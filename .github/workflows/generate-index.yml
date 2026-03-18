@@ -1,4 +1,4 @@
-name: Generate problems.json
+name: Generate index and sitemap
 
 on:
   push:
@@ -31,15 +31,15 @@ jobs:
       - name: Run IndexGenerator
         run: dotnet run --project IndexGenerator.csproj --configuration Release
 
-      - name: Commit and push problems.json if changed
+      - name: Commit and push problems.json and sitemap.xml if changed
         run: |
-          if git status --porcelain | grep -qE 'problems\.json'; then
+          if git status --porcelain | grep -qE 'problems\.json|sitemap\.xml'; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add problems.json
-            git commit -m "chore: auto-generate problems manifest"
+            git add problems.json sitemap.xml
+            git commit -m "chore: auto-generate problems manifest and sitemap"
             git push origin main
           else
-            echo "No changes to problems.json; nothing to commit."
+            echo "No changes to problems.json or sitemap.xml; nothing to commit."
           fi
 

@@ -1,7 +1,10 @@
 using System.Text.Json;
+using System.Xml.Linq;
 
 var rootPath = args.Length > 0 ? args[0] : Directory.GetCurrentDirectory();
+var baseUrl = args.Length > 1 ? args[1].TrimEnd('/') : "https://codefrydev.in/AnimateDatastructure";
 var manifestPath = Path.Combine(rootPath, "problems.json");
+var sitemapPath = Path.Combine(rootPath, "sitemap.xml");
 
 try
 {
@@ -75,6 +78,8 @@ try
     {
         Console.WriteLine("problems.json is already up to date.");
     }
+
+    WriteSitemap(manifest, baseUrl, sitemapPath);
 }
 catch (Exception ex)
 {
@@ -158,6 +163,45 @@ static string AppendDirectorySeparatorChar(string path)
     }
 
     return path;
+}
+
+static void WriteSitemap(ManifestRoot manifest, string baseUrl, string sitemapPath)
+{
+    var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");
+    var lastmod = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+    var urlElements = new List<XElement>
+    {
+        new XElement(ns + "url",
+            new XElement(ns + "loc", baseUrl + "/"),
+            new XElement(ns + "lastmod", lastmod),
+            new XElement(ns + "changefreq", "weekly"),
+            new XElement(ns + "priority", "1.0"))
+    };
+
+    foreach (var category in manifest.Categories)
+    {
+        foreach (var problem in category.Problems)
+        {
+            var loc = baseUrl + "/" + problem.Path.TrimStart('/');
+            urlElements.Add(new XElement(ns + "url",
+                new XElement(ns + "loc", loc),
+                new XElement(ns + "lastmod", lastmod),
+                new XElement(ns + "changefreq", "monthly"),
+                new XElement(ns + "priority", "0.8")));
+        }
+    }
+
+    var urlset = new XElement(ns + "urlset", urlElements);
+
+    var doc = new XDocument(
+        new XDeclaration("1.0", "UTF-8", null),
+        urlset);
+
+    using var writer = new StreamWriter(sitemapPath, false, System.Text.Encoding.UTF8);
+    writer.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    writer.Write(doc.ToString());
+    Console.WriteLine($"sitemap.xml written at: {sitemapPath}");
 }
 
 file sealed record ManifestRoot(IReadOnlyList<ManifestCategory> Categories);

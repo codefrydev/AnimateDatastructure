@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSA Problem Explorer</title>
+    <meta name="description" content="Search and visualize curated data structure and algorithm problems. DSA Explorer helps you learn algorithms with interactive visualizations linked to LeetCode.">
+    <link rel="canonical" href="https://codefrydev.in/AnimateDatastructure/">
+    <!-- Open Graph -->
+    <meta property="og:title" content="DSA Problem Explorer | Visualize Data Structures &amp; Algorithms">
+    <meta property="og:description" content="Search and visualize curated data structure and algorithm problems. Interactive DSA visualizations linked to LeetCode.">
+    <meta property="og:url" content="https://codefrydev.in/AnimateDatastructure/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="DSA Explorer">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="DSA Problem Explorer | Visualize Data Structures &amp; Algorithms">
+    <meta name="twitter:description" content="Search and visualize curated data structure and algorithm problems. Interactive DSA visualizations linked to LeetCode.">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -44,16 +56,44 @@
         tbody tr {
             transition: all 0.2s ease-in-out;
         }
+        /* Screen reader only - visible when focused */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        /* Keyboard focus for sortable headers and status cells */
+        th[data-sort-key]:focus-visible,
+        [data-status-cell]:focus-visible {
+            outline: 2px solid rgb(99 102 241);
+            outline-offset: 2px;
+        }
     </style>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "DSA Problem Explorer",
+        "description": "Search and visualize curated data structure and algorithm problems. Interactive visualizations linked to LeetCode.",
+        "url": "https://codefrydev.in/AnimateDatastructure/"
+    }
+    </script>
 </head>
 <body class="bg-gray-950 text-gray-200 font-sans min-h-screen antialiased">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-500 focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white">Skip to main content</a>
 
     <!-- App shell -->
     <div class="w-full px-4 sm:px-6 lg:px-10 xl:px-20 py-6">
         <!-- Header -->
         <header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-gray-900 pb-5">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-indigo-500/15 rounded-xl text-indigo-400">
+                <div class="p-2 bg-indigo-500/15 rounded-xl text-indigo-400" aria-hidden="true">
                     <i data-lucide="code-2" class="w-6 h-6"></i>
                 </div>
                 <div>
@@ -67,11 +107,13 @@
             </div>
         </header>
 
+        <!-- Main content -->
+        <main id="main-content" class="mb-6" tabindex="-1">
         <!-- Controls Section (Search & Filter) -->
-        <div class="mb-6">
+        <section class="mb-6" aria-label="Search and filter">
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="relative flex-grow">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" aria-hidden="true">
                     <i data-lucide="search" class="w-5 h-5 text-gray-500"></i>
                 </div>
                 <input 
@@ -94,32 +136,32 @@
                     <option value="Medium">Medium</option>
                     <option value="Hard">Hard</option>
                 </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500" aria-hidden="true">
                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Data Table -->
         <div class="bg-gray-900/70 rounded-2xl border border-gray-900/80 overflow-hidden shadow-xl">
             <div class="overflow-x-auto">
-                <table class="min-w-full table-fixed divide-y divide-gray-800">
+                <table class="min-w-full table-fixed divide-y divide-gray-800" aria-label="List of DSA problems with status, topic, and difficulty">
                     <thead class="bg-gray-900/80">
                         <tr>
-                            <th scope="col" class="w-16 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer" data-sort-key="number" data-label="#">
+                            <th scope="col" class="w-16 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="number" data-label="#" tabindex="0" role="button">
                                 <span>#</span>
                             </th>
-                            <th scope="col" class="w-12 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer" data-sort-key="status" data-label="Status">
+                            <th scope="col" class="w-12 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="status" data-label="Status" tabindex="0" role="button">
                                 <span>Status</span>
                             </th>
-                            <th scope="col" class="w-2/5 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer" data-sort-key="name" data-label="Problem">
+                            <th scope="col" class="w-2/5 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="name" data-label="Problem" tabindex="0" role="button">
                                 <span>Problem</span>
                             </th>
-                            <th scope="col" class="w-1/4 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer" data-sort-key="topic" data-label="Topic">
+                            <th scope="col" class="w-1/4 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="topic" data-label="Topic" tabindex="0" role="button">
                                 <span>Topic</span>
                             </th>
-                            <th scope="col" class="w-28 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer" data-sort-key="difficulty" data-label="Difficulty">
+                            <th scope="col" class="w-28 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="difficulty" data-label="Difficulty" tabindex="0" role="button">
                                 <span>Difficulty</span>
                             </th>
                             <th scope="col" class="w-56 px-4 py-3 text-right text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em]">
@@ -134,7 +176,7 @@
             </div>
             
             <!-- Empty State -->
-            <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center">
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center" role="status" aria-live="polite">
                 <div class="p-3 bg-gray-800 rounded-full text-gray-500 mb-4">
                     <i data-lucide="search-x" class="w-8 h-8"></i>
                 </div>
@@ -142,6 +184,7 @@
                 <p class="mt-1 text-sm text-gray-500">Refine your search query or update the filters.</p>
             </div>
         </div>
+        </main>
     </div>
 
     <!-- Application Logic -->
@@ -262,10 +305,11 @@
 
                 const problemIdEscaped = (problem.id || '').replace(/"/g, '&quot;');
 
+                const nameEscaped = (problem.name || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
                 tr.innerHTML = `
                     ${numberCell}
-                    <td class="px-4 py-3 align-middle cursor-pointer select-none" data-status-cell data-problem-id="${problemIdEscaped}" title="${statusTitle}">
-                        <div class="flex items-center justify-center w-6">
+                    <td class="px-4 py-3 align-middle cursor-pointer select-none focus:outline-none" data-status-cell data-problem-id="${problemIdEscaped}" title="${statusTitle}" tabindex="0" role="button" aria-label="${statusTitle}">
+                        <div class="flex items-center justify-center w-6" aria-hidden="true">
                             ${statusIcon}
                         </div>
                     </td>
@@ -284,12 +328,12 @@
                     </td>
                     <td class="px-4 py-3 text-right text-sm font-medium">
                         <div class="flex items-center justify-end gap-2">
-                            <a href="${problem.animationUrl}" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-300 bg-gray-800/70 hover:bg-gray-800 hover:text-indigo-200 border border-gray-700/80 hover:border-indigo-500/50 transition-colors" title="View animation for this problem">
-                                <i data-lucide="play-circle" class="w-4 h-4"></i>
+                            <a href="${problem.animationUrl}" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-300 bg-gray-800/70 hover:bg-gray-800 hover:text-indigo-200 border border-gray-700/80 hover:border-indigo-500/50 transition-colors" title="View animation for this problem" aria-label="Visualize: ${nameEscaped}">
+                                <i data-lucide="play-circle" class="w-4 h-4" aria-hidden="true"></i>
                                 <span>Visualize</span>
                             </a>
-                            <a href="${problem.leetcodeUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-amber-300 bg-gray-800/70 hover:bg-gray-800 hover:text-amber-200 border border-gray-700/80 hover:border-amber-500/50 transition-colors" title="Open problem on LeetCode in a new tab">
-                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                            <a href="${problem.leetcodeUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-amber-300 bg-gray-800/70 hover:bg-gray-800 hover:text-amber-200 border border-gray-700/80 hover:border-amber-500/50 transition-colors" title="Open problem on LeetCode in a new tab" aria-label="Open on LeetCode: ${nameEscaped}">
+                                <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
                                 <span>Solve</span>
                             </a>
                         </div>
@@ -428,7 +472,7 @@
                     th.classList.add('text-gray-200');
                 } else {
                     labelSpan.textContent = baseLabel;
-                    th.removeAttribute('aria-sort');
+                    th.setAttribute('aria-sort', 'none');
                     th.classList.remove('text-gray-200');
                     th.classList.add('text-gray-400');
                 }
@@ -452,23 +496,28 @@
             renderProblems(sorted);
         }
 
+        function triggerSort(key) {
+            if (!key) return;
+            if (sortConfig.key === key) {
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortConfig.key = key;
+                sortConfig.direction = 'asc';
+            }
+            updateSortIndicators();
+            filterData();
+        }
+
         // Initialize sortable table headers
         function initSortableHeaders() {
             const headerCells = document.querySelectorAll('th[data-sort-key]');
             headerCells.forEach((th) => {
-                th.addEventListener('click', () => {
-                    const key = th.getAttribute('data-sort-key');
-                    if (!key) return;
-
-                    if (sortConfig.key === key) {
-                        sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        sortConfig.key = key;
-                        sortConfig.direction = 'asc';
+                th.addEventListener('click', () => triggerSort(th.getAttribute('data-sort-key')));
+                th.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        triggerSort(th.getAttribute('data-sort-key'));
                     }
-
-                    updateSortIndicators();
-                    filterData();
                 });
             });
 
@@ -484,6 +533,15 @@
             if (!cell) return;
             const id = cell.getAttribute('data-problem-id');
             if (id) cycleProblemStatus(id);
+        });
+        problemListEl.addEventListener('keydown', (e) => {
+            const cell = e.target.closest('[data-status-cell]');
+            if (!cell) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const id = cell.getAttribute('data-problem-id');
+                if (id) cycleProblemStatus(id);
+            }
         });
 
         // Initialize App
