@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Visualizer: Range Sum BST</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .node-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .edge-transition {
+            transition: stroke 0.3s ease;
+        }
+        /* Custom scrollbars */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .light-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .light-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-emerald-600 text-white p-4 sm:px-8 shadow-md">
+        <div class="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <h1 class="text-xl sm:text-2xl font-bold">Range Sum BST (DFS) Visualizer</h1>
+            <div class="text-xs sm:text-sm bg-emerald-700 px-3 py-1 rounded-full border border-emerald-500 shadow-inner">Interactive Debugger</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContainer" class="flex-grow p-4 sm:p-6 w-full flex flex-col lg:flex-row gap-4 relative">
+        
+        <!-- Left Column: Controls & Tree -->
+        <div id="leftPane" class="w-full lg:w-[60%] min-w-[300px] flex flex-col gap-4">
+            
+            <!-- Setup Panel -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm uppercase tracking-wide text-slate-500 font-bold">1. Configure Tree & Range</h2>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 mb-3">
+                    <div class="w-full sm:w-1/3">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Presets</label>
+                        <select id="presetSelect" onchange="loadPreset()" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm bg-slate-50 font-medium text-slate-700">
+                            <option value='{"arr":"[10,5,15,3,7,null,18]","low":"7","high":"15"}'>Standard Tree</option>
+                            <option value='{"arr":"[10,5,15,3,7,13,18,1,null,6]","low":"6","high":"10"}'>Deep Tree</option>
+                            <option value='{"arr":"[20,10,30,5,15,25,35]","low":"5","high":"35"}'>Full Range</option>
+                            <option value='{"arr":"[5,3,8,2,4,7,9]","low":"10","high":"20"}'>Out of Range</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex-grow flex gap-3">
+                        <div class="w-1/2">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Low Range</label>
+                            <input type="number" id="lowInput" value="7" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono text-sm text-slate-700 font-bold">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">High Range</label>
+                            <input type="number" id="highInput" value="15" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono text-sm text-slate-700 font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 items-end">
+                    <div class="flex-grow w-full">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Tree Array (Level-Order)</label>
+                        <input type="text" id="treeInput" value="[10,5,15,3,7,null,18]" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono text-sm text-slate-600 bg-slate-50">
+                    </div>
+                    <button id="loadBtn" onclick="loadSimulation()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors shadow-sm whitespace-nowrap h-[38px]">
+                        Load Run
+                    </button>
+                </div>
+
+                <div id="errorMsg" class="text-rose-600 bg-rose-50 border border-rose-200 p-3 rounded-lg text-sm mt-3 hidden font-mono"></div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 flex-grow flex flex-col">
+                <div class="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
+                    <h2 class="text-sm uppercase tracking-wide text-slate-500 font-bold shrink-0">2. Memory State</h2>
+                    <div class="flex flex-wrap gap-3 items-center w-full justify-end">
+                        <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 flex items-center gap-3 w-full sm:max-w-[320px] overflow-hidden shadow-inner">
+                            <span class="text-xs text-slate-500 font-bold uppercase shrink-0">Call Stack</span>
+                            <div id="displayStack" class="flex flex-row-reverse gap-1.5 overflow-x-auto light-scroll custom-scroll pb-1 w-full items-center min-h-[30px]">
+                                <!-- Stack pills injected here -->
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-3 shadow-sm">
+                            <span class="text-xs text-slate-500 font-bold uppercase">Current Sum</span>
+                            <span id="displaySum" class="font-black text-2xl text-emerald-600 leading-none">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tree Rendering Area -->
+                <div class="relative flex-grow min-h-[350px] bg-slate-50/50 rounded-xl border border-slate-200 overflow-auto light-scroll custom-scroll flex items-center justify-center">
+                    <svg id="treeCanvas" class="absolute origin-center transition-transform duration-300" style="min-width: 100%; min-height: 100%;"></svg>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex gap-x-5 gap-y-2 justify-center mt-6 text-xs sm:text-sm flex-wrap font-medium text-slate-600 items-center">
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-white border-2 border-slate-300 rounded-full"></div> Unvisited</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-emerald-100 border-2 border-emerald-500 rounded-full shadow-inner"></div> In Range</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-rose-50 border-2 border-rose-300 rounded-full"></div> Out of Range</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-white border-4 border-purple-500 rounded-full scale-110 shadow-md"></div> Active Node</div>
+                </div>
+            </div>
+
+            <!-- Playback Controls -->
+            <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <button onclick="prevStep()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-slate-700" title="Previous Step">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition font-bold w-32 text-center shadow-sm">
+                            PLAY
+                        </button>
+                        <button onclick="nextStep()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-slate-700" title="Next Step">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex-grow flex items-center gap-4 px-2 sm:px-4 w-full">
+                        <span class="text-xs font-bold text-slate-400 whitespace-nowrap w-12 text-right" id="stepCounter">0/0</span>
+                        <input type="range" id="stepSlider" min="0" max="0" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" oninput="goToStep(this.value)">
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <input type="range" id="speedSlider" min="50" max="1500" value="600" dir="rtl" class="w-20 sm:w-24 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-500" title="Adjust Playback Speed">
+                    </div>
+                </div>
+                <div class="mt-4 p-3.5 bg-slate-50 text-slate-800 rounded-lg text-sm border border-slate-200 font-medium flex flex-col sm:flex-row items-start sm:items-center gap-3 shadow-inner">
+                    <div id="phaseBadge" class="px-2.5 py-1 text-xs font-bold uppercase rounded-md whitespace-nowrap bg-slate-200 text-slate-600">IDLE</div>
+                    <div id="stepMessage">Click 'Load Run' and then 'PLAY' to start visualization.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Draggable Resizer (Desktop Only) -->
+        <div id="dragResizer" class="hidden lg:flex w-4 cursor-col-resize items-center justify-center -mx-2 z-20 group select-none">
+            <div class="h-24 w-1.5 bg-slate-200 group-hover:bg-emerald-500 rounded-full transition-colors"></div>
+        </div>
+
+        <!-- Right Column: Code Viewer / Editor -->
+        <div id="rightPane" class="w-full lg:flex-1 min-w-[300px] bg-[#1e1e1e] rounded-xl shadow-lg border border-slate-800 flex flex-col overflow-hidden relative">
+            <div class="bg-[#2d2d2d] px-4 py-3 border-b border-slate-700 flex justify-between items-center z-10">
+                <h2 class="text-slate-300 font-semibold text-xs tracking-wider uppercase font-mono">Solution.js (DFS)</h2>
+                <div class="flex items-center gap-3">
+                    <button id="editCodeBtn" onclick="toggleEditMode()" class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-slate-100 text-xs font-bold rounded transition-colors shadow-sm border border-slate-500">
+                        EDIT CODE
+                    </button>
+                    <div class="flex gap-1.5 hidden sm:flex">
+                        <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="relative flex-grow h-[500px] lg:h-auto">
+                <div class="absolute inset-0 overflow-y-auto custom-scroll p-4 pb-12" id="codeContainer">
+                    <pre class="font-mono text-[13px] sm:text-sm leading-relaxed text-[#d4d4d4] w-full" id="codeBlock"></pre>
+                </div>
+                <textarea id="codeEditor" class="hidden absolute inset-0 w-full h-full bg-[#1e1e1e] text-[#4ec9b0] font-mono text-[13px] sm:text-sm leading-relaxed focus:outline-none resize-none border-none p-4 custom-scroll pb-12" spellcheck="false" style="tab-size: 4;"></textarea>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Editable Code State ---
+        // Cleaned up using the "Tracer Hook API" pattern!
+        let currentCodeText = `let sum = 0;
+
+function rangeSumBST(node, low, high) {
+    if (node == null) return;
+
+    // Visualizer Hook: Record arriving at node
+    tracer.visit(node);
+
+    if (node.val >= low && node.val <= high) {
+        sum += node.val;
+        // Visualizer Hook: Mark node as matched
+        tracer.inRange(node, sum);
+    } else {
+        // Visualizer Hook: Mark node as skipped
+        tracer.outOfRange(node);
+    }
+
+    rangeSumBST(node.left, low, high);
+    rangeSumBST(node.right, low, high);
+
+    // Visualizer Hook: Record leaving subtree
+    tracer.leave(node);
+}
+
+// Kick off the recursion
+rangeSumBST(treeRoot, input.low, input.high);`;
+
+        let isEditMode = false;
+
+        // Handle Tab key in Textarea
+        document.getElementById('codeEditor').addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 4;
+            }
+        });
+
+        function toggleEditMode() {
+            const btn = document.getElementById('editCodeBtn');
+            const pre = document.getElementById('codeContainer');
+            const editor = document.getElementById('codeEditor');
+            const loadBtn = document.getElementById('loadBtn');
+
+            if (!isEditMode) {
+                // Enter Edit Mode
+                isEditMode = true;
+                btn.innerText = "SAVE & RUN";
+                btn.classList.replace('bg-slate-600', 'bg-emerald-600');
+                btn.classList.replace('border-slate-500', 'border-emerald-500');
+                btn.classList.replace('hover:bg-slate-500', 'hover:bg-emerald-500');
+                
+                editor.value = currentCodeText;
+                pre.classList.add('hidden');
+                editor.classList.remove('hidden');
+                
+                loadBtn.disabled = true;
+                loadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                if(isPlaying) togglePlay();
+            } else {
+                // Exit Edit Mode & Run
+                isEditMode = false;
+                btn.innerText = "EDIT CODE";
+                btn.classList.replace('bg-emerald-600', 'bg-slate-600');
+                btn.classList.replace('border-emerald-500', 'border-slate-500');
+                btn.classList.replace('hover:bg-emerald-500', 'hover:bg-slate-500');
+                
+                currentCodeText = editor.value;
+                editor.classList.add('hidden');
+                pre.classList.remove('hidden');
+                
+                renderCodeView(currentCodeText);
+                
+                loadBtn.disabled = false;
+                loadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                loadSimulation();
+            }
+        }
+
+        function renderCodeView(code) {
+            const codeLines = code.split('\n');
+            const codeBlock = document.getElementById('codeBlock');
+            // Basic syntax highlighting pseudo-classes
+            codeBlock.innerHTML = codeLines.map((line, index) => {
+                const lineNum = index + 1;
+                // Simple keyword coloring for aesthetics (VS Code dark theme style)
+                let formattedLine = line.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                formattedLine = formattedLine.replace(/\b(function|return|if|else|let|const|var)\b/g, '<span class="text-[#569cd6]">$1</span>');
+                formattedLine = formattedLine.replace(/\b(null|true|false)\b/g, '<span class="text-[#569cd6]">$1</span>');
+                formattedLine = formattedLine.replace(/(\/\/.+)/g, '<span class="text-[#6a9955]">$1</span>');
+                formattedLine = formattedLine.replace(/\b(tracer|node|treeRoot|input)\b/g, '<span class="text-[#9cdcfe]">$1</span>');
+                formattedLine = formattedLine.replace(/\b(visit|inRange|outOfRange|leave)\b/g, '<span class="text-[#dcdcaa]">$1</span>');
+
+                return `<div id="line-${lineNum}" class="px-2 py-0.5 border-l-4 border-transparent flex items-start relative transition-colors duration-200">
+                    <span id="caret-${lineNum}" class="absolute left-0 top-1 -ml-[3px] text-yellow-400 opacity-0 transition-opacity duration-200 text-[10px]">▶</span>
+                    <span class="text-[#858585] w-8 inline-block select-none ml-2 text-right pr-3 shrink-0">${lineNum}</span>
+                    <span class="whitespace-pre-wrap break-all">${formattedLine}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // --- Core Application State & Tree Logic ---
+        let steps = [];
+        let currentStepIndex = 0;
+        let isPlaying = false;
+        let playInterval;
+        let treeLayoutData = { nodes: [], edges: [], width: 0, height: 0 };
+
+        // Parse array [10, 5, 15, ...] into a tree structure
+        function buildTree(arr) {
+            if (!arr || arr.length === 0 || arr[0] === null) return null;
+            let root = { id: 0, val: arr[0], left: null, right: null };
+            let queue = [root];
+            let i = 1;
+            while (i < arr.length && queue.length > 0) {
+                let curr = queue.shift();
+                
+                // Left child
+                if (i < arr.length && arr[i] !== null && arr[i] !== undefined) {
+                    curr.left = { id: i, val: arr[i], left: null, right: null };
+                    queue.push(curr.left);
+                }
+                i++;
+                
+                // Right child
+                if (i < arr.length && arr[i] !== null && arr[i] !== undefined) {
+                    curr.right = { id: i, val: arr[i], left: null, right: null };
+                    queue.push(curr.right);
+                }
+                i++;
+            }
+            return root;
+        }
+
+        // Calculate (x,y) coordinates for SVG rendering
+        function calculateTreeLayout(root) {
+            if (!root) return { nodes: [], edges: [], width: 0, height: 0 };
+            let nodes = [];
+            let edges = [];
+
+            // Calculate max depth for dynamic horizontal spacing
+            function getDepth(node) {
+                if (!node) return 0;
+                return 1 + Math.max(getDepth(node.left), getDepth(node.right));
+            }
+
+            const maxDepth = getDepth(root);
+            const initialXOffset = Math.max(45, Math.pow(2, maxDepth - 2) * 50);
+
+            function traverse(node, depth, x, y, xOffset) {
+                if (!node) return;
+                
+                // Clone node basic properties for layout memory
+                let layoutNode = { id: node.id, val: node.val, x: x, y: y };
+                nodes.push(layoutNode);
+
+                if (node.left) {
+                    let childXOffset = Math.max(45, xOffset / 2);
+                    edges.push({ sourceId: node.id, targetId: node.left.id });
+                    traverse(node.left, depth + 1, x - xOffset, y + 70, childXOffset);
+                }
+                if (node.right) {
+                    let childXOffset = Math.max(45, xOffset / 2);
+                    edges.push({ sourceId: node.id, targetId: node.right.id });
+                    traverse(node.right, depth + 1, x + xOffset, y + 70, childXOffset);
+                }
+            }
+
+            traverse(root, 0, 0, 40, initialXOffset);
+
+            // Normalize X coordinates so no negatives exist, and we add padding
+            let minX = Math.min(...nodes.map(n => n.x));
+            let maxX = Math.max(...nodes.map(n => n.x));
+            let maxY = Math.max(...nodes.map(n => n.y));
+            
+            let shiftX = Math.abs(minX) + 50;
+            nodes.forEach(n => n.x += shiftX);
+
+            return {
+                nodes: nodes,
+                edges: edges,
+                width: maxX + shiftX + 50,
+                height: maxY + 50
+            };
+        }
+
+        function runCustomCode(code, treeRoot, inputObj) {
+            let generatedSteps = [];
+            let stateObj = { sum: 0, nodeStatus: {} };
+            let stack = [];
+
+            // Heuristic line number extraction
+            function getLineNumber() {
+                try { throw new Error(); } catch (e) {
+                    if (!e.stack) return -1;
+                    const lines = e.stack.split('\n');
+                    for (let line of lines) {
+                        if (line.includes('eval') || line.includes('<anonymous>') || line.includes('Function')) {
+                            const matches = [...line.matchAll(/:(\d+):\d+/g)];
+                            if (matches.length > 0) {
+                                const lastMatch = matches[matches.length - 1];
+                                let l = parseInt(lastMatch[1]);
+                                return l > 2 ? l - 2 : l; // offset wrapper lines
+                            }
+                        }
+                    }
+                    return -1;
+                }
+            }
+
+            function recordSnapshot(msg, activeNodeId = null, phase = 'IDLE') {
+                generatedSteps.push({
+                    sum: stateObj.sum,
+                    nodeStatus: { ...stateObj.nodeStatus },
+                    activeNodeId: activeNodeId,
+                    callStack: [...stack],
+                    message: msg,
+                    phase: phase,
+                    line: getLineNumber()
+                });
+            }
+
+            // The clean Tracer API abstracted away from the user
+            const tracer = {
+                visit: (node) => {
+                    if(!node) return;
+                    stack.push(`BST(${node.val})`);
+                    recordSnapshot(`Visiting node ${node.val}`, node.id, 'VISIT');
+                },
+                inRange: (node, currentSum) => {
+                    if(!node) return;
+                    stateObj.sum = currentSum;
+                    stateObj.nodeStatus[node.id] = 'IN_RANGE';
+                    recordSnapshot(`Node ${node.val} in range [${inputObj.low}, ${inputObj.high}]. Sum = ${currentSum}`, node.id, 'ADD');
+                },
+                outOfRange: (node) => {
+                    if(!node) return;
+                    stateObj.nodeStatus[node.id] = 'OUT_RANGE';
+                    recordSnapshot(`Node ${node.val} NOT in range [${inputObj.low}, ${inputObj.high}]`, node.id, 'SKIP');
+                },
+                leave: (node) => {
+                    if(!node) return;
+                    stack.pop();
+                    recordSnapshot(`Finished processing subtree of ${node.val}`, node.id, 'RETURN');
+                }
+            };
+
+            try {
+                // Execute code dynamically giving it access to only what it needs
+                const dynamicFunction = new Function('treeRoot', 'input', 'tracer', code);
+                dynamicFunction(treeRoot, inputObj, tracer);
+
+                generatedSteps.push({
+                    sum: stateObj.sum,
+                    nodeStatus: { ...stateObj.nodeStatus },
+                    activeNodeId: null,
+                    callStack: [],
+                    message: `Execution complete. Total Range Sum: ${stateObj.sum}`,
+                    phase: 'DONE',
+                    line: code.split('\n').length
+                });
+
+                return { steps: generatedSteps, error: null };
+            } catch (err) {
+                console.error(err);
+                return { steps: generatedSteps, error: err.message };
+            }
+        }
+
+        function loadPreset() {
+            try {
+                const presetVal = JSON.parse(document.getElementById('presetSelect').value);
+                document.getElementById('treeInput').value = presetVal.arr;
+                document.getElementById('lowInput').value = presetVal.low;
+                document.getElementById('highInput').value = presetVal.high;
+                loadSimulation();
+            } catch (e) { console.error("Preset load failed", e); }
+        }
+
+        function loadSimulation() {
+            if (isPlaying) togglePlay();
+
+            const treeStr = document.getElementById('treeInput').value;
+            const lowStr = document.getElementById('lowInput').value;
+            const highStr = document.getElementById('highInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const treeArr = JSON.parse(treeStr);
+                const low = parseInt(lowStr);
+                const high = parseInt(highStr);
+
+                if (!Array.isArray(treeArr)) {
+                    throw new Error("Tree must be a valid JSON array.");
+                }
+                if (isNaN(low) || isNaN(high)) {
+                    throw new Error("Low and High must be valid numbers.");
+                }
+                
+                // Parse Tree & layout coordinates once
+                const rootNode = buildTree(treeArr);
+                treeLayoutData = calculateTreeLayout(rootNode);
+                
+                // Setup SVG Canvas Size
+                const svg = document.getElementById('treeCanvas');
+                svg.setAttribute('width', Math.max(500, treeLayoutData.width));
+                svg.setAttribute('height', Math.max(350, treeLayoutData.height));
+                svg.setAttribute('viewBox', `0 0 ${Math.max(500, treeLayoutData.width)} ${Math.max(350, treeLayoutData.height)}`);
+                
+                // Run Engine
+                const inputObj = { low, high };
+                const result = runCustomCode(currentCodeText, rootNode, inputObj);
+                
+                if (result.error) {
+                    errorMsg.innerText = "Execution Error:\n" + result.error;
+                    errorMsg.classList.remove('hidden');
+                    steps = [];
+                    return;
+                }
+
+                errorMsg.classList.add('hidden');
+                steps = result.steps;
+                
+                // Setup UI Sliders
+                const slider = document.getElementById('stepSlider');
+                slider.max = steps.length > 0 ? steps.length - 1 : 0;
+                slider.value = 0;
+                
+                currentStepIndex = 0;
+                renderStep(0);
+                
+            } catch (e) {
+                errorMsg.innerText = "Input Error: Ensure Tree is a valid JSON array (e.g., [10,5,15,null,7]) and bounds are numbers.";
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        // --- Rendering Engine ---
+        function renderStep(index) {
+            if (steps.length === 0) return;
+            const step = steps[index];
+            
+            // Text Overlays
+            document.getElementById('displaySum').innerText = step.sum;
+            document.getElementById('stepCounter').innerText = `${index + 1}/${steps.length}`;
+            document.getElementById('stepSlider').value = index;
+            document.getElementById('stepMessage').innerHTML = `<span class="font-bold text-slate-700">Action:</span> ${step.message}`;
+
+            // Phase Badge Styling
+            const phaseBadge = document.getElementById('phaseBadge');
+            phaseBadge.innerText = step.phase;
+            phaseBadge.className = 'px-2.5 py-1 text-xs font-bold uppercase rounded-md whitespace-nowrap shadow-sm border ';
+            switch (step.phase) {
+                case 'VISIT':  phaseBadge.className += 'bg-purple-100 text-purple-700 border-purple-200'; break;
+                case 'ADD':    phaseBadge.className += 'bg-emerald-100 text-emerald-700 border-emerald-300 ring-1 ring-emerald-500'; break;
+                case 'SKIP':   phaseBadge.className += 'bg-rose-100 text-rose-700 border-rose-200'; break;
+                case 'LEFT':   
+                case 'RIGHT':  phaseBadge.className += 'bg-blue-100 text-blue-700 border-blue-200'; break;
+                case 'RETURN': phaseBadge.className += 'bg-amber-100 text-amber-700 border-amber-200'; break;
+                case 'DONE':   phaseBadge.className += 'bg-emerald-600 text-white border-emerald-700'; break;
+                default:       phaseBadge.className += 'bg-slate-100 text-slate-500 border-slate-200';
+            }
+
+            // Call Stack Visualization (LIFO)
+            const stackContainer = document.getElementById('displayStack');
+            stackContainer.innerHTML = '';
+            if (step.callStack.length === 0) {
+                stackContainer.innerHTML = '<span class="text-slate-400 text-xs italic px-2">Empty</span>';
+            } else {
+                // To simulate a stack growing right-to-left in our reverse-flex container, we just iterate normally.
+                [...step.callStack].reverse().forEach((frame, idx) => {
+                    const isTop = idx === 0; // In reversed array, 0 is the top of the stack
+                    const pill = document.createElement('div');
+                    pill.className = `px-2 py-1 rounded text-xs font-mono font-bold whitespace-nowrap transition-colors flex-shrink-0 border ` + 
+                                     (isTop ? `bg-amber-500 text-white border-amber-600 shadow-sm ring-2 ring-amber-200` 
+                                            : `bg-slate-200 text-slate-600 border-slate-300 opacity-80`);
+                    pill.innerText = frame;
+                    stackContainer.appendChild(pill);
+                });
+            }
+
+            // --- SVG Tree Render ---
+            const svg = document.getElementById('treeCanvas');
+            svg.innerHTML = ''; // clear
+            
+            // Build Maps for O(1) layout lookups
+            const nodeMap = {};
+            treeLayoutData.nodes.forEach(n => nodeMap[n.id] = n);
+
+            // Draw Edges First (so they sit underneath nodes)
+            treeLayoutData.edges.forEach(edge => {
+                const s = nodeMap[edge.sourceId];
+                const t = nodeMap[edge.targetId];
+                
+                // Is this edge part of the current active traversal?
+                // Visual heuristic: if source and target are both visited/in stack, highlight
+                const isTraversed = (step.nodeStatus[edge.sourceId] || step.activeNodeId === edge.sourceId) && 
+                                    (step.nodeStatus[edge.targetId] || step.activeNodeId === edge.targetId);
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', s.x);
+                line.setAttribute('y1', s.y);
+                line.setAttribute('x2', t.x);
+                line.setAttribute('y2', t.y);
+                line.setAttribute('stroke-width', isTraversed ? '3' : '2');
+                line.setAttribute('stroke', isTraversed ? '#cbd5e1' : '#e2e8f0'); // Light grey links
+                line.classList.add('edge-transition');
+                svg.appendChild(line);
+            });
+
+            // Draw Nodes
+            treeLayoutData.nodes.forEach(n => {
+                const isActive = step.activeNodeId === n.id;
+                const status = step.nodeStatus[n.id]; // 'IN_RANGE' or 'OUT_RANGE' or undefined
+                
+                let fill = '#ffffff'; // White default
+                let stroke = '#cbd5e1'; // slate-300
+                let strokeWidth = '2';
+                let radius = 22;
+
+                if (status === 'IN_RANGE') {
+                    fill = '#d1fae5'; // emerald-100
+                    stroke = '#10b981'; // emerald-500
+                } else if (status === 'OUT_RANGE') {
+                    fill = '#fff1f2'; // rose-50
+                    stroke = '#fda4af'; // rose-300
+                }
+
+                if (isActive) {
+                    stroke = '#a855f7'; // purple-500
+                    strokeWidth = '4';
+                    radius = 25; // pop out effect
+                }
+
+                // Group for circle + text
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.classList.add('node-transition');
+                g.style.transformOrigin = `${n.x}px ${n.y}px`;
+                if(isActive) g.style.transform = 'scale(1.05)';
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', n.x);
+                circle.setAttribute('cy', n.y);
+                circle.setAttribute('r', radius);
+                circle.setAttribute('fill', fill);
+                circle.setAttribute('stroke', stroke);
+                circle.setAttribute('stroke-width', strokeWidth);
+                if (isActive) {
+                    circle.setAttribute('filter', 'drop-shadow(0 4px 6px rgba(168, 85, 247, 0.4))');
+                } else if (status === 'IN_RANGE') {
+                    circle.setAttribute('filter', 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.2)) inset'); // Inner shadow simulation via normal shadow for simplicity in SVG
+                }
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', n.x);
+                text.setAttribute('y', n.y);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'central');
+                text.setAttribute('font-weight', isActive ? '800' : '600');
+                text.setAttribute('font-size', '14px');
+                text.setAttribute('fill', '#334155'); // slate-700
+                text.textContent = n.val;
+
+                g.appendChild(circle);
+                g.appendChild(text);
+                svg.appendChild(g);
+            });
+
+            // Code Line Tracking
+            document.querySelectorAll('#codeBlock > div').forEach(div => {
+                div.classList.remove('bg-[#062f4a]', 'border-yellow-400');
+                div.classList.add('border-transparent');
+            });
+            document.querySelectorAll('[id^="caret-"]').forEach(caret => {
+                caret.classList.replace('opacity-100', 'opacity-0');
+            });
+
+            if (step.line > 0) {
+                const activeLineEl = document.getElementById(`line-${step.line}`);
+                const activeCaretEl = document.getElementById(`caret-${step.line}`);
+                
+                if (activeLineEl) {
+                    activeLineEl.classList.remove('border-transparent');
+                    activeLineEl.classList.add('bg-[#062f4a]', 'border-yellow-400'); // VS code style active line bg
+                    if (activeCaretEl) activeCaretEl.classList.replace('opacity-0', 'opacity-100');
+                    
+                    // Auto-scroll logic
+                    const container = document.getElementById('codeContainer');
+                    const offset = activeLineEl.offsetTop - (container.clientHeight / 2) + (activeLineEl.clientHeight / 2);
+                    container.scrollTo({ top: offset, behavior: 'smooth' });
+                }
+            }
+        }
+
+        // --- Playback Controls ---
+        function goToStep(index) {
+            currentStepIndex = parseInt(index);
+            renderStep(currentStepIndex);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                renderStep(currentStepIndex);
+            } else if (isPlaying) {
+                togglePlay();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                renderStep(currentStepIndex);
+            }
+        }
+
+        function togglePlay() {
+            const btn = document.getElementById('playBtn');
+            if (isPlaying) {
+                clearInterval(playInterval);
+                isPlaying = false;
+                btn.innerText = "PLAY";
+                btn.classList.replace('bg-rose-600', 'bg-emerald-600');
+                btn.classList.replace('hover:bg-rose-700', 'hover:bg-emerald-700');
+            } else {
+                if (currentStepIndex >= steps.length - 1) currentStepIndex = 0;
+                isPlaying = true;
+                btn.innerText = "PAUSE";
+                btn.classList.replace('bg-emerald-600', 'bg-rose-600');
+                btn.classList.replace('hover:bg-emerald-700', 'hover:bg-rose-700');
+                
+                const speed = document.getElementById('speedSlider').value;
+                playInterval = setInterval(nextStep, speed);
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playInterval = setInterval(nextStep, this.value);
+            }
+        });
+
+        // Setup Resize & Keyboard
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    togglePlay();
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    if(isPlaying) togglePlay();
+                    nextStep();
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    if(isPlaying) togglePlay();
+                    prevStep();
+                }
+            });
+        }
+
+        function initResizer() {
+            const resizer = document.getElementById('dragResizer');
+            const leftPane = document.getElementById('leftPane');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none'; 
+                
+                const overlay = document.createElement('div');
+                overlay.id = 'dragOverlay';
+                overlay.className = 'fixed inset-0 z-[9999]';
+                document.body.appendChild(overlay);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const containerRect = mainContainer.getBoundingClientRect();
+                const leftRect = leftPane.getBoundingClientRect();
+                let newLeftWidth = e.clientX - leftRect.left;
+                
+                const minWidth = 350; 
+                const maxWidth = containerRect.width - 350; 
+                
+                if (newLeftWidth < minWidth) newLeftWidth = minWidth;
+                if (newLeftWidth > maxWidth) newLeftWidth = maxWidth;
+
+                leftPane.style.width = `${newLeftWidth}px`;
+                leftPane.style.flex = 'none';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    
+                    const overlay = document.getElementById('dragOverlay');
+                    if (overlay) overlay.remove();
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth < 1024) {
+                    leftPane.style.width = '';
+                    leftPane.style.flex = '';
+                }
+            });
+        }
+
+        // Bootstrap on load
+        window.onload = () => {
+            renderCodeView(currentCodeText);
+            loadSimulation();
+            initResizer();
+            initKeyboardShortcuts();
+        };
+    </script>
+</body>
+</html>
