@@ -1,0 +1,23 @@
+{
+  "GeneratedAt": "2026-03-18T03:03:09.586132Z",
+  "Categories": [
+    {
+      "Name": "Matrix",
+      "Problems": [
+        {
+          "Title": "Count Submatrices With Top Left Element And Sum Less Than K",
+          "Path": "Matrix/count-submatrices-with-top-left-element-and-sum-less-than-k.html",
+          "ProblemUri": "https://leetcode.com/problems/count-submatrices-with-top-left-element-and-sum-less-than-k/",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Senior",
+            "Array",
+            "Matrix",
+            "Prefix Sum",
+            "Weekly Contest 387"
+          ]
+        }
+      ]
+    }
+  ]
+}

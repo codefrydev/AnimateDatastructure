@@ -1,0 +1,8 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/count-submatrices-with-top-left-element-and-sum-less-than-k/",
+  "ProblemName": "Count Submatrices With Top Left Element And Sum Less Than K",
+  "ProblemDescription": "Given a matrix and a target k, count the number of submatrices with top left element and sum less than k.",
+  "ProblemSolution": "The solution is to use a prefix sum to count the number of submatrices with top left element and sum less than k.",
+  "Difficulty": "Medium",
+  "Topics": ["Senior", "Array", "Matrix", "Prefix Sum", "Weekly Contest 387"]
+}

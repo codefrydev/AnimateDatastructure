@@ -1,1 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Problem Explorer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            850: '#1f2937',
+                            900: '#111827',
+                            950: '#030712',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563; 
+        }
+        /* Table transition */
+        tbody tr {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-200 font-sans min-h-screen">
 
+    <!-- Full-width layout with generous horizontal padding -->
+    <div class="w-full px-4 sm:px-6 lg:px-10 xl:px-20 py-6">
+        <!-- Header -->
+        <header class="mb-8 border-b border-gray-800 pb-6">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
+                    <i data-lucide="code-2" class="w-8 h-8"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">DSA Explorer</h1>
+            </div>
+            <p class="text-gray-400">Search and filter your favorite Data Structures and Algorithm problems with interactive visualizers.</p>
+        </header>
+
+        <!-- Controls Section (Search & Filter) -->
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+            <div class="relative flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-500"></i>
+                </div>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-700 rounded-xl leading-5 bg-gray-900 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors" 
+                    placeholder="Search by problem name or topic..."
+                >
+            </div>
+            
+            <div class="relative min-w-[150px]">
+                <select 
+                    id="difficultyFilter" 
+                    class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl bg-gray-900 text-white appearance-none transition-colors border"
+                >
+                    <option value="All">All Difficulties</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-fixed divide-y divide-gray-800">
+                    <thead class="bg-gray-850">
+                        <tr>
+                            <th scope="col" class="w-12 px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="w-2/5 px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Problem Title</th>
+                            <th scope="col" class="w-1/4 px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Topic</th>
+                            <th scope="col" class="w-28 px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Difficulty</th>
+                            <th scope="col" class="w-56 px-4 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Resources</th>
+                        </tr>
+                    </thead>
+                    <tbody id="problemList" class="divide-y divide-gray-800 bg-gray-900">
+                        <!-- Rows will be dynamically injected here via JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center">
+                <div class="p-3 bg-gray-800 rounded-full text-gray-500 mb-4">
+                    <i data-lucide="search-x" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-200">No problems found</h3>
+                <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filters.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Backing data - populated from problems.json
+        let dsaProblems = [];
+
+        // DOM Elements
+        const problemListEl = document.getElementById('problemList');
+        const searchInput = document.getElementById('searchInput');
+        const difficultyFilter = document.getElementById('difficultyFilter');
+        const emptyState = document.getElementById('emptyState');
+        let lastErrorMessage = '';
+
+        // Helper function for difficulty badge styling
+        function getDifficultyClasses(difficulty) {
+            switch(difficulty) {
+                case 'Easy':
+                    return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                case 'Medium':
+                    return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                case 'Hard':
+                    return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                default:
+                    return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+            }
+        }
+
+        // Render function
+        function renderProblems(problems) {
+            problemListEl.innerHTML = '';
+
+            if (problems.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                const titleEl = emptyState.querySelector('h3');
+                const descEl = emptyState.querySelector('p');
+                if (lastErrorMessage) {
+                    if (titleEl) titleEl.textContent = 'Unable to load problems';
+                    if (descEl) descEl.textContent = lastErrorMessage;
+                } else {
+                    if (titleEl) titleEl.textContent = 'No problems found';
+                    if (descEl) descEl.textContent = 'Try adjusting your search or filters.';
+                }
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            problems.forEach((problem) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-800/50 group';
+
+                // Status Icon logic
+                const statusIcon = problem.solved 
+                    ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i>'
+                    : '<i data-lucide="circle" class="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition-colors"></i>';
+
+                const diffClasses = getDifficultyClasses(problem.difficulty);
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 align-middle">
+                        <div class="flex items-center justify-center w-6">
+                            ${statusIcon}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 align-top">
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-indigo-400 transition-colors cursor-pointer break-words">
+                            ${problem.name}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 align-top">
+                        <div class="text-sm text-gray-400 break-words">${problem.topic}</div>
+                    </td>
+                    <td class="px-4 py-3 align-middle">
+                        <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${diffClasses}">
+                            ${problem.difficulty}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right text-sm font-medium">
+                        <div class="flex items-center justify-end gap-3">
+                            <a href="${problem.animationUrl}" class="text-gray-400 hover:text-indigo-400 transition-colors inline-flex items-center gap-1 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 hover:border-indigo-500/50" title="View Animation">
+                                <i data-lucide="play-circle" class="w-4 h-4"></i>
+                                <span>Visualize</span>
+                            </a>
+                            <a href="${problem.leetcodeUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-amber-500 transition-colors inline-flex items-center gap-1 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 hover:border-amber-500/50" title="Solve on LeetCode">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                                <span>Solve</span>
+                            </a>
+                        </div>
+                    </td>
+                `;
+                problemListEl.appendChild(tr);
+            });
+
+            // Re-initialize Lucide icons for dynamically added elements
+            lucide.createIcons();
+        }
+
+        // Load data from problems.json
+        async function loadProblems() {
+            try {
+                lastErrorMessage = '';
+                const response = await fetch('problems.json', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} while loading problems.json`);
+                }
+
+                const data = await response.json();
+
+                const categories = Array.isArray(data.Categories) ? data.Categories : [];
+
+                dsaProblems = categories.flatMap(category => {
+                    const catName = category.Name || 'Uncategorized';
+                    const problems = Array.isArray(category.Problems) ? category.Problems : [];
+
+                    return problems.map(p => {
+                        const topics = Array.isArray(p.Topics) ? p.Topics : [];
+                        const topicLabel = topics.length > 0
+                            ? topics.join(', ')
+                            : catName;
+
+                        const difficulty = p.Difficulty || 'Unknown';
+
+                        return {
+                            name: p.Title || 'Untitled Problem',
+                            topic: topicLabel,
+                            difficulty,
+                            leetcodeUrl: p.ProblemUri || '#',
+                            animationUrl: p.Path || '#',
+                            solved: false
+                        };
+                    });
+                });
+
+                filterData();
+            } catch (err) {
+                console.error('Failed to load problems.json', err);
+                lastErrorMessage = 'Could not load problems.json. Please try again later.';
+                dsaProblems = [];
+                renderProblems([]);
+            }
+        }
+
+        // Filtering logic
+        function filterData() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const difficulty = difficultyFilter.value;
+
+            const filtered = dsaProblems.filter(problem => {
+                const matchesSearch = problem.name.toLowerCase().includes(searchTerm) || 
+                                      problem.topic.toLowerCase().includes(searchTerm);
+                const matchesDifficulty = difficulty === 'All' || problem.difficulty === difficulty;
+                
+                return matchesSearch && matchesDifficulty;
+            });
+
+            renderProblems(filtered);
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', filterData);
+        difficultyFilter.addEventListener('change', filterData);
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProblems().then(() => {
+                lucide.createIcons(); // Initialize header icons
+            });
+        });
+    </script>
+</body>
+</html>

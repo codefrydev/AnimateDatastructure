@@ -1,0 +1,45 @@
+name: Generate problems.json
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-index:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build IndexGenerator
+        run: dotnet build IndexGenerator.csproj --configuration Release
+
+      - name: Run IndexGenerator
+        run: dotnet run --project IndexGenerator.csproj --configuration Release
+
+      - name: Commit and push problems.json if changed
+        run: |
+          if git status --porcelain | grep -qE 'problems\.json'; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add problems.json
+            git commit -m "chore: auto-generate problems manifest"
+            git push origin main
+          else
+            echo "No changes to problems.json; nothing to commit."
+          fi
+

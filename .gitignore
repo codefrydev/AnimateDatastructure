@@ -1,0 +1,26 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vs/
+*.user
+*.suo
+
+# Node / frontend (if added later)
+node_modules/
+dist/
+build/
+
+# .NET build output
+bin/
+obj/
+
+# VS Code / Cursor
+.vscode/
+.history/
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
