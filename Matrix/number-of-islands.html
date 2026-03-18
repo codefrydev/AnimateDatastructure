@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Visualizer: Number of Islands</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cell-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom scrollbars */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .light-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .light-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white p-4 sm:px-8 shadow-md">
+        <div class="w-full flex items-center justify-between">
+            <h1 class="text-xl sm:text-2xl font-bold">Number of Islands (BFS) Visualizer</h1>
+            <div class="text-xs sm:text-sm bg-indigo-700 px-3 py-1 rounded-full border border-indigo-500 shadow-inner">Interactive Debugger</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContainer" class="flex-grow p-4 sm:p-6 w-full flex flex-col lg:flex-row gap-4 relative">
+        
+        <!-- Left Column: Controls & Grid -->
+        <div id="leftPane" class="w-full lg:w-[60%] min-w-[300px] flex flex-col gap-4">
+            
+            <!-- Setup Panel -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm uppercase tracking-wide text-slate-500 font-bold">1. Configure Grid</h2>
+                    <span class="text-xs text-indigo-500 font-semibold bg-indigo-50 px-2 py-1 rounded">Tip: Click the grid to draw islands!</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="w-full sm:w-1/3">
+                        <select id="presetSelect" onchange="loadPreset()" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-slate-50 font-medium text-slate-700">
+                            <option value='[["1","1","0","0","0"],["1","1","0","0","0"],["0","0","1","0","0"],["0","0","0","1","1"]]'>Default Map</option>
+                            <option value='[["1","1","1","1","1"],["1","0","0","0","1"],["1","0","1","0","1"],["1","0","0","0","1"],["1","1","1","1","1"]]'>Donut Island</option>
+                            <option value='[["1","0","1","0","1"],["0","1","0","1","0"],["1","0","1","0","1"],["0","1","0","1","0"]]'>Checkerboard</option>
+                            <option value='[["0","0","0","0","0"],["0","0","0","0","0"],["0","0","0","0","0"],["0","0","0","0","0"]]'>Empty Ocean</option>
+                        </select>
+                    </div>
+                    
+                    <!-- New Grid Dimension Controls -->
+                    <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200 gap-1 overflow-x-auto shrink-0">
+                        <button onclick="modifyGridSize('add-row')" class="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-600 shadow-sm" title="Add Row">+ Row</button>
+                        <button onclick="modifyGridSize('rem-row')" class="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-600 shadow-sm" title="Remove Row">- Row</button>
+                        <button onclick="modifyGridSize('add-col')" class="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-600 shadow-sm" title="Add Column">+ Col</button>
+                        <button onclick="modifyGridSize('rem-col')" class="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-600 shadow-sm" title="Remove Column">- Col</button>
+                    </div>
+
+                    <div class="flex-grow hidden lg:block">
+                        <input type="text" id="gridInput" value='[["1","1","0","0","0"],["1","1","0","0","0"],["0","0","1","0","0"],["0","0","0","1","1"]]' 
+                               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-sm text-slate-500 hidden sm:block">
+                    </div>
+                    <div class="flex items-end">
+                        <button id="loadBtn" onclick="loadSimulation()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm whitespace-nowrap">
+                            Load Run
+                        </button>
+                    </div>
+                </div>
+                <!-- Mobile JSON input (shown only on small screens) -->
+                <div class="mt-3 sm:hidden">
+                    <input type="text" id="gridInputMobile" value='[["1","1","0","0","0"],["1","1","0","0","0"],["0","0","1","0","0"],["0","0","0","1","1"]]' 
+                           class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-sm text-slate-500"
+                           oninput="document.getElementById('gridInput').value = this.value">
+                </div>
+                <div id="errorMsg" class="text-rose-600 bg-rose-50 border border-rose-200 p-3 rounded-lg text-sm mt-3 hidden font-mono"></div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 flex-grow flex flex-col">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 class="text-sm uppercase tracking-wide text-slate-500 font-bold">2. Memory State</h2>
+                    <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
+                        <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 flex items-center gap-3 w-full sm:w-[320px] overflow-hidden shadow-inner">
+                            <span class="text-xs text-slate-500 font-bold uppercase shrink-0">Queue (BFS)</span>
+                            <div id="displayQueue" class="flex gap-1.5 overflow-x-auto light-scroll custom-scroll pb-1 w-full items-center min-h-[30px]">
+                                <!-- Queue pills injected here -->
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 flex items-center gap-2 shadow-sm">
+                            <span class="text-xs text-slate-500 font-bold uppercase">Islands Found</span>
+                            <span id="displayCount" class="font-bold text-xl text-emerald-600 leading-none">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Rendering Area -->
+                <div class="flex-grow flex items-center justify-center min-h-[300px] bg-slate-50/50 rounded-xl border border-slate-200 p-4 overflow-auto light-scroll custom-scroll">
+                    <div id="gridContainer" class="grid gap-2 sm:gap-3">
+                        <!-- Cells injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex gap-x-4 gap-y-2 justify-center mt-6 text-xs sm:text-sm flex-wrap font-medium text-slate-600 items-center">
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-blue-50 border-2 border-blue-100 rounded shadow-inner"></div> Water</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-amber-50 border-2 border-amber-200 rounded"></div> Unexplored Land</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 bg-gradient-to-br from-emerald-400 to-rose-400 border-2 border-slate-400 rounded"></div> Discovered Islands (Colored)</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 border-4 border-yellow-400 rounded-full scale-75 animate-pulse"></div> Active / Scanning</div>
+                    <div class="flex items-center gap-1.5"><div class="w-4 h-4 border-4 border-purple-400 rounded-full scale-75"></div> In Queue</div>
+                </div>
+            </div>
+
+            <!-- Playback Controls -->
+            <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <button onclick="prevStep()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-slate-700" title="Previous Step">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition font-bold w-32 text-center shadow-sm">
+                            PLAY
+                        </button>
+                        <button onclick="nextStep()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-slate-700" title="Next Step">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex-grow flex items-center gap-4 px-2 sm:px-4 w-full">
+                        <span class="text-xs font-bold text-slate-400 whitespace-nowrap w-12 text-right" id="stepCounter">0/0</span>
+                        <input type="range" id="stepSlider" min="0" max="0" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" oninput="goToStep(this.value)">
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <input type="range" id="speedSlider" min="50" max="1500" value="600" dir="rtl" class="w-20 sm:w-24 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-500" title="Adjust Playback Speed">
+                    </div>
+                </div>
+                <div class="mt-4 p-3.5 bg-indigo-50/50 text-indigo-900 rounded-lg text-sm border border-indigo-100 font-medium flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div id="phaseBadge" class="px-2.5 py-1 text-xs font-bold uppercase rounded-md whitespace-nowrap bg-slate-200 text-slate-600">IDLE</div>
+                    <div id="stepMessage">Click 'Load Run' and then 'PLAY' to start visualization.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Draggable Resizer (Desktop Only) -->
+        <div id="dragResizer" class="hidden lg:flex w-4 cursor-col-resize items-center justify-center -mx-2 z-20 group select-none">
+            <div class="h-24 w-1.5 bg-slate-200 group-hover:bg-indigo-500 rounded-full transition-colors"></div>
+        </div>
+
+        <!-- Right Column: Code Viewer / Editor -->
+        <div id="rightPane" class="w-full lg:flex-1 min-w-[300px] bg-slate-900 rounded-xl shadow-lg border border-slate-800 flex flex-col overflow-hidden relative">
+            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center z-10">
+                <h2 class="text-slate-300 font-semibold text-xs tracking-wider uppercase font-mono">Algorithm Source (JS)</h2>
+                <div class="flex items-center gap-3">
+                    <button id="editCodeBtn" onclick="toggleEditMode()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs font-bold rounded transition-colors shadow-sm border border-slate-600">
+                        EDIT CODE
+                    </button>
+                    <div class="flex gap-1.5 hidden sm:flex">
+                        <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="relative flex-grow h-[500px] lg:h-auto">
+                <div class="absolute inset-0 overflow-y-auto custom-scroll p-4 pb-12" id="codeContainer">
+                    <pre class="font-mono text-[13px] sm:text-sm leading-relaxed text-slate-300 w-full" id="codeBlock"></pre>
+                </div>
+                <textarea id="codeEditor" class="hidden absolute inset-0 w-full h-full bg-slate-900 text-emerald-400 font-mono text-[13px] sm:text-sm leading-relaxed focus:outline-none resize-none border-none p-4 custom-scroll pb-12" spellcheck="false" style="tab-size: 4;"></textarea>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Editable Code State ---
+        // Exposing `state.visited` so the internal tracer can capture it automatically.
+        let currentCodeText = `state.count = 0;
+const m = grid.length;
+const n = grid[0].length;
+state.visited = Array(m).fill().map(() => Array(n).fill(false));
+state.islandMap = Array(m).fill().map(() => Array(n).fill(0));
+state.visitOrderMap = Array(m).fill().map(() => Array(n).fill(0));
+state.globalOrder = 0;
+let queue = [];
+
+for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+        log(\`Scanning cell (\${i}, \${j})\`, [{r: i, c: j}], queue, 'SCANNING');
+        
+        if (grid[i][j] == '1' && !state.visited[i][j]) {
+            state.count++;
+            state.visited[i][j] = true;
+            state.islandMap[i][j] = state.count;
+            state.globalOrder++;
+            state.visitOrderMap[i][j] = state.globalOrder;
+            queue.push({r: i, c: j});
+            
+            log(\`Island #\${state.count} found! Starting BFS.\`, [{r: i, c: j}], queue, 'FOUND');
+            
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                log(\`Visiting dequeued cell (\${curr.r}, \${curr.c})\`, [{r: curr.r, c: curr.c}], queue, 'DEQUEUE');
+                
+                // 4 Directions: Right, Down, Left, Up
+                const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                
+                for (let d = 0; d < dirs.length; d++) {
+                    const nx = curr.r + dirs[d][0];
+                    const ny = curr.c + dirs[d][1];
+                    
+                    if (nx >= 0 && nx < m && ny >= 0 && ny < n) {
+                        log(\`Checking neighbor (\${nx}, \${ny})\`, [{r: nx, c: ny}, {r: curr.r, c: curr.c}], queue, 'CHECKING');
+                        
+                        if (grid[nx][ny] == '1' && !state.visited[nx][ny]) {
+                            state.visited[nx][ny] = true;
+                            state.islandMap[nx][ny] = state.count;
+                            state.globalOrder++;
+                            state.visitOrderMap[nx][ny] = state.globalOrder;
+                            queue.push({r: nx, c: ny});
+                            log(\`Added land at (\${nx}, \${ny}) to queue\`, [{r: nx, c: ny}], queue, 'ENQUEUE');
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+return state.count;`;
+
+        let isEditMode = false;
+
+        // Handle Tab key in Textarea
+        document.getElementById('codeEditor').addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 4;
+            }
+        });
+
+        function toggleEditMode() {
+            const btn = document.getElementById('editCodeBtn');
+            const pre = document.getElementById('codeContainer');
+            const editor = document.getElementById('codeEditor');
+            const loadBtn = document.getElementById('loadBtn');
+
+            if (!isEditMode) {
+                // Enter Edit Mode
+                isEditMode = true;
+                btn.innerText = "SAVE & RUN";
+                btn.classList.replace('bg-slate-700', 'bg-emerald-600');
+                btn.classList.replace('border-slate-600', 'border-emerald-500');
+                btn.classList.replace('hover:bg-slate-600', 'hover:bg-emerald-500');
+                
+                editor.value = currentCodeText;
+                pre.classList.add('hidden');
+                editor.classList.remove('hidden');
+                
+                // Disable execution while editing
+                loadBtn.disabled = true;
+                loadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                if(isPlaying) togglePlay();
+            } else {
+                // Exit Edit Mode & Run
+                isEditMode = false;
+                btn.innerText = "EDIT CODE";
+                btn.classList.replace('bg-emerald-600', 'bg-slate-700');
+                btn.classList.replace('border-emerald-500', 'border-slate-600');
+                btn.classList.replace('hover:bg-emerald-500', 'hover:bg-slate-600');
+                
+                currentCodeText = editor.value;
+                editor.classList.add('hidden');
+                pre.classList.remove('hidden');
+                
+                renderCodeView(currentCodeText);
+                
+                loadBtn.disabled = false;
+                loadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                loadSimulation();
+            }
+        }
+
+        function renderCodeView(code) {
+            const codeLines = code.split('\n');
+            const codeBlock = document.getElementById('codeBlock');
+            codeBlock.innerHTML = codeLines.map((line, index) => {
+                const lineNum = index + 1;
+                return `<div id="line-${lineNum}" class="px-2 py-0.5 border-l-4 border-transparent flex items-start relative transition-colors duration-200">
+                    <span id="caret-${lineNum}" class="absolute left-0 top-1 -ml-[3px] text-yellow-400 opacity-0 transition-opacity duration-200 text-[10px]">▶</span>
+                    <span class="text-slate-600 w-8 inline-block select-none ml-2 text-right pr-3 shrink-0">${lineNum}</span>
+                    <span class="whitespace-pre-wrap break-all">${line.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // --- Core Application State ---
+        let steps = [];
+        let currentStepIndex = 0;
+        let isPlaying = false;
+        let playInterval;
+
+        const copyGrid = (g) => g.map(row => [...row]);
+
+        function runCustomCode(code, initialGrid) {
+            let generatedSteps = [];
+            let currentGrid = copyGrid(initialGrid);
+            let stateObj = { count: 0, visited: null, islandMap: null, visitOrderMap: null };
+
+            // Heuristic to extract line number from dynamic eval execution
+            function getLineNumber() {
+                try { throw new Error(); } catch (e) {
+                    if (!e.stack) return -1;
+                    const lines = e.stack.split('\n');
+                    for (let line of lines) {
+                        // Look for the anonymous function evaluation context
+                        if (line.includes('eval') || line.includes('<anonymous>') || line.includes('Function')) {
+                            // Extract the LAST match of line:column to avoid matching the parent index.html line
+                            const matches = [...line.matchAll(/:(\d+):\d+/g)];
+                            if (matches.length > 0) {
+                                const lastMatch = matches[matches.length - 1];
+                                let l = parseInt(lastMatch[1]);
+                                return l > 2 ? l - 2 : l; // offset wrapper lines
+                            }
+                        }
+                    }
+                    return -1;
+                }
+            }
+
+            function recordSnapshot(msg, active = [], queue = [], phase = 'IDLE') {
+                generatedSteps.push({
+                    grid: currentGrid, // Grid doesn't mutate in NumIslands
+                    visited: stateObj.visited ? copyGrid(stateObj.visited) : null,
+                    islandMap: stateObj.islandMap ? copyGrid(stateObj.islandMap) : null,
+                    visitOrderMap: stateObj.visitOrderMap ? copyGrid(stateObj.visitOrderMap) : null,
+                    count: stateObj.count,
+                    message: msg,
+                    phase: phase,
+                    activeCells: [...active],
+                    queueCells: queue.map(q => ({...q})), // Deep copy current queue state
+                    line: getLineNumber()
+                });
+            }
+
+            try {
+                // Execute the User's code 
+                // Passed globals: grid, state, log
+                const dynamicFunction = new Function('grid', 'state', 'log', code);
+                dynamicFunction(currentGrid, stateObj, recordSnapshot);
+
+                // Final summary step
+                generatedSteps.push({
+                    grid: currentGrid, 
+                    visited: stateObj.visited ? copyGrid(stateObj.visited) : null,
+                    islandMap: stateObj.islandMap ? copyGrid(stateObj.islandMap) : null,
+                    visitOrderMap: stateObj.visitOrderMap ? copyGrid(stateObj.visitOrderMap) : null,
+                    count: stateObj.count,
+                    message: `Execution complete. Total islands found: ${stateObj.count}`,
+                    phase: 'DONE',
+                    activeCells: [], queueCells: [], line: code.split('\n').length
+                });
+
+                return { steps: generatedSteps, error: null };
+            } catch (err) {
+                console.error(err);
+                return { steps: generatedSteps, error: err.message };
+            }
+        }
+
+        function loadSimulation() {
+            if (isPlaying) togglePlay();
+
+            const gridStr = document.getElementById('gridInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const initialGrid = JSON.parse(gridStr);
+
+                if (!Array.isArray(initialGrid) || !Array.isArray(initialGrid[0])) {
+                    throw new Error("Input must be a valid 2D JSON array.");
+                }
+                
+                // Run Engine
+                const result = runCustomCode(currentCodeText, initialGrid);
+                
+                if (result.error) {
+                    errorMsg.innerText = "Execution Error:\n" + result.error;
+                    errorMsg.classList.remove('hidden');
+                    steps = [];
+                    return;
+                }
+
+                errorMsg.classList.add('hidden');
+                steps = result.steps;
+                
+                // Setup UI Sliders
+                const slider = document.getElementById('stepSlider');
+                slider.max = steps.length > 0 ? steps.length - 1 : 0;
+                slider.value = 0;
+                
+                currentStepIndex = 0;
+
+                // Setup dynamic CSS layout for the visual grid
+                const gridContainer = document.getElementById('gridContainer');
+                const cols = initialGrid[0].length;
+                gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+                renderStep(0);
+            } catch (e) {
+                errorMsg.innerText = "Error parsing grid input. Ensure it is a valid JSON 2D Array (e.g., [[\"1\",\"0\"],[\"0\",\"1\"]]).";
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        // --- Rendering Engine ---
+        function renderStep(index) {
+            if (steps.length === 0) return;
+            const step = steps[index];
+            
+            // Text Overlays
+            document.getElementById('displayCount').innerText = step.count;
+            document.getElementById('stepCounter').innerText = `${index + 1}/${steps.length}`;
+            document.getElementById('stepSlider').value = index;
+            document.getElementById('stepMessage').innerHTML = `<span class="font-bold text-indigo-700">Action:</span> ${step.message}`;
+
+            // Phase Badge Styling
+            const phaseBadge = document.getElementById('phaseBadge');
+            phaseBadge.innerText = step.phase;
+            phaseBadge.className = 'px-2.5 py-1 text-xs font-bold uppercase rounded-md whitespace-nowrap shadow-sm ';
+            switch (step.phase) {
+                case 'SCANNING': phaseBadge.className += 'bg-slate-200 text-slate-700'; break;
+                case 'FOUND':    phaseBadge.className += 'bg-emerald-200 text-emerald-800 ring-2 ring-emerald-400'; break;
+                case 'DEQUEUE':  phaseBadge.className += 'bg-purple-200 text-purple-800'; break;
+                case 'CHECKING': phaseBadge.className += 'bg-yellow-200 text-yellow-800'; break;
+                case 'ENQUEUE':  phaseBadge.className += 'bg-blue-200 text-blue-800'; break;
+                case 'DONE':     phaseBadge.className += 'bg-indigo-600 text-white'; break;
+                default:         phaseBadge.className += 'bg-slate-100 text-slate-500';
+            }
+
+            // Queue Visualization Component
+            const queueContainer = document.getElementById('displayQueue');
+            queueContainer.innerHTML = '';
+            if (step.queueCells.length === 0) {
+                queueContainer.innerHTML = '<span class="text-slate-400 text-xs italic">Empty</span>';
+            } else {
+                step.queueCells.forEach((q, idx) => {
+                    const isFirst = idx === 0;
+                    const pill = document.createElement('div');
+                    // Style the item at the front of the queue differently (bold purple) to emphasize FIFO extraction
+                    pill.className = `px-1.5 py-0.5 rounded text-xs font-mono font-bold whitespace-nowrap transition-colors flex-shrink-0 border ` + 
+                                     (isFirst ? `bg-purple-600 text-white border-purple-700 shadow-sm` : `bg-purple-100 text-purple-700 border-purple-300 opacity-80`);
+                    pill.innerText = `(${q.r},${q.c})`;
+                    queueContainer.appendChild(pill);
+                });
+            }
+
+            // Grid Render
+            const gridContainer = document.getElementById('gridContainer');
+            gridContainer.innerHTML = ''; 
+            
+            const rows = step.grid.length;
+            const cols = step.grid[0].length;
+            
+            const isActive = (r, c) => step.activeCells.some(cell => cell.r === r && cell.c === c);
+            const isInQueue = (r, c) => step.queueCells.some(cell => cell.r === r && cell.c === c);
+            const isVisited = (r, c) => step.visited && step.visited[r][c];
+
+            // Palette to uniquely distinguish connected island groups
+            const islandColors = [
+                'bg-emerald-500 text-white border-emerald-600',       // Island 1
+                'bg-rose-500 text-white border-rose-600',             // Island 2
+                'bg-blue-500 text-white border-blue-600',             // Island 3
+                'bg-orange-500 text-white border-orange-600',         // Island 4
+                'bg-fuchsia-500 text-white border-fuchsia-600',       // Island 5
+                'bg-cyan-500 text-white border-cyan-600',             // Island 6
+                'bg-amber-400 text-amber-900 border-amber-500',       // Island 7
+            ];
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const val = String(step.grid[r][c]); // standardize to string
+                    const active = isActive(r, c);
+                    const queued = isInQueue(r, c);
+                    const visited = isVisited(r, c);
+                    const islandId = step.islandMap && step.islandMap[r][c] ? step.islandMap[r][c] : 0;
+                    const visitOrder = step.visitOrderMap && step.visitOrderMap[r][c] ? step.visitOrderMap[r][c] : 0;
+                    
+                    // Determine base colors
+                    let valClass = val === '1' 
+                        ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                        : 'bg-blue-50 text-blue-200 border-blue-100 font-light shadow-inner'; // Indented pool look for water
+                    
+                    if (val === '1' && visited && islandId > 0) {
+                        // Dynamically assign an island color based on its discovered ID
+                        valClass = islandColors[(islandId - 1) % islandColors.length] + ' shadow-inner';
+                    }
+
+                    // Apply interaction rings and z-indexes
+                    let ringClass = '';
+                    let zIndex = 'z-0';
+                    let transformClass = 'scale-100';
+
+                    if (active) {
+                        ringClass = 'ring-4 ring-yellow-400 ring-offset-1';
+                        zIndex = 'z-20';
+                        transformClass = 'scale-110';
+                    } else if (queued) {
+                        ringClass = 'ring-4 ring-purple-400 ring-offset-1 ring-opacity-80';
+                        zIndex = 'z-10';
+                        transformClass = 'scale-105';
+                    }
+
+                    // Interactive drawing states
+                    const isEditable = index === 0 && !isPlaying;
+                    const cursorClass = isEditable ? 'cursor-pointer hover:ring-4 hover:ring-indigo-300 hover:z-30' : '';
+
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = `cell-transition relative flex items-center justify-center w-[44px] h-[44px] sm:w-[56px] sm:h-[56px] text-lg sm:text-xl font-bold rounded-xl border-2 ${valClass} ${ringClass} ${zIndex} ${transformClass} ${cursorClass}`;
+                    cellDiv.dataset.r = r;
+                    cellDiv.dataset.c = c;
+                    
+                    // Coordinate Hint & Visit Order Sequence
+                    const hintDiv = `<div class="absolute top-1 left-1.5 text-[8px] sm:text-[9px] opacity-50 font-mono tracking-tighter leading-none pointer-events-none">(${r},${c})</div>`;
+                    const orderBadge = visitOrder > 0 ? `<div class="absolute bottom-1 right-1.5 text-[10px] sm:text-[11px] font-black opacity-40 pointer-events-none">#${visitOrder}</div>` : '';
+                    
+                    cellDiv.innerHTML = `${hintDiv}<div class="pointer-events-none">${val}</div>${orderBadge}`;
+                    
+                    gridContainer.appendChild(cellDiv);
+                }
+            }
+
+            // Code Line Tracking
+            document.querySelectorAll('#codeBlock > div').forEach(div => {
+                div.classList.remove('bg-indigo-900', 'border-yellow-400', 'bg-opacity-40');
+                div.classList.add('border-transparent');
+            });
+            document.querySelectorAll('[id^="caret-"]').forEach(caret => {
+                caret.classList.replace('opacity-100', 'opacity-0');
+            });
+
+            if (step.line > 0) {
+                const activeLineEl = document.getElementById(`line-${step.line}`);
+                const activeCaretEl = document.getElementById(`caret-${step.line}`);
+                
+                if (activeLineEl) {
+                    activeLineEl.classList.remove('border-transparent');
+                    activeLineEl.classList.add('bg-indigo-900', 'border-yellow-400', 'bg-opacity-40');
+                    if (activeCaretEl) activeCaretEl.classList.replace('opacity-0', 'opacity-100');
+                    
+                    // Auto-scroll logic to keep the active line centered
+                    const container = document.getElementById('codeContainer');
+                    const offset = activeLineEl.offsetTop - (container.clientHeight / 2) + (activeLineEl.clientHeight / 2);
+                    container.scrollTo({ top: offset, behavior: 'smooth' });
+                }
+            }
+        }
+
+        // --- Playback Controls ---
+        function goToStep(index) {
+            currentStepIndex = parseInt(index);
+            renderStep(currentStepIndex);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                renderStep(currentStepIndex);
+            } else if (isPlaying) {
+                togglePlay();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                renderStep(currentStepIndex);
+            }
+        }
+
+        function togglePlay() {
+            const btn = document.getElementById('playBtn');
+            if (isPlaying) {
+                clearInterval(playInterval);
+                isPlaying = false;
+                btn.innerText = "PLAY";
+                btn.classList.replace('bg-rose-600', 'bg-indigo-600');
+                btn.classList.replace('hover:bg-rose-700', 'hover:bg-indigo-700');
+            } else {
+                if (currentStepIndex >= steps.length - 1) currentStepIndex = 0;
+                isPlaying = true;
+                btn.innerText = "PAUSE";
+                btn.classList.replace('bg-indigo-600', 'bg-rose-600');
+                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-rose-700');
+                
+                const speed = document.getElementById('speedSlider').value;
+                playInterval = setInterval(nextStep, speed);
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playInterval = setInterval(nextStep, this.value);
+            }
+        });
+
+        // Bootstrap on load
+        window.onload = () => {
+            renderCodeView(currentCodeText);
+            loadSimulation();
+            initResizer();
+            initGridClicker();
+            initKeyboardShortcuts();
+        };
+
+        // --- Grid Drawing Logic ---
+        function modifyGridSize(action) {
+            try {
+                let grid = JSON.parse(document.getElementById('gridInput').value);
+                const r = grid.length;
+                const c = grid[0].length;
+                
+                if (action === 'add-row') {
+                    grid.push(Array(c).fill('0'));
+                } else if (action === 'rem-row' && r > 1) {
+                    grid.pop();
+                } else if (action === 'add-col') {
+                    grid.forEach(row => row.push('0'));
+                } else if (action === 'rem-col' && c > 1) {
+                    grid.forEach(row => row.pop());
+                }
+
+                const newGridStr = JSON.stringify(grid);
+                document.getElementById('gridInput').value = newGridStr;
+                const mobileInput = document.getElementById('gridInputMobile');
+                if (mobileInput) mobileInput.value = newGridStr;
+                
+                loadSimulation();
+            } catch (err) {
+                console.error("Error modifying grid size:", err);
+            }
+        }
+
+        function loadPreset() {
+            const presetVal = document.getElementById('presetSelect').value;
+            document.getElementById('gridInput').value = presetVal;
+            const mobileInput = document.getElementById('gridInputMobile');
+            if (mobileInput) mobileInput.value = presetVal;
+            loadSimulation();
+        }
+
+        function initGridClicker() {
+            document.getElementById('gridContainer').addEventListener('click', (e) => {
+                // Only allow drawing on Step 0 when paused
+                if (isPlaying || currentStepIndex > 0) return;
+                
+                const cell = e.target.closest('.cell-transition');
+                if (!cell) return;
+                
+                const r = cell.dataset.r;
+                const c = cell.dataset.c;
+                if (r === undefined || c === undefined) return;
+
+                try {
+                    const gridStr = document.getElementById('gridInput').value;
+                    let grid = JSON.parse(gridStr);
+                    
+                    // Toggle cell
+                    grid[r][c] = grid[r][c] === '1' ? '0' : '1';
+                    
+                    // Update Inputs
+                    const newGridStr = JSON.stringify(grid);
+                    document.getElementById('gridInput').value = newGridStr;
+                    const mobileInput = document.getElementById('gridInputMobile');
+                    if (mobileInput) mobileInput.value = newGridStr;
+                    
+                    // Reload Simulation silently
+                    loadSimulation();
+                } catch (err) {
+                    console.error("Error drawing on grid:", err);
+                }
+            });
+            
+            // Sync mobile input to main input if edited manually
+            document.getElementById('gridInput').addEventListener('input', function() {
+                const mobileInput = document.getElementById('gridInputMobile');
+                if (mobileInput) mobileInput.value = this.value;
+            });
+        }
+
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ignore if user is typing in an input or textarea
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+                if (e.code === 'Space') {
+                    e.preventDefault(); // prevent scrolling
+                    togglePlay();
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    if(isPlaying) togglePlay();
+                    nextStep();
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    if(isPlaying) togglePlay();
+                    prevStep();
+                }
+            });
+        }
+
+        // --- Drag to Resize Logic ---
+        function initResizer() {
+            const resizer = document.getElementById('dragResizer');
+            const leftPane = document.getElementById('leftPane');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none'; 
+                
+                const overlay = document.createElement('div');
+                overlay.id = 'dragOverlay';
+                overlay.className = 'fixed inset-0 z-[9999]';
+                document.body.appendChild(overlay);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const containerRect = mainContainer.getBoundingClientRect();
+                const leftRect = leftPane.getBoundingClientRect();
+                let newLeftWidth = e.clientX - leftRect.left;
+                
+                const minWidth = 350; 
+                const maxWidth = containerRect.width - 350; 
+                
+                if (newLeftWidth < minWidth) newLeftWidth = minWidth;
+                if (newLeftWidth > maxWidth) newLeftWidth = maxWidth;
+
+                leftPane.style.width = `${newLeftWidth}px`;
+                leftPane.style.flex = 'none';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    
+                    const overlay = document.getElementById('dragOverlay');
+                    if (overlay) overlay.remove();
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth < 1024) {
+                    leftPane.style.width = '';
+                    leftPane.style.flex = '';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

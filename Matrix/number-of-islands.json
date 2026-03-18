@@ -1,0 +1,9 @@
+{
+    "ProblemUri": "https://leetcode.com/problems/number-of-islands/",
+    "ProblemName": "Number of Islands",
+    "ProblemDescription": "Given a 2D grid of 0s and 1s, count the number of islands. An island is a group of 1s connected horizontally or vertically.",
+    "ProblemSolution": "The solution is to use a depth-first search to count the number of islands.",
+    "Difficulty": "Medium",
+    "Topics": ["Array", "Depth-First Search", "Breadth-First Search", "Union-Find", "Matrix"],
+    "ProblemNumber": 200
+}
