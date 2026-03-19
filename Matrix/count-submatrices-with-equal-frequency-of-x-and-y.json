@@ -1,0 +1,14 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/count-submatrices-with-equal-frequency-of-x-and-y/",
+  "ProblemName": "Count Submatrices With Equal Frequency of X and Y",
+  "ProblemDescription": "Given a 2D character matrix grid, where grid[i][j] is either \u0027X\u0027, \u0027Y\u0027, or \u0027.\u0027, return the number of submatrices that contain:\ngrid[0][0]\nan equal frequency of \u0027X\u0027 and \u0027Y\u0027.\nat least one \u0027X\u0027.",
+  "ProblemSolution": "BFS with Prefix Sum",
+  "Difficulty": "Medium",
+  "Topics": [
+    "Array",
+    "Matrix",
+    "Prefix Sum",
+    "Weekly Contest 405"
+  ],
+  "ProblemNumber": 3212
+}
