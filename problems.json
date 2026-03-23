@@ -50,6 +50,19 @@
           "ProblemNumber": 3070
         },
         {
+          "Title": "Determine Whether Matrix Can Be Obtained By Rotation",
+          "Path": "Matrix/determine-whether-matrix-can-be-obtained-by-rotation.html",
+          "ProblemUri": "https://leetcode.com/problems/determine-whether-matrix-can-be-obtained-by-rotation",
+          "Difficulty": "Easy",
+          "Topics": [
+            "Array",
+            "Two Pointers",
+            "Matrix",
+            "Weekly Contest 244"
+          ],
+          "ProblemNumber": 18666
+        },
+        {
           "Title": "Flip Square Submatrix Vertically",
           "Path": "Matrix/flip-square-submatrix-vertically.html",
           "ProblemUri": "https://leetcode.com/problems/flip-square-submatrix-vertically",
