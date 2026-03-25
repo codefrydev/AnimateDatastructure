@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSA Problem Explorer</title>
+    <title>DSA Problem Explorer — Visualize Data Structures &amp; Algorithms</title>
     <meta name="description" content="Search and visualize curated data structure and algorithm problems. DSA Explorer helps you learn algorithms with interactive visualizations linked to LeetCode.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#030712">
     <link rel="canonical" href="https://codefrydev.in/AnimateDatastructure/">
     <!-- Open Graph -->
     <meta property="og:title" content="DSA Problem Explorer | Visualize Data Structures &amp; Algorithms">
     <meta property="og:description" content="Search and visualize curated data structure and algorithm problems. Interactive DSA visualizations linked to LeetCode.">
     <meta property="og:url" content="https://codefrydev.in/AnimateDatastructure/">
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
     <meta property="og:site_name" content="DSA Explorer">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
@@ -25,6 +28,9 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
                     colors: {
                         gray: {
                             850: '#1f2937',
@@ -37,26 +43,49 @@
         }
     </script>
     <style>
-        /* Custom scrollbar for a polished look */
+        :root {
+            --app-accent: rgb(129 140 248);
+            --app-accent-ring: rgb(99 102 241);
+            --app-surface: #030712;
+            --app-mesh-1: rgba(99, 102, 241, 0.09);
+            --app-mesh-2: rgba(52, 211, 153, 0.05);
+            --app-mesh-3: rgba(244, 114, 182, 0.04);
+        }
+        body.app-body {
+            background-color: var(--app-surface);
+            background-image:
+                radial-gradient(ellipse 120% 80% at 50% -30%, var(--app-mesh-1), transparent 55%),
+                radial-gradient(ellipse 70% 50% at 100% 20%, var(--app-mesh-2), transparent 45%),
+                radial-gradient(ellipse 60% 40% at 0% 80%, var(--app-mesh-3), transparent 50%);
+            background-attachment: fixed;
+        }
+        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #111827; 
+            background: #111827;
         }
         ::-webkit-scrollbar-thumb {
-            background: #374151; 
+            background: #374151;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #4b5563; 
+            background: #4b5563;
         }
-        /* Table transition */
         tbody tr {
-            transition: all 0.2s ease-in-out;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
         }
-        /* Screen reader only - visible when focused */
+        .field-inset {
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+        }
+        .table-card-sheen {
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.06),
+                0 1px 0 rgba(255, 255, 255, 0.04) inset,
+                0 24px 48px -24px rgba(0, 0, 0, 0.65);
+        }
         .sr-only {
             position: absolute;
             width: 1px;
@@ -68,11 +97,18 @@
             white-space: nowrap;
             border-width: 0;
         }
-        /* Keyboard focus for sortable headers and status cells */
         th[data-sort-key]:focus-visible,
-        [data-status-cell]:focus-visible {
-            outline: 2px solid rgb(99 102 241);
+        [data-status-cell]:focus-visible,
+        .field-inset:focus-visible,
+        tbody a.motion-transition:focus-visible {
+            outline: 2px solid var(--app-accent-ring);
             outline-offset: 2px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            tbody tr,
+            .motion-transition {
+                transition: none !important;
+            }
         }
     </style>
     <script type="application/ld+json">
@@ -81,26 +117,28 @@
         "@type": "WebSite",
         "name": "DSA Problem Explorer",
         "description": "Search and visualize curated data structure and algorithm problems. Interactive visualizations linked to LeetCode.",
-        "url": "https://codefrydev.in/AnimateDatastructure/"
+        "url": "https://codefrydev.in/AnimateDatastructure/",
+        "inLanguage": "en-US"
     }
     </script>
 </head>
-<body class="bg-gray-950 text-gray-200 font-sans min-h-screen antialiased">
+<body class="app-body text-gray-200 font-sans min-h-screen antialiased">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-500 focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white">Skip to main content</a>
 
     <!-- App shell -->
-    <div class="w-full px-4 sm:px-6 lg:px-10 xl:px-20 py-6">
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 py-6 sm:py-8">
         <!-- Header -->
-        <header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-gray-900 pb-5">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-indigo-500/15 rounded-xl text-indigo-400" aria-hidden="true">
+        <header class="mb-8 sm:mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-6 border-b border-white/[0.06] relative" role="banner">
+            <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/35 to-transparent pointer-events-none" aria-hidden="true"></div>
+            <div class="flex items-center gap-4">
+                <div class="p-2.5 rounded-xl bg-indigo-500/12 text-indigo-300 ring-1 ring-indigo-400/25 shadow-[0_0_24px_-8px_rgba(129,140,248,0.55)]" aria-hidden="true">
                     <i data-lucide="code-2" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
                         DSA Explorer
                     </h1>
-                    <p class="mt-1 text-sm text-gray-400">
+                    <p class="mt-1.5 text-sm text-gray-400 max-w-xl leading-relaxed">
                         Search and visualize curated data structure & algorithm problems.
                     </p>
                 </div>
@@ -110,78 +148,90 @@
         <!-- Main content -->
         <main id="main-content" class="mb-6" tabindex="-1">
         <!-- Controls Section (Search & Filter) -->
-        <section class="mb-6" aria-label="Search and filter">
-            <div class="flex flex-col sm:flex-row gap-4">
-                <div class="relative flex-grow">
+        <section class="mb-6" aria-labelledby="filters-heading">
+            <h2 id="filters-heading" class="sr-only">Search and filter problems</h2>
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div class="relative flex-grow min-w-0">
+                <label for="searchInput" class="sr-only">Search by problem name or topic</label>
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" aria-hidden="true">
                     <i data-lucide="search" class="w-5 h-5 text-gray-500"></i>
                 </div>
                 <input 
-                    type="text" 
+                    type="search" 
                     id="searchInput" 
-                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-800 rounded-xl leading-5 bg-gray-900/80 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors" 
+                    class="motion-transition field-inset block w-full h-11 pl-10 pr-3 py-2.5 border border-white/[0.08] rounded-xl leading-5 bg-gray-950/60 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:border-indigo-500/50 sm:text-sm transition-colors" 
                     placeholder="Search by problem name or topic..."
-                    aria-label="Search problems by name or topic"
+                    autocomplete="off"
+                    enterkeyhint="search"
                 >
             </div>
             
-            <div class="relative min-w-[150px]">
+            <div class="relative min-w-[160px] sm:min-w-[180px]">
+                <label for="difficultyFilter" class="sr-only">Filter by difficulty</label>
                 <select 
                     id="difficultyFilter" 
-                    class="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl bg-gray-900/80 text-gray-100 appearance-none transition-colors"
-                    aria-label="Filter by difficulty"
+                    class="motion-transition field-inset block w-full h-11 pl-3 pr-10 py-2.5 text-base border border-white/[0.08] focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:border-indigo-500/50 sm:text-sm rounded-xl bg-gray-950/60 text-gray-100 appearance-none transition-colors"
                 >
                     <option value="All">All Difficulties</option>
                     <option value="Easy">Easy</option>
                     <option value="Medium">Medium</option>
                     <option value="Hard">Hard</option>
                 </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500" aria-hidden="true">
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-500" aria-hidden="true">
                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
                     </div>
                 </div>
             </div>
         </section>
 
+        <div id="resultsStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
         <!-- Data Table -->
-        <div class="bg-gray-900/70 rounded-2xl border border-gray-900/80 overflow-hidden shadow-xl">
-            <div class="overflow-x-auto">
-                <table class="min-w-full table-fixed divide-y divide-gray-800" aria-label="List of DSA problems with status, topic, and difficulty">
-                    <thead class="bg-gray-900/80">
+        <div class="rounded-2xl border border-white/[0.07] bg-gray-900/55 backdrop-blur-sm overflow-hidden table-card-sheen" role="region" aria-labelledby="table-heading">
+            <h2 id="table-heading" class="sr-only">Problem list</h2>
+            <div class="overflow-x-auto max-h-[min(70vh,52rem)] overflow-y-auto">
+                <table class="min-w-full table-fixed divide-y divide-gray-800/90">
+                    <caption class="sr-only">
+                        Curated DSA problems. Select a column header to change sort order. Use the status control in each row to track progress.
+                    </caption>
+                    <thead class="sticky top-0 z-20 bg-gray-950/92 backdrop-blur-md border-b border-white/[0.06] shadow-[0_1px_0_rgba(0,0,0,0.4)]">
                         <tr>
-                            <th scope="col" class="w-16 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="number" data-label="#" tabindex="0" role="button">
-                                <span>#</span>
+                            <th scope="col" class="w-14 px-3 py-3.5 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="number" data-label="#" tabindex="0" role="button">
+                                <span class="inline-flex items-center gap-1"><span data-sort-label>#</span><i data-sort-arrow class="hidden w-3.5 h-3.5 shrink-0 text-indigo-400" data-lucide="arrow-up" aria-hidden="true"></i></span>
                             </th>
-                            <th scope="col" class="w-12 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="status" data-label="Status" tabindex="0" role="button">
-                                <span>Status</span>
+                            <th scope="col" class="w-12 px-3 py-3.5 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="status" data-label="Status" tabindex="0" role="button">
+                                <span class="inline-flex items-center gap-1"><span data-sort-label>Status</span><i data-sort-arrow class="hidden w-3.5 h-3.5 shrink-0 text-indigo-400" data-lucide="arrow-up" aria-hidden="true"></i></span>
                             </th>
-                            <th scope="col" class="w-2/5 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="name" data-label="Problem" tabindex="0" role="button">
-                                <span>Problem</span>
+                            <th scope="col" class="min-w-0 px-4 py-3.5 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="name" data-label="Problem" tabindex="0" role="button">
+                                <span class="inline-flex items-center gap-1"><span data-sort-label>Problem</span><i data-sort-arrow class="hidden w-3.5 h-3.5 shrink-0 text-indigo-400" data-lucide="arrow-up" aria-hidden="true"></i></span>
                             </th>
-                            <th scope="col" class="w-1/4 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="topic" data-label="Topic" tabindex="0" role="button">
-                                <span>Topic</span>
+                            <th scope="col" class="w-[22%] px-3 py-3.5 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="topic" data-label="Topic" tabindex="0" role="button">
+                                <span class="inline-flex items-center gap-1"><span data-sort-label>Topic</span><i data-sort-arrow class="hidden w-3.5 h-3.5 shrink-0 text-indigo-400" data-lucide="arrow-up" aria-hidden="true"></i></span>
                             </th>
-                            <th scope="col" class="w-28 px-4 py-3 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="difficulty" data-label="Difficulty" tabindex="0" role="button">
-                                <span>Difficulty</span>
+                            <th scope="col" class="w-24 px-3 py-3.5 text-left text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em] select-none cursor-pointer focus:outline-none" data-sort-key="difficulty" data-label="Difficulty" tabindex="0" role="button">
+                                <span class="inline-flex items-center gap-1"><span data-sort-label>Difficulty</span><i data-sort-arrow class="hidden w-3.5 h-3.5 shrink-0 text-indigo-400" data-lucide="arrow-up" aria-hidden="true"></i></span>
                             </th>
-                            <th scope="col" class="w-56 px-4 py-3 text-right text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em]">
-                                Resources
+                            <th scope="col" id="col-visualize" class="w-28 px-3 py-3.5 text-center text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em]">
+                                Visualize
+                            </th>
+                            <th scope="col" id="col-leetcode" class="w-28 px-3 py-3.5 text-center text-[0.7rem] font-semibold text-gray-400 uppercase tracking-[0.14em]">
+                                LeetCode
                             </th>
                         </tr>
                     </thead>
-                    <tbody id="problemList" class="divide-y divide-gray-850 bg-gray-900">
+                    <tbody id="problemList" class="divide-y divide-gray-800/80 bg-gray-900/40">
                         <!-- Rows will be dynamically injected here via JS -->
                     </tbody>
                 </table>
             </div>
             
             <!-- Empty State -->
-            <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center" role="status" aria-live="polite">
-                <div class="p-3 bg-gray-800 rounded-full text-gray-500 mb-4">
-                    <i data-lucide="search-x" class="w-8 h-8"></i>
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 sm:py-20 px-6 text-center border-t border-white/[0.05]">
+                <div class="p-4 rounded-2xl bg-gray-800/80 ring-1 ring-white/[0.06] text-gray-500 mb-5 shadow-inner" aria-hidden="true">
+                    <i data-lucide="search-x" class="w-9 h-9"></i>
                 </div>
-                <h3 class="text-lg font-medium text-gray-200">No problems found</h3>
-                <p class="mt-1 text-sm text-gray-500">Refine your search query or update the filters.</p>
+                <h3 class="text-xl font-semibold text-gray-100 tracking-tight">No problems found</h3>
+                <p class="mt-2 text-sm text-gray-500 max-w-sm leading-relaxed">Refine your search query or update the filters.</p>
             </div>
         </div>
         </main>
@@ -197,7 +247,19 @@
         const searchInput = document.getElementById('searchInput');
         const difficultyFilter = document.getElementById('difficultyFilter');
         const emptyState = document.getElementById('emptyState');
+        const resultsStatusEl = document.getElementById('resultsStatus');
         let lastErrorMessage = '';
+
+        function announceResults(problemsLength) {
+            if (!resultsStatusEl) return;
+            if (problemsLength === 0) {
+                resultsStatusEl.textContent = lastErrorMessage
+                    ? 'Unable to load problems.'
+                    : 'No problems match your search or filter.';
+            } else {
+                resultsStatusEl.textContent = `${problemsLength} problem${problemsLength === 1 ? '' : 's'} shown.`;
+            }
+        }
 
         // Sorting state
         const sortConfig = {
@@ -206,6 +268,20 @@
         };
 
         const STORAGE_KEY = 'dsa-explorer-progress';
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function escapeAttr(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;');
+        }
 
         function getProgressFromStorage() {
             try {
@@ -274,6 +350,7 @@
                     if (titleEl) titleEl.textContent = 'No problems found';
                     if (descEl) descEl.textContent = 'Try adjusting your search or filters.';
                 }
+                announceResults(0);
                 return;
             } else {
                 emptyState.classList.add('hidden');
@@ -282,7 +359,15 @@
 
             problems.forEach((problem) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-850/70 group';
+                let rowStateClasses;
+                if (problem.solved) {
+                    rowStateClasses = 'border-l-emerald-500/55 bg-emerald-950/30 hover:bg-emerald-950/45';
+                } else if (problem.inProgress) {
+                    rowStateClasses = 'border-l-orange-500/55 bg-orange-950/25 hover:bg-orange-950/40';
+                } else {
+                    rowStateClasses = 'border-l-transparent bg-gray-950/28 hover:bg-gray-850/40 hover:border-l-indigo-500/40';
+                }
+                tr.className = `group border-l-2 ${rowStateClasses}`;
 
                 // Status: solved > in progress > not started
                 let statusIcon, statusTitle;
@@ -290,57 +375,61 @@
                     statusIcon = '<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>';
                     statusTitle = 'Finished (click to clear)';
                 } else if (problem.inProgress) {
-                    statusIcon = '<i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>';
+                    statusIcon = '<i data-lucide="clock" class="w-4 h-4 text-orange-400"></i>';
                     statusTitle = 'In progress (click to set finished)';
                 } else {
-                    statusIcon = '<i data-lucide="circle" class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors"></i>';
+                    statusIcon = '<i data-lucide="circle" class="motion-transition w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors"></i>';
                     statusTitle = 'Not started (click to set in progress)';
                 }
 
                 const diffClasses = getDifficultyClasses(problem.difficulty);
 
                 const numberCell = typeof problem.number === 'number'
-                    ? `<td class="px-4 py-3 align-middle text-xs text-gray-400 tabular-nums">${problem.number}</td>`
-                    : `<td class="px-4 py-3 align-middle text-xs text-gray-600">—</td>`;
+                    ? `<td class="px-3 py-3 align-middle text-xs text-gray-400 tabular-nums">${problem.number}</td>`
+                    : `<td class="px-3 py-3 align-middle text-xs text-gray-600">—</td>`;
 
-                const problemIdEscaped = (problem.id || '').replace(/"/g, '&quot;');
+                const problemIdEscaped = escapeAttr(problem.id || '');
+                const nameHtml = escapeHtml(problem.name || '');
+                const nameEscaped = escapeAttr(problem.name || '');
+                const animHref = escapeAttr(problem.animationUrl || '#');
+                const leetHref = escapeAttr(problem.leetcodeUrl || '#');
+                const topicHtml = escapeHtml(problem.topic || '');
 
-                const nameEscaped = (problem.name || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
                 tr.innerHTML = `
                     ${numberCell}
-                    <td class="px-4 py-3 align-middle cursor-pointer select-none focus:outline-none" data-status-cell data-problem-id="${problemIdEscaped}" title="${statusTitle}" tabindex="0" role="button" aria-label="${statusTitle}">
+                    <td class="px-3 py-3 align-middle cursor-pointer select-none focus:outline-none" data-status-cell data-problem-id="${problemIdEscaped}" title="${escapeAttr(statusTitle)}" tabindex="0" role="button" aria-label="${escapeAttr(statusTitle)}">
                         <div class="flex items-center justify-center w-6" aria-hidden="true">
                             ${statusIcon}
                         </div>
                     </td>
-                    <td class="px-4 py-3 align-top">
-                        <div class="text-sm font-medium text-gray-200 group-hover:text-indigo-300 transition-colors cursor-pointer break-words">
-                            ${problem.name}
-                        </div>
+                    <td class="px-4 py-3 align-top min-w-0">
+                        <a href="${animHref}" class="motion-transition text-sm font-medium text-gray-200 hover:text-indigo-300 underline-offset-2 hover:underline break-words focus:outline-none rounded-sm" title="Open visualization for this problem">${nameHtml}</a>
                     </td>
-                    <td class="px-4 py-3 align-top">
-                        <div class="text-sm text-gray-400 break-words">${problem.topic}</div>
+                    <td class="px-3 py-3 align-top">
+                        <div class="text-sm text-gray-400 break-words">${topicHtml}</div>
                     </td>
-                    <td class="px-4 py-3 align-middle">
-                        <span class="px-2.5 py-1 inline-flex text-[0.7rem] leading-5 font-medium rounded-full border ${diffClasses}">
-                            ${problem.difficulty}
+                    <td class="px-3 py-3 align-middle">
+                        <span class="px-2 py-0.5 inline-flex text-[0.65rem] leading-4 font-semibold tracking-wide rounded-full border ${diffClasses}">
+                            ${escapeHtml(problem.difficulty)}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-right text-sm font-medium">
-                        <div class="flex items-center justify-end gap-2">
-                            <a href="${problem.animationUrl}" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-300 bg-gray-800/70 hover:bg-gray-800 hover:text-indigo-200 border border-gray-700/80 hover:border-indigo-500/50 transition-colors" title="View animation for this problem" aria-label="Visualize: ${nameEscaped}">
-                                <i data-lucide="play-circle" class="w-4 h-4" aria-hidden="true"></i>
-                                <span>Visualize</span>
-                            </a>
-                            <a href="${problem.leetcodeUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-amber-300 bg-gray-800/70 hover:bg-gray-800 hover:text-amber-200 border border-gray-700/80 hover:border-amber-500/50 transition-colors" title="Open problem on LeetCode in a new tab" aria-label="Open on LeetCode: ${nameEscaped}">
-                                <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
-                                <span>Solve</span>
-                            </a>
-                        </div>
+                    <td class="px-3 py-3 align-middle text-center" headers="col-visualize">
+                        <a href="${animHref}" class="motion-transition inline-flex items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-200 bg-indigo-500/10 border border-indigo-400/20 hover:bg-indigo-500/16 hover:border-indigo-400/35 hover:text-white transition-colors" title="View animation" aria-label="Visualize ${nameEscaped}">
+                            <i data-lucide="play-circle" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                            <span class="hidden sm:inline">Visualize</span>
+                        </a>
+                    </td>
+                    <td class="px-3 py-3 align-middle text-center" headers="col-leetcode">
+                        <a href="${leetHref}" target="_blank" rel="noopener noreferrer" class="motion-transition inline-flex items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-200 bg-amber-500/10 border border-amber-400/20 hover:bg-amber-500/16 hover:border-amber-400/35 hover:text-amber-50 transition-colors" title="Open on LeetCode in a new tab" aria-label="Solve on LeetCode: ${nameEscaped}. Opens in a new tab.">
+                            <i data-lucide="external-link" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                            <span class="hidden sm:inline">Solve</span>
+                        </a>
                     </td>
                 `;
                 problemListEl.appendChild(tr);
             });
+
+            announceResults(problems.length);
 
             // Re-initialize Lucide icons for dynamically added elements
             lucide.createIcons();
@@ -350,6 +439,7 @@
         async function loadProblems() {
             try {
                 lastErrorMessage = '';
+                if (resultsStatusEl) resultsStatusEl.textContent = 'Loading problem list.';
                 const response = await fetch('problems.json', { cache: 'no-store' });
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status} while loading problems.json`);
@@ -451,32 +541,54 @@
             return sorted;
         }
 
+        const SORT_COLUMN_NAMES = {
+            number: 'Problem number',
+            status: 'Status',
+            name: 'Problem name',
+            topic: 'Topic',
+            difficulty: 'Difficulty',
+        };
+
         // Update header labels / aria attributes to reflect active sort
         function updateSortIndicators() {
             const headerCells = document.querySelectorAll('th[data-sort-key]');
             headerCells.forEach((th) => {
                 const key = th.getAttribute('data-sort-key');
                 const baseLabel = th.getAttribute('data-label') || '';
-                const labelSpan = th.querySelector('span');
+                const labelEl = th.querySelector('[data-sort-label]');
+                const iconEl = th.querySelector('[data-sort-arrow]');
+                const spokenName = SORT_COLUMN_NAMES[key] || baseLabel;
 
-                if (!labelSpan) return;
+                if (!labelEl || !iconEl) return;
 
                 if (sortConfig.key === key) {
-                    const arrow = sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
-                    labelSpan.textContent = baseLabel + arrow;
+                    labelEl.textContent = baseLabel;
+                    iconEl.setAttribute('data-lucide', sortConfig.direction === 'asc' ? 'arrow-up' : 'arrow-down');
+                    iconEl.innerHTML = '';
+                    iconEl.classList.remove('hidden');
                     th.setAttribute(
                         'aria-sort',
                         sortConfig.direction === 'asc' ? 'ascending' : 'descending'
                     );
+                    th.setAttribute(
+                        'aria-label',
+                        `${spokenName}, sorted ${sortConfig.direction === 'asc' ? 'ascending' : 'descending'}. Activate to reverse order.`
+                    );
                     th.classList.remove('text-gray-400');
                     th.classList.add('text-gray-200');
                 } else {
-                    labelSpan.textContent = baseLabel;
+                    labelEl.textContent = baseLabel;
+                    iconEl.classList.add('hidden');
+                    iconEl.innerHTML = '';
                     th.setAttribute('aria-sort', 'none');
+                    th.setAttribute('aria-label', `${spokenName}, not sorted. Activate to sort this column.`);
                     th.classList.remove('text-gray-200');
                     th.classList.add('text-gray-400');
                 }
             });
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
 
         // Filtering logic
