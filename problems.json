@@ -63,6 +63,24 @@
           "ProblemNumber": 18666
         },
         {
+          "Title": "Equal Sum Grid Partition I",
+          "Path": "Matrix/equal-sum-grid-partition-i.html",
+          "ProblemUri": "https://leetcode.com/problems/equal-sum-grid-partition-i",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Senior",
+            "Array",
+            "Matrix",
+            "Enumeration",
+            "Prefix",
+            "Sum",
+            "Weekly",
+            "Contest",
+            "449"
+          ],
+          "ProblemNumber": 3546
+        },
+        {
           "Title": "Flip Square Submatrix Vertically",
           "Path": "Matrix/flip-square-submatrix-vertically.html",
           "ProblemUri": "https://leetcode.com/problems/flip-square-submatrix-vertically",
