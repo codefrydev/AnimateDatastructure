@@ -84,7 +84,7 @@
           "Title": "Equal Sum Grid Partition II",
           "Path": "Matrix/equal-sum-grid-partition-ii.html",
           "ProblemUri": "https://leetcode.com/problems/equal-sum-grid-partition-ii",
-          "Difficulty": "Medium",
+          "Difficulty": "Hard",
           "Topics": [
             "Principal",
             "Array",
