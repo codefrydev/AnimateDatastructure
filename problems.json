@@ -114,6 +114,24 @@
           "ProblemNumber": 3643
         },
         {
+          "Title": "Matrix Similarity After Cyclic Shifts",
+          "Path": "Matrix/matrix-similarity-after-cyclic-shifts.html",
+          "ProblemUri": "https://leetcode.com/problems/matrix-similarity-after-cyclic-shifts",
+          "Difficulty": "Easy",
+          "Topics": [
+            "Mid",
+            "Level",
+            "Array",
+            "Math",
+            "Matrix",
+            "Simulation",
+            "Weekly",
+            "Contest",
+            "373"
+          ],
+          "ProblemNumber": 2946
+        },
+        {
           "Title": "Number of Islands",
           "Path": "Matrix/number-of-islands.html",
           "ProblemUri": "https://leetcode.com/problems/number-of-islands/",
