@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find the String with LCP - Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Ensures the slider track looks decent across browsers */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            margin-top: -4px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 p-4 md:p-6 font-sans text-slate-800">
+
+<div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                The "Secret Word" Puzzle <span class="text-lg font-normal text-slate-500 ml-2">(LCP Matrix)</span>
+            </h1>
+            <div class="flex gap-3">
+                <div class="hidden md:flex items-center gap-2 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg>
+                    <span><kbd class="bg-white px-1.5 py-0.5 rounded border shadow-sm mx-1">Space</kbd> Play/Pause</span>
+                    <span><kbd class="bg-white px-1.5 py-0.5 rounded border shadow-sm mx-1">←</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded border shadow-sm mx-1">→</kbd> Step</span>
+                </div>
+                <button id="btn-toggle-eli5" class="flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-xl hover:bg-amber-200 transition-colors font-bold shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                    <span id="eli5-btn-text">Hide Deep Dive</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="eli5-section" class="bg-slate-50 p-4 md:p-8 rounded-xl border-2 border-indigo-200 text-slate-800 text-lg leading-relaxed shadow-inner block">
+            
+            <h3 class="font-black text-2xl mb-6 text-indigo-900 flex items-center gap-3">
+                <span class="bg-indigo-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md">1</span> 
+                What are we actually comparing? (The "Suffix")
+            </h3>
+            <p class="mb-4">The matrix does NOT compare single letters. It compares the rest of the word starting from a specific slot. Let's use the word <b>"apple"</b>.</p>
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-10 overflow-x-auto flex flex-col gap-3 font-mono font-bold text-xl">
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-sans font-bold text-slate-400 w-28 text-right">Start Slot 0:</span>
+                    <div class="flex gap-2">
+                        <span class="bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-sm border border-blue-200">a</span>
+                        <span class="bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-sm border border-blue-200">p</span>
+                        <span class="bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-sm border border-blue-200">p</span>
+                        <span class="bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-sm border border-blue-200">l</span>
+                        <span class="bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-sm border border-blue-200">e</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-sans font-bold text-slate-400 w-28 text-right">Start Slot 1:</span>
+                    <div class="flex gap-2">
+                        <span class="bg-emerald-100 text-emerald-800 px-4 py-3 rounded-lg shadow-sm border border-emerald-200">p</span>
+                        <span class="bg-emerald-100 text-emerald-800 px-4 py-3 rounded-lg shadow-sm border border-emerald-200">p</span>
+                        <span class="bg-emerald-100 text-emerald-800 px-4 py-3 rounded-lg shadow-sm border border-emerald-200">l</span>
+                        <span class="bg-emerald-100 text-emerald-800 px-4 py-3 rounded-lg shadow-sm border border-emerald-200">e</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-sans font-bold text-slate-400 w-28 text-right">Start Slot 2:</span>
+                    <div class="flex gap-2">
+                        <span class="bg-purple-100 text-purple-800 px-4 py-3 rounded-lg shadow-sm border border-purple-200">p</span>
+                        <span class="bg-purple-100 text-purple-800 px-4 py-3 rounded-lg shadow-sm border border-purple-200">l</span>
+                        <span class="bg-purple-100 text-purple-800 px-4 py-3 rounded-lg shadow-sm border border-purple-200">e</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-black text-2xl mb-6 text-indigo-900 flex items-center gap-3">
+                <span class="bg-indigo-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md">2</span> 
+                How does the Matrix calculate a clue?
+            </h3>
+            <p class="mb-4">Let's look at how the computer calculates <b>Clue[1][2]</b>. It stacks the word from Slot 1 and the word from Slot 2, and reads left-to-right until they stop matching.</p>
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-10 overflow-x-auto">
+                <div class="flex flex-col gap-3 font-mono font-bold text-2xl w-max">
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-sans font-bold text-slate-400 w-20 text-right">Slot 1:</span>
+                        <div class="flex gap-2">
+                            <span class="bg-green-200 text-green-900 border-4 border-green-500 px-4 py-3 rounded-lg shadow-md">p</span>
+                            <span class="bg-red-100 text-red-800 border-4 border-red-300 px-4 py-3 rounded-lg shadow-sm">p</span>
+                            <span class="bg-slate-100 text-slate-400 border-4 border-slate-100 px-4 py-3 rounded-lg">l</span>
+                            <span class="bg-slate-100 text-slate-400 border-4 border-slate-100 px-4 py-3 rounded-lg">e</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-sans font-bold text-slate-400 w-20 text-right">Slot 2:</span>
+                        <div class="flex gap-2">
+                            <span class="bg-green-200 text-green-900 border-4 border-green-500 px-4 py-3 rounded-lg shadow-md">p</span>
+                            <span class="bg-red-100 text-red-800 border-4 border-red-300 px-4 py-3 rounded-lg shadow-sm">l</span>
+                            <span class="bg-slate-100 text-slate-400 border-4 border-slate-100 px-4 py-3 rounded-lg">e</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 text-indigo-900 bg-indigo-100 p-5 rounded-xl border-2 border-indigo-200 text-lg">
+                    They share exactly <b>1</b> letter (the <span class="font-mono bg-green-200 text-green-900 px-2 rounded font-bold">p</span>) before hitting a mismatch (<span class="font-mono text-red-700">p vs l</span>).<br>
+                    Therefore, the computer writes down: <span class="font-bold bg-white px-3 py-1 rounded shadow-sm text-xl text-indigo-900">Clue[1][2] = 1</span>
+                </div>
+            </div>
+
+            <h3 class="font-black text-2xl mb-6 text-indigo-900 flex items-center gap-3">
+                <span class="bg-indigo-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md">3</span> 
+                The Reverse Engineering (The "Aha!" Moment)
+            </h3>
+            <p class="mb-4">Now, let's play the game backwards. We don't know the word. We just have blank spaces <code class="bg-white px-3 py-1 rounded border shadow-sm tracking-widest text-xl font-bold">_ _ _ _ _</code> and the computer gives you a clue: <span class="bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded border border-indigo-200 text-xl">Clue [0][3] = 2</span>.</p>
+            <p class="mb-4 text-slate-700">This clue <b>guarantees</b> that when we stack Slot 0 and Slot 3, they will share exactly 2 letters. Look at what this visually forces to happen:</p>
+
+            <div class="bg-amber-50 p-6 md:p-8 rounded-2xl border-4 border-amber-300 shadow-lg relative overflow-hidden mb-8">
+                <div class="flex flex-col gap-4 font-mono font-bold text-2xl w-max mb-8">
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-sans font-bold text-amber-800 w-24 text-right">Slot 0:</span>
+                        <div class="flex gap-2">
+                            <div class="flex flex-col items-center"><span class="text-xs font-sans text-amber-600 mb-2 uppercase tracking-wider">Slot 0</span><span class="bg-amber-200 text-amber-900 border-4 border-amber-500 px-5 py-4 rounded-xl shadow-md w-16 text-center text-3xl">?</span></div>
+                            <div class="flex flex-col items-center"><span class="text-xs font-sans text-amber-600 mb-2 uppercase tracking-wider">Slot 1</span><span class="bg-amber-200 text-amber-900 border-4 border-amber-500 px-5 py-4 rounded-xl shadow-md w-16 text-center text-3xl">?</span></div>
+                            <div class="flex flex-col items-center"><span class="text-xs font-sans text-slate-400 mb-2 uppercase tracking-wider">Slot 2</span><span class="bg-white text-slate-300 border-4 border-slate-200 border-dashed px-5 py-4 rounded-xl w-16 text-center text-3xl">_</span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-sans font-bold text-amber-800 w-24 text-right">Slot 3:</span>
+                        <div class="flex gap-2">
+                            <div class="flex flex-col items-center"><span class="text-xs font-sans text-amber-600 mb-2 uppercase tracking-wider">Slot 3</span><span class="bg-amber-200 text-amber-900 border-4 border-amber-500 px-5 py-4 rounded-xl shadow-md w-16 text-center text-3xl">?</span></div>
+                            <div class="flex flex-col items-center"><span class="text-xs font-sans text-amber-600 mb-2 uppercase tracking-wider">Slot 4</span><span class="bg-amber-200 text-amber-900 border-4 border-amber-500 px-5 py-4 rounded-xl shadow-md w-16 text-center text-3xl">?</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl border-2 border-amber-200 shadow-sm text-xl text-amber-900 leading-relaxed">
+                    Because the clue is <b>2</b>, the boxes stacked perfectly on top of each other <b>MUST be identical letters!</b><br><br>
+                    <ul class="list-none space-y-4 font-bold">
+                        <li class="flex items-center gap-3">
+                            <span class="bg-amber-100 text-amber-800 w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span> 
+                            The 1st boxes must match: <span class="bg-green-100 text-green-900 px-4 py-2 rounded-lg border-2 border-green-400 shadow-sm">Slot 0 == Slot 3</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="bg-amber-100 text-amber-800 w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span> 
+                            The 2nd boxes must match: <span class="bg-green-100 text-green-900 px-4 py-2 rounded-lg border-2 border-green-400 shadow-sm">Slot 1 == Slot 4</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-xl md:text-2xl font-bold text-green-900 bg-green-50 p-8 rounded-2xl border-4 border-green-400 shadow-lg relative">
+                <div class="absolute -right-4 -top-4 text-8xl opacity-20">🎯</div>
+                The Ultimate Rule for our Algorithm:<br>
+                <p class="text-lg md:text-xl text-green-800 mt-4 font-normal leading-relaxed">
+                    Our algorithm builds the secret word by guessing one letter at a time, moving from left to right. <br><br>
+                    If we see a Matrix clue that is <b>greater than 0</b>, we instantly know that those two Suffixes share <b>AT LEAST 1 letter</b>. Therefore, their very first boxes are guaranteed to be twins!
+                </p>
+                <div class="mt-8 flex items-center justify-center gap-3 text-2xl md:text-3xl bg-white p-4 rounded-xl shadow-inner border border-green-200">
+                    <span class="bg-green-600 text-white px-6 py-3 rounded-xl font-black tracking-wide shadow-md transform hover:scale-105 transition-transform text-center w-full">If Clue > 0, then the First Slots are Equal</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Examples Selector -->
+    <div id="examples-container" class="flex flex-wrap gap-3">
+        <!-- Buttons injected by JS -->
+    </div>
+
+    <!-- Main Visualizer Area -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        
+        <!-- Left Panel: The Clue Grid -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+            <h2 class="text-xl font-bold mb-2 text-slate-800 flex items-center gap-2">
+                <span class="bg-slate-200 px-2 py-1 rounded text-sm">1</span> The Clue Grid
+            </h2>
+            <p class="text-sm text-slate-500 mb-6">Numbers represent how many letters overlap.</p>
+            
+            <div class="flex-1 flex items-center justify-center overflow-x-auto">
+                <div class="relative min-w-max pb-4">
+                    <!-- Headers (Cols) -->
+                    <div id="grid-col-headers" class="flex ml-8 mb-2"></div>
+
+                    <div class="flex">
+                        <!-- Headers (Rows) -->
+                        <div id="grid-row-headers" class="flex flex-col mr-2 justify-between"></div>
+
+                        <!-- Matrix Grid -->
+                        <div id="matrix-grid" class="grid gap-1.5 relative"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Detective Notepad -->
+        <div class="flex flex-col gap-4">
+            
+            <!-- The Constructed Word -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+                <h2 class="text-xl font-bold mb-6 text-slate-800 flex items-center gap-2">
+                    <span class="bg-slate-200 px-2 py-1 rounded text-sm">2</span> Our Blank Slots
+                </h2>
+                <div id="word-container" class="flex gap-3 justify-center flex-wrap min-w-max">
+                    <!-- Slots injected by JS -->
+                </div>
+
+                <!-- LIVE SUFFIX COMPARATOR (Hidden by default) -->
+                <div id="suffix-comparator-container" class="mt-8 bg-slate-50 border-2 border-purple-100 rounded-xl p-4 shadow-inner hidden">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+
+            <!-- Detective Notepad Box -->
+            <div class="bg-[#fdfbf2] rounded-2xl shadow-sm border border-[#eaddb2] overflow-hidden flex flex-col flex-1 relative min-h-[200px]">
+                <!-- Fake spiral binding visually -->
+                <div class="absolute left-0 top-0 bottom-0 w-8 border-r border-[#eaddb2] flex flex-col justify-evenly py-4">
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                    <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 -ml-2"></div>
+                </div>
+                
+                <div class="ml-8 p-6 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-4 border-b-2 border-red-200 pb-2">
+                        <span id="notepad-phase" class="text-sm font-black uppercase tracking-widest text-red-500"></span>
+                    </div>
+                    
+                    <h2 id="notepad-title" class="text-2xl font-bold text-slate-800 mb-2 font-serif"></h2>
+                    <p id="notepad-desc" class="text-lg text-slate-700 leading-relaxed mb-6"></p>
+                    
+                    <div id="notepad-aha-container" class="mt-auto bg-yellow-100 p-4 rounded-xl border border-yellow-300 shadow-sm relative hidden">
+                        <strong class="text-yellow-800 font-bold block mb-1">💡 Detective Logic:</strong> 
+                        <span id="notepad-aha" class="text-yellow-900 text-md"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-4">
+        <div class="flex flex-col gap-6">
+            <input type="range" id="timeline-slider" min="0" max="0" value="0" class="w-full accent-blue-600 cursor-pointer h-2 bg-slate-200 rounded-lg appearance-none">
+
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                
+                <div class="flex items-center gap-2 bg-slate-100 p-2 rounded-2xl border border-slate-200">
+                    <button id="btn-restart" class="p-3 rounded-xl hover:bg-white hover:shadow-sm text-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500" title="Restart">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
+                    <button id="btn-step-back" class="p-3 rounded-xl hover:bg-white hover:shadow-sm text-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500" title="Previous Step (Left Arrow)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg>
+                    </button>
+                    <button id="btn-play-pause" class="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all flex items-center gap-3 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-blue-300" title="Play/Pause (Spacebar)">
+                        <!-- Play/Pause Icon injected by JS -->
+                        <div id="play-pause-icon"></div>
+                        <span id="play-pause-text" class="font-bold text-lg">Auto Play</span>
+                    </button>
+                    <button id="btn-step-forward" class="p-3 rounded-xl hover:bg-white hover:shadow-sm text-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500" title="Next Step (Right Arrow)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Speed</span>
+                    <button class="speed-btn px-4 py-2 rounded-lg font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-400" data-speed="2500">Read Mode</button>
+                    <button class="speed-btn px-4 py-2 rounded-lg font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-400" data-speed="1200">Normal</button>
+                    <button class="speed-btn px-4 py-2 rounded-lg font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-400" data-speed="300">Fast</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- Predefined Examples from LeetCode ---
+    const EXAMPLES = [
+        {
+            name: "Example 1 (abab)",
+            lcp: [[4, 0, 2, 0], [0, 3, 0, 1], [2, 0, 2, 0], [0, 1, 0, 1]],
+            expected: "abab"
+        },
+        {
+            name: "Example 2 (aaaa)",
+            lcp: [[4, 3, 2, 1], [3, 3, 2, 1], [2, 2, 2, 1], [1, 1, 1, 1]],
+            expected: "aaaa"
+        },
+        {
+            name: "Example 3 (Impossible)",
+            lcp: [[4, 3, 2, 1], [3, 3, 2, 1], [2, 2, 2, 1], [1, 1, 1, 3]],
+            expected: ""
+        }
+    ];
+
+    // Helper to color-code different letters
+    const getCharColorClass = (char) => {
+        if (char === '?') return 'bg-slate-50 text-slate-400 border-slate-300 border-dashed';
+        const colors = [
+            'bg-red-100 text-red-800 border-red-400 shadow-sm', // a
+            'bg-emerald-100 text-emerald-800 border-emerald-400 shadow-sm', // b
+            'bg-purple-100 text-purple-800 border-purple-400 shadow-sm', // c
+            'bg-amber-100 text-amber-800 border-amber-400 shadow-sm', // d
+            'bg-pink-100 text-pink-800 border-pink-400 shadow-sm', // e
+            'bg-cyan-100 text-cyan-800 border-cyan-400 shadow-sm', // f
+        ];
+        const idx = char.charCodeAt(0) - 97;
+        return colors[idx % colors.length];
+    };
+
+    // --- Algorithm & Frame Generator (Detective Version) ---
+    const generateFrames = (lcp) => {
+        const n = lcp.length;
+        const frames = [];
+        let word = Array(n).fill('?');
+        let charCode = 97; // 'a'
+
+        frames.push({
+            phase: 'THE PUZZLE', type: 'INIT', word: [...word], activeCells: [],
+            title: "The Missing Word",
+            desc: "Someone wrote down a secret word, generated a grid of clues about it, and then deleted the word. We have to guess the word.",
+            aha: "The rules say we must guess the alphabetically smallest word possible. So, whenever we have a blank space, we will always try to put an 'a' in it first."
+        });
+
+        // Phase 1: Grouping
+        for (let i = 0; i < n; i++) {
+            if (word[i] === '?') {
+                if (charCode > 122) { // 'z'
+                    frames.push({
+                        phase: 'RULE BROKEN', type: 'FAIL', word: [...word], activeCells: [[i, i]],
+                        title: "Out of Letters!",
+                        desc: "We used all 26 letters from 'a' to 'z' and we still need new characters. The problem says it must be lowercase English letters.",
+                        aha: "This clue grid is impossible to solve with the normal alphabet. We return an empty string."
+                    });
+                    return frames;
+                }
+                
+                const currentChar = String.fromCharCode(charCode);
+                word[i] = currentChar;
+                
+                frames.push({
+                    phase: 'GUESSING', type: 'ASSIGN_NEW', word: [...word], activeCells: [[i, i]], activeI: i,
+                    title: `Guessing a letter for slot ${i}`,
+                    desc: `Slot ${i} is empty. Because we want the smallest dictionary word, we assign it the lowest unused letter: '${currentChar}'.`,
+                    aha: `Now we need to look at the clue grid to see if any OTHER slots are forced to be '${currentChar}' as well.`
+                });
+
+                for (let j = i + 1; j < n; j++) {
+                    frames.push({
+                        phase: 'READING CLUES', type: 'CHECK_MATRIX', word: [...word], activeCells: [[i, j]], activeI: i, activeJ: j,
+                        title: `Looking at Clue [${i}][${j}]`,
+                        desc: `The clue at row ${i}, column ${j} is the number ${lcp[i][j]}.`,
+                        aha: `What does this mean? It means the word starting at slot ${i} and the word starting at slot ${j} share exactly ${lcp[i][j]} letters in a row.`
+                    });
+
+                    if (lcp[i][j] > 0) {
+                        if (word[j] === '?') {
+                            word[j] = currentChar;
+                            frames.push({
+                                phase: 'MATCH FOUND', type: 'ASSIGN_MATCH', word: [...word], activeCells: [[i, j], [j, j]], activeI: i, activeJ: j,
+                                title: `They Must Be Twins!`,
+                                desc: `Because the clue is greater than 0, slot ${i} and slot ${j} share at least one letter at the start!`,
+                                aha: `If they share a letter, slot ${j} MUST be exactly the same as slot ${i}. We copy '${currentChar}' into slot ${j}.`
+                            });
+                        } else {
+                            frames.push({
+                                phase: 'READING CLUES', type: 'CHECK_EXISTING', word: [...word], activeCells: [[i, j]], activeI: i, activeJ: j,
+                                title: `Match Required`,
+                                desc: `Clue > 0 means slot ${j} should match slot ${i}. Slot ${j} is already '${word[j]}'.`,
+                                aha: `We will double check if this actually makes sense in the final verification step.`
+                            });
+                        }
+                    } else {
+                        frames.push({
+                            phase: 'READING CLUES', type: 'NO_MATCH', word: [...word], activeCells: [[i, j]], activeI: i, activeJ: j,
+                            title: `No Shared Letters`,
+                            desc: `The clue is 0. This means slot ${i} and slot ${j} definitely DO NOT start with the same letter.`,
+                            aha: `We leave slot ${j} alone for now.`
+                        });
+                    }
+                }
+                charCode++; 
+            } else {
+                frames.push({
+                    phase: 'GUESSING', type: 'SKIP', word: [...word], activeCells: [], activeI: i,
+                    title: `Slot ${i} is already filled`,
+                    desc: `We already figured out that slot ${i} is '${word[i]}' from an earlier clue.`,
+                    aha: "We can just skip to the next empty slot."
+                });
+            }
+        }
+
+        frames.push({
+            phase: 'TRANSITION', type: 'VALIDATE_START', word: [...word], activeCells: [],
+            title: `We have a suspect!`,
+            desc: `Based on the >0 clues, the ONLY possible word is "${word.join('')}".`,
+            aha: `But wait! We only looked at whether clues were "> 0" or "0". We didn't check the EXACT numbers. What if a clue said they share 5 letters, but our word is only 4 letters long? The clues might be a lie!`
+        });
+
+        // Phase 2: Double Checking (Validation)
+        let actualLcp = Array(n).fill(0).map(() => Array(n).fill(0));
+        for (let i = n - 1; i >= 0; i--) {
+            for (let j = n - 1; j >= 0; j--) {
+                const match = word[i] === word[j];
+                const hasDep = i + 1 < n && j + 1 < n;
+                const prevLcp = hasDep ? actualLcp[i+1][j+1] : 0;
+                actualLcp[i][j] = match ? 1 + prevLcp : 0;
+
+                frames.push({
+                    phase: 'DOUBLE CHECKING', type: 'VALIDATE_CELL', word: [...word], actualLcp: actualLcp.map(row => [...row]),
+                    activeCells: [[i, j]], depCell: match && hasDep ? [i+1, j+1] : null, activeI: i, activeJ: j,
+                    title: `Checking Clue [${i}][${j}] against our word`,
+                    desc: `Our word has '${word[i]}' at slot ${i} and '${word[j]}' at slot ${j}.`,
+                    aha: match 
+                        ? `They match! So they share 1 letter PLUS whatever the next slots (i+1, j+1) share. We look diagonally down-right and calculate they share 1 + ${prevLcp} = ${actualLcp[i][j]} letters.` 
+                        : `They don't match! So they share 0 letters.`
+                });
+
+                if (actualLcp[i][j] !== lcp[i][j]) {
+                    frames.push({
+                        phase: 'CAUGHT A LIE!', type: 'FAIL', word: [...word], actualLcp: actualLcp.map(row => [...row]), activeCells: [[i, j]], activeI: i, activeJ: j,
+                        title: `The clues are broken!`,
+                        desc: `The original grid says clue [${i}][${j}] MUST be ${lcp[i][j]}. But in our string "${word.join('')}", it is exactly ${actualLcp[i][j]}.`,
+                        aha: `Because the math doesn't add up, the original grid is mathematically impossible. We return "" (empty string).`
+                    });
+                    return frames;
+                }
+            }
+        }
+
+        frames.push({
+            phase: 'CASE CLOSED', type: 'SUCCESS', word: [...word], actualLcp: actualLcp, activeCells: [],
+            title: `The word is verified!`,
+            desc: `We double checked every single number in the grid, and our word "${word.join('')}" produces the exact same numbers.`,
+            aha: `We found the correct, alphabetically smallest string!`
+        });
+
+        return frames;
+    };
+
+    // --- Application State ---
+    let state = {
+        exampleIdx: 0,
+        frameIdx: 0,
+        isPlaying: false,
+        speed: 1500,
+        showEli5: true,
+        frames: [],
+        playbackTimer: null
+    };
+
+    // --- DOM Elements ---
+    const DOM = {
+        eli5Section: document.getElementById('eli5-section'),
+        btnToggleEli5: document.getElementById('btn-toggle-eli5'),
+        eli5BtnText: document.getElementById('eli5-btn-text'),
+        examplesContainer: document.getElementById('examples-container'),
+        gridColHeaders: document.getElementById('grid-col-headers'),
+        gridRowHeaders: document.getElementById('grid-row-headers'),
+        matrixGrid: document.getElementById('matrix-grid'),
+        wordContainer: document.getElementById('word-container'),
+        suffixComparatorContainer: document.getElementById('suffix-comparator-container'),
+        notepadPhase: document.getElementById('notepad-phase'),
+        notepadTitle: document.getElementById('notepad-title'),
+        notepadDesc: document.getElementById('notepad-desc'),
+        notepadAhaContainer: document.getElementById('notepad-aha-container'),
+        notepadAha: document.getElementById('notepad-aha'),
+        timelineSlider: document.getElementById('timeline-slider'),
+        btnRestart: document.getElementById('btn-restart'),
+        btnStepBack: document.getElementById('btn-step-back'),
+        btnStepForward: document.getElementById('btn-step-forward'),
+        btnPlayPause: document.getElementById('btn-play-pause'),
+        playPauseIcon: document.getElementById('play-pause-icon'),
+        playPauseText: document.getElementById('play-pause-text'),
+        speedBtns: document.querySelectorAll('.speed-btn')
+    };
+
+    // --- Icons ---
+    const ICONS = {
+        play: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+        pause: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+    };
+
+    // --- Initialization & Render Loop ---
+    function init() {
+        renderExamples();
+        loadExample(0);
+        setupEventListeners();
+        updateSpeedUI();
+    }
+
+    function loadExample(idx) {
+        state.exampleIdx = idx;
+        state.frameIdx = 0;
+        state.isPlaying = false;
+        clearTimeout(state.playbackTimer);
+        
+        const example = EXAMPLES[idx];
+        state.frames = generateFrames(example.lcp);
+        DOM.timelineSlider.max = state.frames.length - 1;
+        
+        // Update example buttons active state
+        Array.from(DOM.examplesContainer.children).forEach((btn, i) => {
+            if (i === idx) {
+                btn.className = 'px-5 py-3 rounded-xl font-bold transition-all duration-200 bg-slate-900 text-white shadow-lg transform scale-105';
+            } else {
+                btn.className = 'px-5 py-3 rounded-xl font-bold transition-all duration-200 bg-white text-slate-600 border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300';
+            }
+        });
+
+        render();
+    }
+
+    function renderExamples() {
+        DOM.examplesContainer.innerHTML = '';
+        EXAMPLES.forEach((ex, idx) => {
+            const btn = document.createElement('button');
+            btn.textContent = ex.name;
+            btn.onclick = () => loadExample(idx);
+            DOM.examplesContainer.appendChild(btn);
+        });
+    }
+
+    function setFrame(idx) {
+        state.frameIdx = Math.max(0, Math.min(idx, state.frames.length - 1));
+        DOM.timelineSlider.value = state.frameIdx;
+        render();
+    }
+
+    function togglePlay() {
+        state.isPlaying = !state.isPlaying;
+        if (state.isPlaying) {
+            if (state.frameIdx >= state.frames.length - 1) {
+                state.frameIdx = 0; // reset if at end
+            }
+            playLoop();
+        } else {
+            clearTimeout(state.playbackTimer);
+        }
+        updatePlayPauseUI();
+    }
+
+    function playLoop() {
+        render();
+        if (state.frameIdx < state.frames.length - 1) {
+            state.playbackTimer = setTimeout(() => {
+                state.frameIdx++;
+                DOM.timelineSlider.value = state.frameIdx;
+                playLoop();
+            }, state.speed);
+        } else {
+            state.isPlaying = false;
+            updatePlayPauseUI();
+        }
+    }
+
+    function updatePlayPauseUI() {
+        DOM.playPauseIcon.innerHTML = state.isPlaying ? ICONS.pause : ICONS.play;
+        DOM.playPauseText.textContent = state.isPlaying ? 'Pause' : 'Auto Play';
+    }
+
+    function updateSpeedUI() {
+        DOM.speedBtns.forEach(btn => {
+            if (parseInt(btn.dataset.speed) === state.speed) {
+                btn.className = 'speed-btn px-4 py-2 rounded-lg font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-800 text-white shadow-md';
+            } else {
+                btn.className = 'speed-btn px-4 py-2 rounded-lg font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-100 text-slate-500 hover:bg-slate-200';
+            }
+        });
+    }
+
+    function setupEventListeners() {
+        DOM.btnToggleEli5.onclick = () => {
+            state.showEli5 = !state.showEli5;
+            DOM.eli5Section.style.display = state.showEli5 ? 'block' : 'none';
+            DOM.eli5BtnText.textContent = state.showEli5 ? 'Hide Simple Explanation' : 'Explain Like I\'m 5';
+        };
+
+        DOM.timelineSlider.oninput = (e) => {
+            state.isPlaying = false;
+            clearTimeout(state.playbackTimer);
+            updatePlayPauseUI();
+            setFrame(parseInt(e.target.value));
+        };
+
+        DOM.btnRestart.onclick = () => {
+            state.isPlaying = false;
+            clearTimeout(state.playbackTimer);
+            updatePlayPauseUI();
+            setFrame(0);
+        };
+
+        DOM.btnStepBack.onclick = () => {
+            state.isPlaying = false;
+            clearTimeout(state.playbackTimer);
+            updatePlayPauseUI();
+            setFrame(state.frameIdx - 1);
+        };
+
+        DOM.btnStepForward.onclick = () => {
+            state.isPlaying = false;
+            clearTimeout(state.playbackTimer);
+            updatePlayPauseUI();
+            setFrame(state.frameIdx + 1);
+        };
+
+        DOM.btnPlayPause.onclick = togglePlay;
+
+        DOM.speedBtns.forEach(btn => {
+            btn.onclick = (e) => {
+                state.speed = parseInt(e.target.dataset.speed);
+                updateSpeedUI();
+            };
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePlay();
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                state.isPlaying = false;
+                clearTimeout(state.playbackTimer);
+                updatePlayPauseUI();
+                setFrame(state.frameIdx + 1);
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                state.isPlaying = false;
+                clearTimeout(state.playbackTimer);
+                updatePlayPauseUI();
+                setFrame(state.frameIdx - 1);
+            }
+        });
+    }
+
+    // --- Core Rendering Logic ---
+    function render() {
+        const frame = state.frames[state.frameIdx];
+        const example = EXAMPLES[state.exampleIdx];
+        const n = example.lcp.length;
+
+        // Render Headers if empty
+        if (DOM.gridColHeaders.children.length === 0) {
+            DOM.gridColHeaders.innerHTML = Array(n).fill('').map((_, i) => `<div class="flex-1 text-center font-bold text-slate-400">S${i}</div>`).join('');
+            DOM.gridRowHeaders.innerHTML = Array(n).fill('').map((_, i) => `<div class="flex-1 flex items-center font-bold text-slate-400 text-right pr-2">S${i}</div>`).join('');
+            DOM.matrixGrid.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+        }
+
+        // Render Matrix
+        let matrixHTML = '';
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                const val = example.lcp[i][j];
+                const active = frame.activeCells?.some(c => c[0] === i && c[1] === j);
+                const dep = frame.depCell && frame.depCell[0] === i && frame.depCell[1] === j;
+                
+                let cellClass = "w-12 h-12 sm:w-16 sm:h-16 flex flex-col items-center justify-center font-bold text-xl rounded-xl transition-all duration-300 border-2 relative ";
+                
+                if (active) {
+                    if (frame.type === 'FAIL') cellClass += "bg-red-500 text-white border-red-700 shadow-lg transform scale-110 z-20";
+                    else if (frame.type === 'VALIDATE_CELL') cellClass += "bg-purple-600 text-white border-purple-800 shadow-lg transform scale-110 z-20";
+                    else cellClass += "bg-blue-500 text-white border-blue-700 shadow-lg transform scale-110 z-20";
+                } else if (dep) {
+                    cellClass += "bg-yellow-50 text-yellow-800 border-yellow-400 border-dashed border-4 z-10 scale-105";
+                } else {
+                    cellClass += "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100";
+                }
+
+                let showValidation = frame.phase.includes('CHECKING') && frame.actualLcp && frame.actualLcp[i][j] !== 0;
+                if (frame.type === 'VALIDATE_CELL' && active) showValidation = true;
+
+                let content = '';
+                if (showValidation) {
+                    content = `
+                        <div class="flex flex-col items-center leading-none">
+                            <span class="text-[10px] text-purple-200 uppercase font-bold tracking-wider mb-1">Our Math</span>
+                            <span class="text-2xl">${frame.actualLcp[i][j] || 0}</span>
+                        </div>
+                    `;
+                } else {
+                    content = `<span>${val}</span>`;
+                }
+
+                let depBadge = dep ? `<div class="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md animate-bounce">+ Prev</div>` : '';
+
+                matrixHTML += `<div class="${cellClass}">${content}${depBadge}</div>`;
+            }
+        }
+        DOM.matrixGrid.innerHTML = matrixHTML;
+
+        // Render Word Slots
+        let wordHTML = '';
+        frame.word.forEach((char, i) => {
+            const isActive = frame.activeI === i || frame.activeJ === i;
+            let boxClass = `w-14 h-20 flex flex-col items-center justify-center border-4 rounded-xl font-mono text-3xl font-bold transition-all duration-300 ${getCharColorClass(char)}`;
+            
+            if (isActive) {
+                boxClass = "w-14 h-20 flex flex-col items-center justify-center border-4 rounded-xl font-mono text-3xl font-bold transition-all duration-300 border-blue-500 bg-blue-100 transform -translate-y-2 shadow-xl text-blue-800 ring-4 ring-blue-200";
+            }
+
+            wordHTML += `
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}">Slot ${i}</span>
+                    <div class="${boxClass}">${char}</div>
+                </div>
+            `;
+        });
+        DOM.wordContainer.innerHTML = wordHTML;
+
+        // Render Live Suffix Comparator
+        if (frame.phase.includes('CHECKING') && frame.activeI !== undefined && frame.activeJ !== undefined) {
+            DOM.suffixComparatorContainer.classList.remove('hidden');
+            
+            let str1HTML = '';
+            const sliceI = frame.word.slice(frame.activeI);
+            sliceI.forEach((char, idx) => {
+                const charClass = idx === 0 ? 'bg-purple-200 text-purple-900 font-bold border-b-2 border-purple-400' : 'text-slate-500';
+                str1HTML += `<span class="w-8 text-center ${charClass}">${char}</span>`;
+            });
+
+            let str2HTML = '';
+            const sliceJ = frame.word.slice(frame.activeJ);
+            sliceJ.forEach((char, idx) => {
+                const isMatch = idx === 0 && char === frame.word[frame.activeI];
+                const charClass = idx === 0 
+                    ? (isMatch ? 'bg-purple-200 text-purple-900 font-bold border-t-2 border-purple-400' : 'bg-red-200 text-red-900 border-t-2 border-red-400') 
+                    : 'text-slate-500';
+                str2HTML += `<span class="w-8 text-center ${charClass}">${char}</span>`;
+            });
+
+            DOM.suffixComparatorContainer.innerHTML = `
+                <h3 class="text-sm font-bold text-purple-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span class="bg-purple-200 text-purple-900 w-5 h-5 flex items-center justify-center rounded-full text-xs">👀</span>
+                    Live Suffix Comparison
+                </h3>
+                <div class="font-mono text-xl flex flex-col gap-2 relative">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-sans font-bold text-slate-400 w-16 text-right">Slot ${frame.activeI}:</span>
+                        <div class="flex">${str1HTML}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-sans font-bold text-slate-400 w-16 text-right">Slot ${frame.activeJ}:</span>
+                        <div class="flex">${str2HTML}</div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-3 italic">
+                    By lining up the suffixes side-by-side, we count the exact number of matching letters from the start.
+                </p>
+            `;
+        } else {
+            DOM.suffixComparatorContainer.classList.add('hidden');
+        }
+
+        // Render Notepad
+        DOM.notepadPhase.textContent = frame.phase;
+        DOM.notepadTitle.textContent = frame.title;
+        DOM.notepadDesc.textContent = frame.desc;
+        
+        if (frame.aha) {
+            DOM.notepadAhaContainer.classList.remove('hidden');
+            DOM.notepadAha.textContent = frame.aha;
+        } else {
+            DOM.notepadAhaContainer.classList.add('hidden');
+        }
+
+        updatePlayPauseUI();
+    }
+
+    // Run on load
+    init();
+
+</script>
+</body>
+</html>
