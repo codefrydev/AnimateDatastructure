@@ -101,6 +101,27 @@
           "ProblemNumber": 3548
         },
         {
+          "Title": "Find the String with LCP",
+          "Path": "Matrix/find-the-string-with-lcp.html",
+          "ProblemUri": "https://leetcode.com/problems/find-the-string-with-lcp",
+          "Difficulty": "Hard",
+          "Topics": [
+            "Senior",
+            "Staff",
+            "Array",
+            "String",
+            "Dynamic",
+            "Programming",
+            "Greedy",
+            "Union-Find",
+            "Matrix",
+            "Weekly",
+            "Contest",
+            "333"
+          ],
+          "ProblemNumber": 2946
+        },
+        {
           "Title": "Flip Square Submatrix Vertically",
           "Path": "Matrix/flip-square-submatrix-vertically.html",
           "ProblemUri": "https://leetcode.com/problems/flip-square-submatrix-vertically",
