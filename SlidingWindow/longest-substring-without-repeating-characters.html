@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Problem Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Replicate lucide-react default styling */
+        svg.icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        svg.icon-sm { width: 18px; height: 18px; }
+        svg.icon-lg { width: 28px; height: 28px; }
+        
+        /* Custom animations */
+        @keyframes slide-in {
+            0% { transform: translateY(1rem); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-in {
+            animation: slide-in 0.5s ease-out forwards;
+        }
+        
+        /* Hide scrollbars for visualizer arrays */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 p-6 font-sans">
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">
+                <svg class="icon text-blue-500" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Deconstructing the Problem
+            </h1>
+            <p class="mt-2 text-slate-600 text-lg">
+                "Given a string <code>s</code>, find the length of the <strong>longest substring</strong> without <strong>repeating characters</strong>."
+            </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-wrap gap-2" id="tab-buttons">
+            <button data-tab="sandbox" class="tab-btn px-6 py-3 rounded-lg font-medium transition-colors bg-blue-600 text-white shadow-md">
+                Interactive Sandbox
+            </button>
+            <button data-tab="rules" class="tab-btn px-6 py-3 rounded-lg font-medium transition-colors bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+                Understanding the Rules
+            </button>
+            <button data-tab="algo" class="tab-btn px-6 py-3 rounded-lg font-medium transition-colors bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+                The "Sliding Window" Algorithm
+            </button>
+        </div>
+
+        <!-- Tab Content: Interactive Sandbox -->
+        <div id="view-sandbox" class="space-y-6 animate-slide-in">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <svg class="icon text-indigo-500" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><path d="m4 4 7.07 17 2.51-7.39L21 11.07z"/></svg>
+                        Test Your Own Substrings
+                    </h2>
+                    <div class="flex gap-2" id="example-buttons">
+                        <!-- Example buttons injected via JS -->
+                    </div>
+                </div>
+
+                <!-- String Input -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Target String (s):</label>
+                    <input type="text" id="sandbox-input" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-lg" maxlength="20" />
+                </div>
+
+                <!-- Visualization Array -->
+                <div class="mb-8 relative overflow-x-auto pb-4 no-scrollbar">
+                    <div id="sandbox-viz" class="flex gap-2 min-w-max"></div>
+                </div>
+
+                <!-- Sliders -->
+                <div class="space-y-6 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <div>
+                        <label class="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                            <span>Start Index: <span id="label-start-idx" class="text-blue-600">0</span></span>
+                        </label>
+                        <input type="range" id="slider-start" min="0" value="0" class="w-full accent-blue-600" />
+                    </div>
+                    <div>
+                        <label class="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+                            <span>End Index: <span id="label-end-idx" class="text-blue-600">2</span></span>
+                        </label>
+                        <input type="range" id="slider-end" min="0" value="2" class="w-full accent-blue-600" />
+                    </div>
+                </div>
+
+                <!-- Analysis Panel -->
+                <div id="sandbox-analysis" class="mt-6 grid md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Understanding the Rules -->
+        <div id="view-rules" class="space-y-6 animate-slide-in hidden">
+            <!-- Rule 1 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-start gap-4">
+                    <div class="bg-amber-100 p-3 rounded-full text-amber-600 mt-1">
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 mb-2">Rule 1: Substring vs. Subsequence</h2>
+                        <p class="text-slate-600 mb-4">
+                            The question strictly asks for a <strong>substring</strong>. A substring is a <em>contiguous</em> sequence of characters. You cannot skip letters. You must slice the string cleanly like a piece of cake.
+                        </p>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mt-6">
+                            <!-- Good Example -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div class="text-green-600 font-bold mb-3 flex items-center gap-2">
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Valid Substring ("wke")
+                                </div>
+                                <div class="flex gap-1" id="rule1-good"></div>
+                                <p class="text-sm text-slate-500 mt-3">All characters are right next to each other.</p>
+                            </div>
+                            <!-- Bad Example -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div class="text-red-600 font-bold mb-3 flex items-center gap-2">
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg> Invalid (Subsequence "pwke")
+                                </div>
+                                <div class="flex gap-1" id="rule1-bad"></div>
+                                <p class="text-sm text-slate-500 mt-3">You skipped the second 'w'. This is a subsequence, not a substring.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rule 2 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-start gap-4">
+                    <div class="bg-indigo-100 p-3 rounded-full text-indigo-600 mt-1">
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 mb-2">Rule 2: No Repeating Characters</h2>
+                        <p class="text-slate-600 mb-4">
+                            Inside your chosen contiguous slice, every single character must be unique. If a letter appears twice, the whole slice is immediately disqualified.
+                        </p>
+                        
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <p class="font-semibold text-slate-700 mb-4">Let's look at "abcabcbb" starting from the beginning:</p>
+                            <div class="space-y-4 font-mono" id="rule2-examples">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Sliding Window Algorithm -->
+        <div id="view-algo" class="space-y-6 animate-slide-in hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:flex-wrap gap-4 mb-6">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <svg class="icon text-purple-500" viewBox="0 0 24 24"><path d="M12 4.5a2.5 2.5 0 0 0-4.96-.46 2.5 2.5 0 0 0-1.98 3 2.5 2.5 0 0 0-1.32 4.24 3 3 0 0 0 .34 5.58 2.5 2.5 0 0 0 2.96 3.08 2.5 2.5 0 0 0 4.91.05L12 20V4.5Z"/><path d="M16 8V5c0-1.1.9-2 2-2"/><path d="M12 13h4"/><path d="M12 17h6"/><path d="M16 16v4"/><path d="M18 16h2a2 2 0 0 0 2-2v-5c0-1.1-.9-2-2-2h-2"/></svg>
+                        Step-by-Step: The Sliding Window
+                    </h2>
+                    <div class="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button id="btn-algo-restart" class="p-2 text-slate-600 hover:bg-white rounded-md disabled:opacity-50" title="Restart">
+                            <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        </button>
+                        <button id="btn-algo-prev" class="p-2 text-slate-600 hover:bg-white rounded-md disabled:opacity-50 flex items-center gap-1 pl-1">
+                            <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg> Prev <span class="text-[10px] text-slate-400 ml-1 hidden sm:inline">(←)</span>
+                        </button>
+                        <div class="px-4 flex items-center font-mono text-sm font-semibold" id="algo-step-count">
+                            Step 1 / 1
+                        </div>
+                        <button id="btn-algo-next" class="p-2 text-slate-600 hover:bg-white rounded-md disabled:opacity-50 flex items-center gap-1 pr-1">
+                            Next <span class="text-[10px] text-slate-400 mr-1 hidden sm:inline">(→)</span> <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- String Input -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Target String (s):</label>
+                    <input type="text" id="algo-input" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-mono text-lg" maxlength="20" />
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6">
+                    <p id="algo-msg" class="text-lg text-slate-800 min-h-[3rem] font-medium"></p>
+                </div>
+
+                <!-- Visualization Array -->
+                <div class="mb-12 relative overflow-x-auto pb-10 pt-4 no-scrollbar">
+                    <div id="algo-viz" class="flex gap-2 min-w-max pl-2"></div>
+                </div>
+
+                <!-- State Panel -->
+                <div class="grid md:grid-cols-2 gap-4 mt-8">
+                    <div class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                            Seen Characters Map
+                        </h3>
+                        <div id="algo-seen-map" class="flex flex-wrap gap-2"></div>
+                        <p class="text-xs text-slate-500 mt-4">This tracks the <strong>last known index</strong> of each character.</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-purple-50 border border-purple-200 flex flex-col justify-center shadow-sm">
+                        <h3 class="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <svg class="icon icon-sm text-purple-600" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            Max Substring Found
+                        </h3>
+                        <div class="text-4xl font-black text-purple-600 flex items-baseline gap-2 mb-2">
+                            <span id="algo-max-len-val">0</span>
+                            <span class="text-sm font-normal text-purple-800">characters</span>
+                        </div>
+                        <div id="algo-best-str-container"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            activeTab: 'sandbox',
+            targetString: 'abcabcbb',
+            startIndex: 0,
+            endIndex: 2,
+            algoStep: 0,
+            algoHistory: []
+        };
+
+        const examples = [
+            { label: "Example 1", str: "abcabcbb", defaultStart: 0, defaultEnd: 2 },
+            { label: "Example 2", str: "bbbbb", defaultStart: 0, defaultEnd: 0 },
+            { label: "Example 3", str: "pwwkew", defaultStart: 2, defaultEnd: 4 },
+        ];
+
+        // --- SVG Icons ---
+        const ICONS = {
+            check: `<svg class="icon icon-lg text-green-500" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+            x: `<svg class="icon icon-lg text-red-500" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>`,
+            checkSm: `<svg class="icon icon-sm text-green-600" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+            xSm: `<svg class="icon icon-sm text-red-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>`
+        };
+
+        // --- Core Algorithm Logic ---
+        function generateAlgoHistory(str) {
+            let history = [];
+            let left = 0;
+            let seen = new Map();
+            let maxLen = 0;
+            let bestStr = "";
+
+            history.push({ left: 0, right: 0, seen: new Map(), maxLen: 0, bestStr: "", msg: "Initialization: Pointers Left (L) and Right (R) start at index 0.", highlight: [], windowState: 'init', activeChar: null });
+
+            if (str.length === 0) return history;
+
+            for (let right = 0; right < str.length; right++) {
+                const char = str[right];
+
+                history.push({ left, right, seen: new Map(seen), maxLen, bestStr, msg: `Expand: Move Right (R) to include '${char}' at index ${right}.`, highlight: [right], windowState: 'normal', activeChar: char });
+
+                if (seen.has(char) && seen.get(char) >= left) {
+                    const prevIndex = seen.get(char);
+                    history.push({ left, right, seen: new Map(seen), maxLen, bestStr, msg: `Duplicate Detected! '${char}' is already in our window at index ${prevIndex}.`, highlight: [prevIndex, right], windowState: 'error', activeChar: char });
+
+                    left = prevIndex + 1;
+                    history.push({ left, right, seen: new Map(seen), maxLen, bestStr, msg: `Shrink: Move Left (L) to index ${left} to cut out the duplicate '${char}'.`, highlight: [left], windowState: 'shrink', activeChar: char });
+                }
+
+                seen.set(char, right);
+                const currentWinLen = right - left + 1;
+                let isNewMax = false;
+                if (currentWinLen > maxLen) {
+                    maxLen = currentWinLen;
+                    bestStr = str.slice(left, right + 1);
+                    isNewMax = true;
+                }
+
+                let windowArr = [];
+                for(let i=left; i<=right; i++) windowArr.push(i);
+
+                history.push({ left, right, seen: new Map(seen), maxLen, bestStr, msg: isNewMax ? `Valid! Found a new longest substring of length ${maxLen}.` : `Valid window. Current length is ${currentWinLen}.`, highlight: windowArr, windowState: 'success', activeChar: char });
+            }
+
+            history.push({ left, right: str.length - 1, seen: new Map(seen), maxLen, bestStr, msg: `Finished! The longest continuous substring without repeats is "${bestStr}" (Length: ${maxLen}).`, highlight: [], windowState: 'finish', activeChar: null });
+
+            return history;
+        }
+
+        function getActualMax(str) {
+            let maxLen = 0;
+            for (let i = 0; i < str.length; i++) {
+                let seen = new Set();
+                for (let j = i; j < str.length; j++) {
+                    if (seen.has(str[j])) break;
+                    seen.add(str[j]);
+                    maxLen = Math.max(maxLen, j - i + 1);
+                }
+            }
+            return maxLen;
+        }
+
+        // --- Render Functions ---
+
+        function updateTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === state.activeTab) {
+                    btn.className = "tab-btn px-6 py-3 rounded-lg font-medium transition-colors bg-blue-600 text-white shadow-md";
+                } else {
+                    btn.className = "tab-btn px-6 py-3 rounded-lg font-medium transition-colors bg-white text-slate-600 hover:bg-slate-100 border border-slate-200";
+                }
+            });
+
+            document.getElementById('view-sandbox').classList.toggle('hidden', state.activeTab !== 'sandbox');
+            document.getElementById('view-rules').classList.toggle('hidden', state.activeTab !== 'rules');
+            document.getElementById('view-algo').classList.toggle('hidden', state.activeTab !== 'algo');
+        }
+
+        function renderStaticRules() {
+            // Rule 1 Good
+            const r1GoodStr = ['p','w','w','k','e','w'];
+            const r1GoodHtml = r1GoodStr.map((c, i) => {
+                const active = [2,3,4].includes(i);
+                return `<div class="w-8 h-8 flex items-center justify-center font-mono rounded ${active ? 'bg-green-500 text-white font-bold' : 'bg-slate-200 text-slate-400'}">${c}</div>`;
+            }).join('');
+            document.getElementById('rule1-good').innerHTML = r1GoodHtml;
+
+            // Rule 1 Bad
+            const r1BadHtml = r1GoodStr.map((c, i) => {
+                const active = [0,2,3,4].includes(i);
+                return `<div class="w-8 h-8 flex items-center justify-center font-mono rounded ${active ? 'bg-red-500 text-white font-bold' : 'bg-slate-200 text-slate-400'}">${c}</div>`;
+            }).join('');
+            document.getElementById('rule1-bad').innerHTML = r1BadHtml;
+
+            // Rule 2 Examples
+            const examplesHtml = `
+                <div class="flex items-center gap-4">
+                    <div class="w-20 text-right text-slate-500">Length 1</div>
+                    <div class="flex gap-1"><span class="w-8 h-8 bg-green-500 text-white flex items-center justify-center rounded">a</span></div>
+                    <div class="text-green-600 text-sm flex items-center gap-1">${ICONS.checkSm} Valid</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-20 text-right text-slate-500">Length 2</div>
+                    <div class="flex gap-1">
+                        <span class="w-8 h-8 bg-green-500 text-white flex items-center justify-center rounded">a</span>
+                        <span class="w-8 h-8 bg-green-500 text-white flex items-center justify-center rounded">b</span>
+                    </div>
+                    <div class="text-green-600 text-sm flex items-center gap-1">${ICONS.checkSm} Valid</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-20 text-right text-slate-500">Length 3</div>
+                    <div class="flex gap-1">
+                        <span class="w-8 h-8 bg-green-500 text-white flex items-center justify-center rounded">a</span>
+                        <span class="w-8 h-8 bg-green-500 text-white flex items-center justify-center rounded">b</span>
+                        <span class="w-8 h-8 bg-green-500 text-white flex items-center justify-center rounded">c</span>
+                    </div>
+                    <div class="text-green-600 text-sm flex items-center gap-1">${ICONS.checkSm} Valid (Max so far)</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-20 text-right text-slate-500">Length 4</div>
+                    <div class="flex gap-1">
+                        <span class="w-8 h-8 bg-red-500 text-white flex items-center justify-center rounded border-2 border-red-700">a</span>
+                        <span class="w-8 h-8 bg-red-200 text-red-800 flex items-center justify-center rounded">b</span>
+                        <span class="w-8 h-8 bg-red-200 text-red-800 flex items-center justify-center rounded">c</span>
+                        <span class="w-8 h-8 bg-red-500 text-white flex items-center justify-center rounded border-2 border-red-700">a</span>
+                    </div>
+                    <div class="text-red-600 text-sm flex items-center gap-1">${ICONS.xSm} Invalid! 'a' repeats.</div>
+                </div>
+            `;
+            document.getElementById('rule2-examples').innerHTML = examplesHtml;
+            
+            // Render example buttons
+            const exBtns = examples.map((ex, i) => `
+                <button onclick="loadExample(${i})" class="text-sm px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors">
+                    ${ex.label}
+                </button>
+            `).join('');
+            document.getElementById('example-buttons').innerHTML = exBtns;
+        }
+
+        function renderSandbox() {
+            // Validate state indices
+            if (state.startIndex > state.endIndex) state.endIndex = state.startIndex;
+            const maxIdx = Math.max(0, state.targetString.length - 1);
+            if (state.startIndex > maxIdx) state.startIndex = maxIdx;
+            if (state.endIndex > maxIdx) state.endIndex = maxIdx;
+
+            // Sync Inputs
+            document.getElementById('sandbox-input').value = state.targetString;
+            
+            // Sliders
+            const sStart = document.getElementById('slider-start');
+            const sEnd = document.getElementById('slider-end');
+            sStart.max = maxIdx;
+            sStart.value = state.startIndex;
+            sEnd.max = maxIdx;
+            sEnd.min = state.startIndex;
+            sEnd.value = state.endIndex;
+
+            document.getElementById('label-start-idx').innerText = state.startIndex;
+            document.getElementById('label-end-idx').innerText = state.endIndex;
+
+            // Analyze Substring
+            const chars = state.targetString.split('');
+            const currentSub = state.targetString.slice(state.startIndex, state.endIndex + 1);
+            
+            const charCounts = {};
+            let hasDuplicates = false;
+            const duplicateChars = new Set();
+
+            for (let char of currentSub) {
+                charCounts[char] = (charCounts[char] || 0) + 1;
+                if (charCounts[char] > 1) {
+                    hasDuplicates = true;
+                    duplicateChars.add(char);
+                }
+            }
+
+            // Render Viz Array
+            const vizHtml = chars.map((char, index) => {
+                const isSelected = index >= state.startIndex && index <= state.endIndex;
+                const isDuplicate = isSelected && duplicateChars.has(char);
+                
+                let bgClass = "bg-slate-100 border-slate-200 text-slate-400";
+                if (isSelected) {
+                    if (hasDuplicates) {
+                        bgClass = isDuplicate ? "bg-red-500 text-white border-red-600 shadow-lg scale-110 z-10" : "bg-red-100 border-red-300 text-red-800";
+                    } else {
+                        bgClass = "bg-green-500 text-white border-green-600 shadow-lg scale-110 z-10";
+                    }
+                }
+
+                return `
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-slate-400 mb-1 font-mono">${index}</span>
+                        <div class="w-12 h-12 flex items-center justify-center text-2xl font-mono font-bold rounded-lg border-2 transition-all duration-300 ${bgClass}">
+                            ${char === ' ' ? '␣' : char}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('sandbox-viz').innerHTML = vizHtml;
+
+            // Render Analysis
+            const actualMax = getActualMax(state.targetString);
+            const dupArrayStr = Array.from(duplicateChars).map(c => `'${c}'`).join(', ');
+            
+            const analysisHtml = `
+                <div class="p-5 rounded-xl border-2 flex flex-col justify-center ${hasDuplicates ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}">
+                    <div class="flex items-center gap-3 mb-2">
+                        ${hasDuplicates ? ICONS.x : ICONS.check}
+                        <h3 class="text-xl font-bold ${hasDuplicates ? 'text-red-800' : 'text-green-800'}">
+                            ${hasDuplicates ? 'Invalid Substring' : 'Valid Substring'}
+                        </h3>
+                    </div>
+                    <p class="${hasDuplicates ? 'text-red-600' : 'text-green-600'}">
+                        ${hasDuplicates ? `Contains duplicate characters: ${dupArrayStr}` : 'All characters are completely unique.'}
+                    </p>
+                </div>
+                <div class="p-5 rounded-xl bg-blue-50 border-2 border-blue-200 flex flex-col justify-center">
+                    <h3 class="text-sm font-semibold text-blue-800 uppercase tracking-wider mb-1">Current Length</h3>
+                    <div class="text-4xl font-black text-blue-600 flex items-baseline gap-2">
+                        ${currentSub.length}
+                        <span class="text-sm font-normal text-blue-800">characters</span>
+                    </div>
+                    <p class="text-blue-700 text-sm mt-2">
+                        ${currentSub.length === actualMax && !hasDuplicates 
+                            ? "🏆 You found the maximum possible length!" 
+                            : `The longest possible for this string is ${actualMax}.`}
+                    </p>
+                </div>
+            `;
+            document.getElementById('sandbox-analysis').innerHTML = analysisHtml;
+        }
+
+        function renderAlgo() {
+            if (state.algoHistory.length === 0) return;
+
+            // Sync Input
+            document.getElementById('algo-input').value = state.targetString;
+
+            const current = state.algoHistory[state.algoStep];
+            
+            // Update Controls
+            document.getElementById('btn-algo-restart').disabled = state.algoStep === 0;
+            document.getElementById('btn-algo-prev').disabled = state.algoStep === 0;
+            document.getElementById('btn-algo-next').disabled = state.algoStep === state.algoHistory.length - 1;
+            document.getElementById('algo-step-count').innerText = `Step ${state.algoStep + 1} / ${state.algoHistory.length}`;
+            
+            // Update Message
+            document.getElementById('algo-msg').innerText = current.msg;
+
+            // Render Viz Array
+            const chars = state.targetString.split('');
+            const vizHtml = chars.map((char, index) => {
+                const isLeft = current.left === index;
+                const isRight = current.right === index;
+                const inWindow = index >= current.left && index <= current.right;
+                const isHighlighted = current.highlight.includes(index);
+                const wState = current.windowState;
+                
+                let bgClass = "bg-white border-slate-200 text-slate-300 opacity-50";
+                
+                if (inWindow) {
+                    if (wState === 'error') bgClass = "bg-red-50 border-red-300 text-red-800";
+                    else if (wState === 'success') bgClass = "bg-green-50 border-green-300 text-green-800";
+                    else if (wState === 'shrink') bgClass = "bg-orange-50 border-orange-300 text-orange-800";
+                    else bgClass = "bg-blue-50 border-blue-300 text-blue-800";
+                }
+
+                if (isHighlighted) {
+                    if (wState === 'error') bgClass = "bg-red-500 border-red-600 text-white font-bold scale-110 shadow-lg z-10 animate-pulse";
+                    else if (wState === 'success') bgClass = "bg-green-500 border-green-600 text-white font-bold shadow-md z-10 scale-105";
+                    else if (wState === 'shrink') bgClass = "bg-orange-500 border-orange-600 text-white font-bold scale-110 shadow-lg z-10";
+                    else bgClass = "bg-blue-500 border-blue-600 text-white font-bold scale-110 shadow-lg z-10";
+                }
+
+                const pointerL = isLeft ? `<div class="flex flex-col items-center animate-slide-in"><div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-sky-600 mb-1"></div><div class="text-xs font-bold text-white bg-sky-600 px-1.5 py-0.5 rounded shadow-sm">L</div></div>` : '';
+                const pointerR = isRight ? `<div class="flex flex-col items-center animate-slide-in"><div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-rose-600 mb-1"></div><div class="text-xs font-bold text-white bg-rose-600 px-1.5 py-0.5 rounded shadow-sm">R</div></div>` : '';
+
+                return `
+                    <div class="flex flex-col items-center relative">
+                        <span class="text-xs text-slate-400 mb-1 font-mono">${index}</span>
+                        <div class="w-12 h-12 flex items-center justify-center text-2xl font-mono rounded-lg border-2 transition-all duration-300 ${bgClass}">
+                            ${char === ' ' ? '␣' : char}
+                        </div>
+                        <div class="absolute -bottom-10 flex gap-1 w-full justify-center z-20">
+                            ${pointerL}${pointerR}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('algo-viz').innerHTML = vizHtml;
+
+            // Render State Panels
+            document.getElementById('algo-max-len-val').innerText = current.maxLen;
+            
+            const bestStrContainer = document.getElementById('algo-best-str-container');
+            if (current.bestStr) {
+                bestStrContainer.innerHTML = `<p class="text-purple-700 text-sm font-mono bg-purple-100 inline-block px-3 py-1.5 rounded-md font-bold border border-purple-200">"${current.bestStr}"</p>`;
+            } else {
+                bestStrContainer.innerHTML = '';
+            }
+
+            const mapContainer = document.getElementById('algo-seen-map');
+            if (current.seen.size === 0) {
+                mapContainer.innerHTML = `<span class="text-sm text-slate-400 italic">No characters processed yet.</span>`;
+            } else {
+                mapContainer.innerHTML = Array.from(current.seen.entries()).map(([k, v]) => {
+                    const isDuplicate = current.windowState === 'error' && current.activeChar === k;
+                    const mapClass = isDuplicate ? 'bg-red-100 border-red-400 text-red-800 font-bold animate-pulse' : 'bg-slate-100 border-slate-200 text-slate-700';
+                    return `
+                        <div class="px-3 py-1 border rounded-md font-mono text-sm transition-colors ${mapClass}">
+                            <span class="font-bold">'${k}'</span> : idx ${v}
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // --- Event Handlers ---
+
+        function handleStringChange(val) {
+            val = val.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+            state.targetString = val || 'a';
+            state.startIndex = 0;
+            state.endIndex = 0;
+            
+            state.algoHistory = generateAlgoHistory(state.targetString);
+            state.algoStep = 0;
+            
+            renderSandbox();
+            renderAlgo();
+        }
+
+        // Expose globally for HTML onclick
+        window.loadExample = function(index) {
+            const ex = examples[index];
+            state.targetString = ex.str;
+            state.startIndex = ex.defaultStart;
+            state.endIndex = ex.defaultEnd;
+            state.algoHistory = generateAlgoHistory(state.targetString);
+            state.algoStep = 0;
+            renderSandbox();
+            renderAlgo();
+        }
+
+        function init() {
+            // Initial data generation
+            state.algoHistory = generateAlgoHistory(state.targetString);
+            renderStaticRules();
+            updateTabs();
+            renderSandbox();
+            renderAlgo();
+
+            // Setup Listeners
+            document.getElementById('tab-buttons').addEventListener('click', (e) => {
+                const btn = e.target.closest('.tab-btn');
+                if (btn) {
+                    state.activeTab = btn.dataset.tab;
+                    updateTabs();
+                }
+            });
+
+            document.getElementById('sandbox-input').addEventListener('input', (e) => handleStringChange(e.target.value));
+            document.getElementById('algo-input').addEventListener('input', (e) => handleStringChange(e.target.value));
+
+            document.getElementById('slider-start').addEventListener('input', (e) => {
+                state.startIndex = parseInt(e.target.value, 10);
+                renderSandbox();
+            });
+            document.getElementById('slider-end').addEventListener('input', (e) => {
+                state.endIndex = parseInt(e.target.value, 10);
+                renderSandbox();
+            });
+
+            document.getElementById('btn-algo-restart').addEventListener('click', () => { state.algoStep = 0; renderAlgo(); });
+            document.getElementById('btn-algo-prev').addEventListener('click', () => { state.algoStep = Math.max(0, state.algoStep - 1); renderAlgo(); });
+            document.getElementById('btn-algo-next').addEventListener('click', () => { state.algoStep = Math.min(state.algoHistory.length - 1, state.algoStep + 1); renderAlgo(); });
+
+            // Keyboard navigation
+            window.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                if (state.activeTab === 'algo' && state.algoHistory.length > 0) {
+                    if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        state.algoStep = Math.min(state.algoHistory.length - 1, state.algoStep + 1);
+                        renderAlgo();
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        state.algoStep = Math.max(0, state.algoStep - 1);
+                        renderAlgo();
+                    }
+                }
+            });
+        }
+
+        // Boot
+        init();
+
+    </script>
+</body>
+</html>

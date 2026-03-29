@@ -1,0 +1,16 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/longest-substring-without-repeating-characters",
+  "ProblemName": "Longest Substring Without Repeating Characters",
+  "ProblemDescription": "\n\n\n\nGiven a string s, find the length of the longest substring without duplicate characters.\n",
+  "ProblemSolution": "Sliding Window",
+  "Difficulty": "Medium",
+  "Topics": [
+    "Staff",
+    "Hash",
+    "Table",
+    "String",
+    "Sliding",
+    "Window"
+  ],
+  "ProblemNumber": 3
+}
