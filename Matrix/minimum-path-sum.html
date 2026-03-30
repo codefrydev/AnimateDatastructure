@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Path Sum Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .animate-fade-in-up { animation: fade-in-up 0.2s ease-out forwards; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Utility to preserve line breaks in code block */
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 min-h-screen">
+
+<div class="p-4 md:p-6 flex flex-col gap-6">
+    
+    <!-- Header & Controls -->
+    <div class="max-w-7xl mx-auto w-full flex flex-col lg:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200 gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">DP Deep Dive: Min Path Sum</h1>
+        </div>
+        
+        <div class="flex bg-gray-100 p-1 rounded-lg">
+            <button id="btn-mode-tabulation" class="px-4 py-2 rounded-md font-medium transition-colors text-sm bg-white text-blue-700 shadow-sm" onclick="setMode('tabulation')">
+                Tabulation (Bottom-Up)
+            </button>
+            <button id="btn-mode-memoization" class="px-4 py-2 rounded-md font-medium transition-colors text-sm text-gray-600 hover:text-gray-900" onclick="setMode('memoization')">
+                Memoization (Top-Down)
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btn-theory" class="p-2 rounded-lg border transition-colors flex items-center gap-2 text-sm font-medium bg-indigo-50 text-indigo-700 border-indigo-200" onclick="toggleTheory()">
+                <i data-lucide="book-open" class="w-[18px] h-[18px]"></i> Theory Guide
+            </button>
+            <button id="btn-prev" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg border bg-white disabled:opacity-30" onclick="prevStep()">
+                <i data-lucide="skip-back" class="w-5 h-5"></i>
+            </button>
+            <button id="btn-play" class="p-2 rounded-lg border text-white transition-colors w-24 flex justify-center items-center gap-2 bg-gray-900 hover:bg-black border-gray-900" onclick="togglePlay()">
+                <i data-lucide="play" class="w-[18px] h-[18px]"></i> Auto
+            </button>
+            <button id="btn-next" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg border bg-white disabled:opacity-30" onclick="nextStep()">
+                <i data-lucide="skip-forward" class="w-5 h-5"></i>
+            </button>
+            <button class="ml-4 flex items-center gap-1 px-3 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium" onclick="randomizeGrid()">
+                <i data-lucide="shuffle" class="w-4 h-4"></i> New Grid
+            </button>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Hint -->
+    <div class="max-w-7xl mx-auto w-full text-center text-xs text-gray-400 font-medium hidden md:block -mt-4">
+        Keyboard Shortcuts: 
+        <kbd class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 ml-1">←</kbd> 
+        <kbd class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 mr-1">→</kbd> Step, 
+        <kbd class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 mx-1">Space</kbd> Play/Pause, 
+        <kbd class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 mx-1">M</kbd> Toggle Mode, 
+        <kbd class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 mx-1">R</kbd> Random Grid, 
+        <kbd class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 mx-1">T</kbd> Theory
+    </div>
+
+    <!-- Theory Guide Panel -->
+    <div id="theory-guide" class="max-w-7xl mx-auto w-full bg-slate-900 text-slate-100 p-6 md:p-8 rounded-xl shadow-xl relative overflow-hidden border border-slate-700 animate-fade-in-up">
+        <button class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors bg-slate-800 p-1 rounded-full" onclick="toggleTheory()">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <h2 class="text-2xl font-bold flex items-center gap-3 mb-6 text-white border-b border-slate-700 pb-4">
+            <i data-lucide="book-open" class="w-6 h-6 text-indigo-400"></i>
+            Problem Pattern & Strategy Breakdown
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-indigo-400 font-bold uppercase tracking-wider text-sm"><i data-lucide="target" class="w-[18px] h-[18px]"></i> The Problem & Pattern</div>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    <strong class="text-white">The Prompt:</strong> Given an <code class="bg-slate-800 px-1 py-0.5 rounded text-indigo-300">m x n</code> grid filled with non-negative numbers, find a path from top-left to bottom-right that minimizes the sum of all numbers along the path. 
+                    <br/><br/>
+                    <strong class="text-white">The Rule:</strong> You can only move <span class="text-indigo-300 font-bold">DOWN</span> or <span class="text-indigo-300 font-bold">RIGHT</span>.
+                </p>
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                    <p class="text-sm text-slate-300"><strong class="text-emerald-400">Pattern: 2D Dynamic Programming.</strong> This problem asks for an "optimal" value (minimum), and the best path to a cell relies entirely on the best paths to its neighbors (Overlapping Subproblems + Optimal Substructure).</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-fuchsia-400 font-bold uppercase tracking-wider text-sm"><i data-lucide="git-branch" class="w-[18px] h-[18px]"></i> Ways to Solve</div>
+                <ul class="space-y-3 text-sm text-slate-300">
+                    <li class="flex gap-2"><span class="text-red-400 mt-0.5">✗</span> <div><strong class="text-white">Brute Force (DFS):</strong> Explore every possible path. Time complexity is <code class="text-xs bg-slate-800 px-1 rounded">O(2^(m+n))</code>. Horribly slow for large grids.</div></li>
+                    <li class="flex gap-2"><span class="text-amber-400 mt-0.5">●</span> <div><strong class="text-white">Top-Down (Memoization):</strong> The purple visualizer. Recursively dive to the end, but save answers in a Dictionary. Time: <code class="text-xs bg-slate-800 px-1 rounded">O(m×n)</code>.</div></li>
+                    <li class="flex gap-2"><span class="text-blue-400 mt-0.5">✓</span> <div><strong class="text-white">Bottom-Up (Tabulation):</strong> The blue visualizer. Start at (0,0) and systematically calculate the cheapest route to every cell iteratively. Time: <code class="text-xs bg-slate-800 px-1 rounded">O(m×n)</code>.</div></li>
+                </ul>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-emerald-400 font-bold uppercase tracking-wider text-sm"><i data-lucide="zap" class="w-[18px] h-[18px]"></i> Which is Best?</div>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    Both DP approaches have <code class="bg-slate-800 px-1 py-0.5 rounded text-emerald-300">O(m×n)</code> time and space complexity, but <strong class="text-blue-400">Bottom-Up (Tabulation)</strong> is the industry standard winner.
+                </p>
+                <div class="bg-emerald-900/20 p-3 rounded-lg border border-emerald-900/50 text-sm text-slate-300">
+                    <strong class="text-emerald-400 block mb-1">Why? No Call Stack.</strong> 
+                    Top-Down uses recursion. On a massive 2000x2000 grid, the giant chain of recursive calls will trigger a <code class="text-rose-400 bg-slate-900 px-1 rounded">StackOverflowException</code> before it ever reaches the base case. Bottom-Up uses standard loops and avoids call stack overhead entirely!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Visualizer Container -->
+    <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Top/Left: Explanation & Code Viewer -->
+        <div class="lg:col-span-12 xl:col-span-5 flex flex-col gap-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+                <div class="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <span id="step-counter" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Step 1 / X</span>
+                    <span id="mode-badge" class="text-xs font-bold px-2 py-1 rounded uppercase tracking-wider bg-blue-100 text-blue-800">
+                        Tabulation
+                    </span>
+                </div>
+                
+                <div class="p-6 flex-1 flex flex-col gap-4 min-h-[160px]">
+                    <h2 id="step-title" class="text-2xl font-bold text-gray-900 leading-tight">Loading...</h2>
+                    <p id="step-desc" class="text-gray-600 text-[1.05rem] leading-relaxed animate-fade-in">
+                        ...
+                    </p>
+                </div>
+
+                <div class="bg-[#1e1e1e] p-5 text-gray-300 font-mono text-sm leading-relaxed overflow-x-auto border-t-4 border-gray-800">
+                    <div class="text-gray-500 mb-2 text-xs uppercase tracking-widest flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        Currently Executing (C#)
+                    </div>
+                    <pre id="step-code" class="text-green-400 font-semibold"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Visualizations -->
+        <div class="lg:col-span-12 xl:col-span-7 flex flex-col gap-4">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Original Grid -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center">
+                    <h3 class="text-sm font-bold uppercase text-gray-400 mb-6 tracking-widest">Input: grid[i][j]</h3>
+                    <div id="grid-container" class="flex flex-col gap-2">
+                        <!-- Grid rendered here via JS -->
+                    </div>
+                    <div id="oob-container"></div>
+                </div>
+
+                <!-- State Structure (DP Array or Cache) -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center justify-start min-h-[350px]">
+                    <div id="memory-header" class="w-full flex justify-center mb-6"></div>
+                    <div id="memory-container" class="w-full flex justify-center">
+                        <!-- DP array or dictionary rendered here via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call Stack Visualizer (Only visible in Memoization) -->
+            <div id="callstack-container" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hidden">
+                <h3 class="text-xs font-bold uppercase text-gray-500 mb-3 tracking-widest">Memory: The Call Stack</h3>
+                <div id="callstack-items" class="flex gap-2 flex-wrap items-center">
+                    <!-- Stack frames rendered here via JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- State Variables ---
+    const DEFAULT_GRID = [
+        [1, 3, 1],
+        [1, 5, 1],
+        [4, 2, 1]
+    ];
+    let grid = JSON.parse(JSON.stringify(DEFAULT_GRID));
+    let mode = 'tabulation';
+    let steps = [];
+    let stepIdx = 0;
+    let isPlaying = false;
+    let speed = 800;
+    let showIntro = true;
+    let timerRef = null;
+
+    // --- Helpers ---
+    const clone2D = (arr) => arr.map(row => [...row]);
+    const containsCoord = (arr, r, c) => arr?.some(([ar, ac]) => ar === r && ac === c);
+
+    // --- Generators ---
+    function generateTabulationSteps(currentGrid) {
+        const m = currentGrid.length;
+        const n = currentGrid[0].length;
+        const newSteps = [];
+        
+        const dp = Array(m).fill(null).map(() => Array(n).fill(null));
+        newSteps.push({
+            title: "1. Initialization",
+            desc: "We create a new 2D array 'sumArr' of the same size. This will store the absolute cheapest path to reach every single cell from the start.",
+            code: `var sumArr = new int[m,n];`,
+            dp: clone2D(dp), active: [], reading: []
+        });
+
+        dp[0][0] = currentGrid[0][0];
+        newSteps.push({
+            title: "2. The Starting Point",
+            desc: `The cheapest way to reach the starting cell (0,0) is simply its own value: ${currentGrid[0][0]}. We record this first.`,
+            code: `sumArr[0,0] = grid[0][0];`,
+            dp: clone2D(dp), active: [[0, 0]], reading: []
+        });
+
+        for (let i = 1; i < n; i++) {
+            dp[0][i] = dp[0][i - 1] + currentGrid[0][i];
+            newSteps.push({
+                title: "3. Filling the Top Edge",
+                desc: `Because we can only move RIGHT or DOWN, the ONLY way to reach cells in the top row is by coming from the left. We simply accumulate the sum going right: ${dp[0][i-1]} + ${currentGrid[0][i]} = ${dp[0][i]}.`,
+                code: `sumArr[0,${i}] = sumArr[0,${i-1}] + grid[0][${i}];`,
+                dp: clone2D(dp), active: [[0, i]], reading: [[0, i - 1]]
+            });
+        }
+
+        for (let i = 1; i < m; i++) {
+            dp[i][0] = dp[i - 1][0] + currentGrid[i][0];
+            newSteps.push({
+                title: "4. Filling the Left Edge",
+                desc: `Similarly, the ONLY way to reach cells in the far-left column is by coming straight down from above. We accumulate the sum going down: ${dp[i-1][0]} + ${currentGrid[i][0]} = ${dp[i][0]}.`,
+                code: `sumArr[${i},0] = sumArr[${i-1},0] + grid[${i}][0];`,
+                dp: clone2D(dp), active: [[i, 0]], reading: [[i - 1, 0]]
+            });
+        }
+
+        for (let i = 1; i < m; i++) {
+            for (let j = 1; j < n; j++) {
+                const top = dp[i - 1][j];
+                const left = dp[i][j - 1];
+                
+                newSteps.push({
+                    title: `5. Inner Grid - Evaluating (${i}, ${j})`,
+                    desc: `To find the best path to cell (${i}, ${j}), we look at the minimum cost to reach the cell directly ABOVE it (${top}) and directly to its LEFT (${left}).`,
+                    code: `var top = sumArr[${i-1},${j}] + grid[${i}][${j}];\nvar left = sumArr[${i},${j-1}] + grid[${i}][${j}];`,
+                    dp: clone2D(dp), active: [[i, j]], reading: [[i - 1, j], [i, j - 1]]
+                });
+
+                dp[i][j] = Math.min(top, left) + currentGrid[i][j];
+                newSteps.push({
+                    title: `5. Inner Grid - Selecting Minimum`,
+                    desc: `We take the cheaper route: Math.Min(${top}, ${left}) is ${Math.min(top, left)}. We add our current cell's value (${currentGrid[i][j]}) for a total of ${dp[i][j]}.`,
+                    code: `sumArr[${i},${j}] = Math.Min(top, left);`,
+                    dp: clone2D(dp), active: [[i, j]], reading: [[i - 1, j], [i, j - 1]]
+                });
+            }
+        }
+
+        newSteps.push({
+            title: "6. Final Answer",
+            desc: `We have evaluated every cell left-to-right, top-to-bottom. The bottom-right corner now holds the absolute minimum cost to reach the end: ${dp[m-1][n-1]}.`,
+            code: `return sumArr[${m-1},${n-1}];`,
+            dp: clone2D(dp), active: [[m - 1, n - 1]], reading: []
+        });
+
+        return newSteps;
+    }
+
+    function generateMemoizationSteps(currentGrid) {
+        const m = currentGrid.length;
+        const n = currentGrid[0].length;
+        const newSteps = [];
+        const dict = {}; 
+        const callStack = [];
+
+        const recursive = (i, j) => {
+            callStack.push([i, j]);
+            const key = `${i},${j}`;
+
+            newSteps.push({
+                title: "1. Recursive Call",
+                desc: `We are at cell (${i}, ${j}). We ask: "What is the minimum path from here to the end?"`,
+                code: `Recursive(grid, ${i}, ${j}, dict)`,
+                memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: []
+            });
+
+            if (dict[key] !== undefined) {
+                newSteps.push({
+                    title: "2. Cache Hit! (Memoization)",
+                    desc: `We check the Dictionary. We've ALREADY computed the path from (${i}, ${j}) earlier! We return ${dict[key]} immediately, skipping massive amounts of recalculation.`,
+                    code: `if(dict.ContainsKey((${i},${j}))) return dict[(${i},${j})];`,
+                    memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: [[i, j]]
+                });
+                callStack.pop();
+                return dict[key];
+            }
+
+            if (i === m - 1 && j === n - 1) {
+                newSteps.push({
+                    title: "3. Base Case: Destination",
+                    desc: `We reached the bottom-right corner! The cost to get to the end from here is just the value of the cell itself (${currentGrid[i][j]}). The recursion starts bubbling back up.`,
+                    code: `if(i== ${m-1} && j== ${n-1}) return grid[${i}][${j}];`,
+                    memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: []
+                });
+                dict[key] = currentGrid[i][j]; 
+                callStack.pop();
+                return currentGrid[i][j];
+            }
+
+            if (i === m || j === n) {
+                newSteps.push({
+                    title: "4. Base Case: Out of Bounds",
+                    desc: `We fell off the grid at (${i}, ${j}). We return int.MaxValue (Infinity) so this invalid path is heavily penalized and never chosen by Math.Min().`,
+                    code: `if (i == ${m} || j == ${n}) return int.MaxValue;`,
+                    memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: [], isOutOfBounds: true
+                });
+                callStack.pop();
+                return Infinity;
+            }
+
+            newSteps.push({
+                title: "5. The Leap of Faith: Branching Right",
+                desc: `We don't know the answer yet. Let's take a step RIGHT and ask the same question recursively. Notice the Call Stack growing.`,
+                code: `var right = Recursive(grid, ${i + 1}, ${j}, dict);`,
+                memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: []
+            });
+            const right = recursive(i + 1, j);
+
+            newSteps.push({
+                title: "6. The Leap of Faith: Branching Down",
+                desc: `The right branch returned ${right === Infinity ? '∞' : right}. Now let's take a step DOWN and ask the same question.`,
+                code: `var down = Recursive(grid, ${i}, ${j + 1}, dict);`,
+                memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: []
+            });
+            const down = recursive(i, j + 1);
+
+            const minVal = Math.min(right, down);
+            dict[key] = currentGrid[i][j] + minVal;
+            
+            newSteps.push({
+                title: "7. Calculate & Cache Result",
+                desc: `Both branches returned. Minimum of (Right: ${right === Infinity ? '∞' : right}, Down: ${down === Infinity ? '∞' : down}) is ${minVal === Infinity ? '∞' : minVal}. We add our current cell (${currentGrid[i][j]}) = ${dict[key]}. We SAVE this to the Dictionary for later!`,
+                code: `dict.TryAdd((${i},${j}), grid[${i}][${j}] + Math.Min(right, down));\nreturn dict[(${i},${j})];`,
+                memo: { ...dict }, active: [[i, j]], stack: [...callStack], reading: []
+            });
+
+            callStack.pop();
+            return dict[key];
+        };
+
+        recursive(0, 0);
+        newSteps.push({
+            title: "8. Execution Complete",
+            desc: `The massive tree of recursive calls has fully resolved back to the start. The minimum path sum from (0,0) is ${dict['0,0']}.`,
+            code: `return Recursive(grid, 0, 0, new Dictionary...);`,
+            memo: { ...dict }, active: [[0, 0]], stack: [], reading: []
+        });
+
+        return newSteps;
+    }
+
+    // --- State Management & Logic ---
+    function initializeData() {
+        if (mode === 'tabulation') {
+            steps = generateTabulationSteps(grid);
+        } else {
+            steps = generateMemoizationSteps(grid);
+        }
+        stepIdx = 0;
+        isPlaying = false;
+        render();
+    }
+
+    function randomizeGrid() {
+        const m = Math.floor(Math.random() * 2) + 3; 
+        const n = Math.floor(Math.random() * 2) + 3; 
+        grid = Array(m).fill(0).map(() => Array(n).fill(0).map(() => Math.floor(Math.random() * 9) + 1));
+        initializeData();
+    }
+
+    function setMode(newMode) {
+        mode = newMode;
+        initializeData();
+    }
+
+    function toggleTheory() {
+        showIntro = !showIntro;
+        render();
+    }
+
+    function nextStep() {
+        isPlaying = false;
+        if (stepIdx < steps.length - 1) {
+            stepIdx++;
+            render();
+        }
+    }
+
+    function prevStep() {
+        isPlaying = false;
+        if (stepIdx > 0) {
+            stepIdx--;
+            render();
+        }
+    }
+
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+            if (stepIdx >= steps.length - 1) stepIdx = 0;
+            loop();
+        } else {
+            clearTimeout(timerRef);
+        }
+        render();
+    }
+
+    function loop() {
+        if (!isPlaying) return;
+        render(); // Render current step
+        
+        if (stepIdx < steps.length - 1) {
+            timerRef = setTimeout(() => {
+                stepIdx++;
+                loop();
+            }, speed);
+        } else {
+            isPlaying = false;
+            render();
+        }
+    }
+
+    // --- Rendering Functions ---
+    function render() {
+        const currentStep = steps[stepIdx] || {};
+
+        // 1. Controls & Badges
+        document.getElementById('btn-prev').disabled = stepIdx === 0;
+        document.getElementById('btn-next').disabled = stepIdx === steps.length - 1;
+        
+        const btnPlay = document.getElementById('btn-play');
+        if (isPlaying) {
+            btnPlay.innerHTML = `<i data-lucide="pause" class="w-[18px] h-[18px]"></i> Pause`;
+            btnPlay.className = "p-2 rounded-lg border text-white transition-colors w-24 flex justify-center items-center gap-2 bg-red-500 hover:bg-red-600 border-red-600";
+        } else {
+            btnPlay.innerHTML = `<i data-lucide="play" class="w-[18px] h-[18px]"></i> Auto`;
+            btnPlay.className = "p-2 rounded-lg border text-white transition-colors w-24 flex justify-center items-center gap-2 bg-gray-900 hover:bg-black border-gray-900";
+        }
+
+        const btnTheory = document.getElementById('btn-theory');
+        if (showIntro) {
+            btnTheory.className = "p-2 rounded-lg border transition-colors flex items-center gap-2 text-sm font-medium bg-indigo-50 text-indigo-700 border-indigo-200";
+            document.getElementById('theory-guide').classList.remove('hidden');
+        } else {
+            btnTheory.className = "p-2 rounded-lg border transition-colors flex items-center gap-2 text-sm font-medium text-gray-600 hover:bg-gray-50";
+            document.getElementById('theory-guide').classList.add('hidden');
+        }
+
+        // Mode toggles
+        if (mode === 'tabulation') {
+            document.getElementById('btn-mode-tabulation').className = "px-4 py-2 rounded-md font-medium transition-colors text-sm bg-white text-blue-700 shadow-sm";
+            document.getElementById('btn-mode-memoization').className = "px-4 py-2 rounded-md font-medium transition-colors text-sm text-gray-600 hover:text-gray-900";
+            document.getElementById('mode-badge').className = "text-xs font-bold px-2 py-1 rounded uppercase tracking-wider bg-blue-100 text-blue-800";
+            document.getElementById('mode-badge').innerText = "Tabulation";
+        } else {
+            document.getElementById('btn-mode-memoization').className = "px-4 py-2 rounded-md font-medium transition-colors text-sm bg-white text-purple-700 shadow-sm";
+            document.getElementById('btn-mode-tabulation').className = "px-4 py-2 rounded-md font-medium transition-colors text-sm text-gray-600 hover:text-gray-900";
+            document.getElementById('mode-badge').className = "text-xs font-bold px-2 py-1 rounded uppercase tracking-wider bg-purple-100 text-purple-800";
+            document.getElementById('mode-badge').innerText = "Memoization";
+        }
+
+        // 2. Info text
+        document.getElementById('step-counter').innerText = `Step ${stepIdx + 1} / ${steps.length}`;
+        document.getElementById('step-title').innerText = currentStep.title || "Loading...";
+        
+        // Force animation restart on description
+        const descEl = document.getElementById('step-desc');
+        descEl.innerText = currentStep.desc || "...";
+        descEl.style.animation = 'none';
+        descEl.offsetHeight; // trigger reflow
+        descEl.style.animation = null; 
+        
+        document.getElementById('step-code').innerText = currentStep.code || "";
+
+        // 3. Render Input Grid
+        let gridHtml = '';
+        for (let r = 0; r < grid.length; r++) {
+            gridHtml += `<div class="flex gap-2">`;
+            for (let c = 0; c < grid[r].length; c++) {
+                const val = grid[r][c];
+                const isActive = containsCoord(currentStep.active, r, c);
+                const isInStack = mode === 'memoization' && containsCoord(currentStep.stack, r, c);
+                
+                let bg = "bg-white border-gray-200 text-gray-800";
+                let badge = "";
+
+                if (isActive) {
+                    bg = mode === 'tabulation' 
+                        ? "bg-blue-600 border-blue-700 text-white shadow-lg scale-110 z-10 ring-4 ring-blue-100" 
+                        : "bg-purple-600 border-purple-700 text-white shadow-lg scale-110 z-10 ring-4 ring-purple-100";
+                    
+                    const pingColor = mode === 'tabulation' ? 'bg-blue-400' : 'bg-purple-400';
+                    const dotColor = mode === 'tabulation' ? 'bg-blue-500' : 'bg-purple-500';
+                    badge = `<span class="absolute -top-2 -right-2 flex h-4 w-4">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${pingColor}"></span>
+                                <span class="relative inline-flex rounded-full h-4 w-4 ${dotColor}"></span>
+                             </span>`;
+                } else if (isInStack) {
+                    bg = "bg-purple-100 border-purple-300 text-purple-900";
+                }
+
+                gridHtml += `
+                    <div class="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-xl border-2 text-xl font-bold transition-all duration-300 relative ${bg}">
+                        ${val}
+                        ${badge}
+                    </div>
+                `;
+            }
+            gridHtml += `</div>`;
+        }
+        document.getElementById('grid-container').innerHTML = gridHtml;
+
+        let oobHtml = '';
+        if (mode === 'memoization' && currentStep.isOutOfBounds && currentStep.active) {
+            oobHtml = `
+                <div class="mt-4 p-2 bg-red-50 text-red-600 border border-red-200 rounded text-sm text-center font-bold">
+                    [!] Out of Bounds at (${currentStep.active[0][0]}, ${currentStep.active[0][1]})
+                </div>`;
+        }
+        document.getElementById('oob-container').innerHTML = oobHtml;
+
+        // 4. Render State Structure (Memory / Cache)
+        const memHeader = document.getElementById('memory-header');
+        const memContainer = document.getElementById('memory-container');
+
+        if (mode === 'tabulation') {
+            memHeader.innerHTML = `<h3 class="text-sm font-bold uppercase text-blue-500 tracking-widest flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> Memory: sumArr[i][j]</h3>`;
+            
+            let dpHtml = '<div class="flex flex-col gap-2">';
+            if (currentStep.dp) {
+                for (let r = 0; r < currentStep.dp.length; r++) {
+                    dpHtml += `<div class="flex gap-2">`;
+                    for (let c = 0; c < currentStep.dp[r].length; c++) {
+                        const val = currentStep.dp[r][c];
+                        const isActive = containsCoord(currentStep.active, r, c);
+                        const isReading = containsCoord(currentStep.reading, r, c);
+                        const isCalculated = val !== null;
+                        
+                        let bg = "bg-gray-50 border-gray-100 text-transparent border-dashed"; 
+                        let tag = "";
+                        
+                        if (isActive) bg = "bg-blue-600 border-blue-700 text-white shadow-lg scale-110 z-10";
+                        else if (isReading) {
+                            bg = "bg-amber-100 border-amber-400 text-amber-900 shadow-sm ring-2 ring-amber-300 z-0";
+                            tag = `<span class="text-[10px] uppercase opacity-70 mb-[-4px]">Read</span>`;
+                        }
+                        else if (isCalculated) bg = "bg-blue-50 border-blue-200 text-blue-900";
+
+                        dpHtml += `
+                            <div class="w-14 h-14 md:w-16 md:h-16 flex flex-col items-center justify-center rounded-xl border-2 transition-all duration-300 ${bg}">
+                                ${tag}
+                                <span class="text-xl font-bold">${val !== null ? val : ''}</span>
+                            </div>
+                        `;
+                    }
+                    dpHtml += `</div>`;
+                }
+            }
+            dpHtml += '</div>';
+            memContainer.innerHTML = dpHtml;
+
+        } else {
+            memHeader.innerHTML = `<h3 class="text-sm font-bold uppercase text-purple-500 tracking-widest flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> Cache: Dictionary</h3>`;
+            
+            let dictHtml = `<div class="w-full max-w-sm flex-1 overflow-y-auto max-h-[250px] bg-gray-50 rounded-xl border border-gray-200 p-3 custom-scrollbar">`;
+            
+            if (currentStep.memo && Object.keys(currentStep.memo).length === 0) {
+                dictHtml += `<div class="text-gray-400 text-center mt-10 text-sm">Dictionary is empty. No overlapping subproblems solved yet.</div>`;
+            } else if (currentStep.memo) {
+                dictHtml += `<div class="flex flex-col gap-2">`;
+                for (const [key, val] of Object.entries(currentStep.memo)) {
+                    const parts = key.split(',');
+                    const r = parseInt(parts[0]);
+                    const c = parseInt(parts[1]);
+                    
+                    const isRecentlyRead = containsCoord(currentStep.reading, r, c);
+                    const isRecentlyAdded = containsCoord(currentStep.active, r, c) && !isRecentlyRead;
+
+                    let bg = "bg-white border-gray-200 text-gray-700";
+                    let icon = "";
+                    if (isRecentlyRead) { 
+                        bg = "bg-green-100 border-green-400 text-green-900 scale-105 shadow-sm"; 
+                        icon = "✨ HIT"; 
+                    } else if (isRecentlyAdded) { 
+                        bg = "bg-purple-100 border-purple-400 text-purple-900 scale-105 shadow-sm"; 
+                        icon = "💾 SAVED"; 
+                    }
+
+                    dictHtml += `
+                        <div class="flex justify-between items-center p-3 rounded-lg border transition-all duration-300 ${bg}">
+                            <span class="font-mono text-sm">Key: <span class="font-bold">(${key})</span></span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold opacity-70">${icon}</span>
+                                <span class="font-bold text-lg">Value: ${val}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                dictHtml += `</div>`;
+            }
+            dictHtml += `</div>`;
+            memContainer.innerHTML = dictHtml;
+        }
+
+        // 5. Render Call Stack
+        const csContainer = document.getElementById('callstack-container');
+        if (mode === 'memoization') {
+            csContainer.classList.remove('hidden');
+            let csHtml = `<div class="text-xs text-gray-400 font-medium whitespace-nowrap">Bottom</div>`;
+            
+            if (currentStep.stack && currentStep.stack.length === 0) {
+                csHtml += `<div class="text-sm text-gray-400 italic bg-gray-50 px-3 py-1 rounded border border-dashed">Stack is empty</div>`;
+            } else if (currentStep.stack) {
+                for (let i = 0; i < currentStep.stack.length; i++) {
+                    const frame = currentStep.stack[i];
+                    csHtml += `
+                        <div class="flex items-center gap-2">
+                            <div class="px-3 py-1.5 bg-purple-600 text-white rounded text-sm font-mono shadow-sm animate-fade-in-up">
+                                Recursive(${frame[0]}, ${frame[1]})
+                            </div>
+                            ${i < currentStep.stack.length - 1 ? '<span class="text-gray-300">→</span>' : ''}
+                        </div>
+                    `;
+                }
+                csHtml += `<div class="text-xs text-purple-500 font-bold whitespace-nowrap ml-2 animate-pulse">← Top (Active)</div>`;
+            }
+            document.getElementById('callstack-items').innerHTML = csHtml;
+        } else {
+            csContainer.classList.add('hidden');
+        }
+
+        // Initialize any new Lucide icons injected via innerHTML
+        lucide.createIcons();
+    }
+
+    // --- Keyboard Navigation ---
+    document.addEventListener('keydown', (e) => {
+        // Prevent firing if user is typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch(e.key) {
+            case 'ArrowRight':
+                nextStep();
+                break;
+            case 'ArrowLeft':
+                prevStep();
+                break;
+            case ' ':
+                e.preventDefault(); // Prevent page from scrolling down when pressing space
+                togglePlay();
+                break;
+            case 'm':
+            case 'M':
+                setMode(mode === 'tabulation' ? 'memoization' : 'tabulation');
+                break;
+            case 'r':
+            case 'R':
+                randomizeGrid();
+                break;
+            case 't':
+            case 'T':
+                toggleTheory();
+                break;
+        }
+    });
+
+    // Startup
+    lucide.createIcons();
+    initializeData();
+
+</script>
+</body>
+</html>
