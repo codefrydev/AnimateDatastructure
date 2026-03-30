@@ -263,11 +263,28 @@
             }
         }
 
+        // --- NEW: Reconstruct the Final Path ---
+        const finalPath = [[m - 1, n - 1]];
+        let currR = m - 1;
+        let currC = n - 1;
+        while (currR > 0 || currC > 0) {
+            if (currR === 0) {
+                currC--;
+            } else if (currC === 0) {
+                currR--;
+            } else {
+                // Pick the smaller path we came from
+                if (dp[currR - 1][currC] < dp[currR][currC - 1]) currR--;
+                else currC--;
+            }
+            finalPath.push([currR, currC]);
+        }
+
         newSteps.push({
-            title: "6. Final Answer",
-            desc: `We have evaluated every cell left-to-right, top-to-bottom. The bottom-right corner now holds the absolute minimum cost to reach the end: ${dp[m-1][n-1]}.`,
+            title: "6. Final Answer & Optimal Path",
+            desc: `The absolute minimum cost is ${dp[m-1][n-1]}. We can trace backwards through our sumArr to reveal the actual optimal path!`,
             code: `return sumArr[${m-1},${n-1}];`,
-            dp: clone2D(dp), active: [[m - 1, n - 1]], reading: []
+            dp: clone2D(dp), active: [], reading: [], finalPath: finalPath
         });
 
         return newSteps;
@@ -356,11 +373,31 @@
         };
 
         recursive(0, 0);
+
+        // --- NEW: Reconstruct the Final Path ---
+        const finalPath = [[0, 0]];
+        let currR = 0;
+        let currC = 0;
+        while (currR < m - 1 || currC < n - 1) {
+            if (currR === m - 1) {
+                currC++;
+            } else if (currC === n - 1) {
+                currR++;
+            } else {
+                // Pick the neighbor that reported the smaller minimum path to the end
+                const rightCost = dict[`${currR},${currC + 1}`];
+                const downCost = dict[`${currR + 1},${currC}`];
+                if (rightCost < downCost) currC++;
+                else currR++;
+            }
+            finalPath.push([currR, currC]);
+        }
+
         newSteps.push({
             title: "8. Execution Complete",
-            desc: `The massive tree of recursive calls has fully resolved back to the start. The minimum path sum from (0,0) is ${dict['0,0']}.`,
+            desc: `The recursion has fully resolved. Minimum path sum is ${dict['0,0']}. By following the smallest cached values, we can trace the exact path!`,
             code: `return Recursive(grid, 0, 0, new Dictionary...);`,
-            memo: { ...dict }, active: [[0, 0]], stack: [], reading: []
+            memo: { ...dict }, active: [], stack: [], reading: [], finalPath: finalPath
         });
 
         return newSteps;
@@ -497,11 +534,15 @@
                 const val = grid[r][c];
                 const isActive = containsCoord(currentStep.active, r, c);
                 const isInStack = mode === 'memoization' && containsCoord(currentStep.stack, r, c);
+                const isFinalPath = containsCoord(currentStep.finalPath, r, c);
                 
                 let bg = "bg-white border-gray-200 text-gray-800";
                 let badge = "";
 
-                if (isActive) {
+                if (isFinalPath) {
+                    bg = "bg-emerald-500 border-emerald-600 text-white shadow-xl scale-110 z-20 ring-4 ring-emerald-200 animate-fade-in-up";
+                    badge = `<span class="absolute -top-2 -right-2 flex h-5 w-5 bg-yellow-400 rounded-full border-2 border-white items-center justify-center text-[10px] shadow-sm">✨</span>`;
+                } else if (isActive) {
                     bg = mode === 'tabulation' 
                         ? "bg-blue-600 border-blue-700 text-white shadow-lg scale-110 z-10 ring-4 ring-blue-100" 
                         : "bg-purple-600 border-purple-700 text-white shadow-lg scale-110 z-10 ring-4 ring-purple-100";
@@ -552,11 +593,14 @@
                         const isActive = containsCoord(currentStep.active, r, c);
                         const isReading = containsCoord(currentStep.reading, r, c);
                         const isCalculated = val !== null;
+                        const isFinalPath = containsCoord(currentStep.finalPath, r, c);
                         
                         let bg = "bg-gray-50 border-gray-100 text-transparent border-dashed"; 
                         let tag = "";
                         
-                        if (isActive) bg = "bg-blue-600 border-blue-700 text-white shadow-lg scale-110 z-10";
+                        if (isFinalPath) {
+                            bg = "bg-emerald-100 border-emerald-500 text-emerald-900 shadow-md scale-105 z-10 ring-2 ring-emerald-300";
+                        } else if (isActive) bg = "bg-blue-600 border-blue-700 text-white shadow-lg scale-110 z-10";
                         else if (isReading) {
                             bg = "bg-amber-100 border-amber-400 text-amber-900 shadow-sm ring-2 ring-amber-300 z-0";
                             tag = `<span class="text-[10px] uppercase opacity-70 mb-[-4px]">Read</span>`;
@@ -592,12 +636,16 @@
                     
                     const isRecentlyRead = containsCoord(currentStep.reading, r, c);
                     const isRecentlyAdded = containsCoord(currentStep.active, r, c) && !isRecentlyRead;
+                    const isFinalPath = containsCoord(currentStep.finalPath, r, c);
 
                     let bg = "bg-white border-gray-200 text-gray-700";
                     let icon = "";
-                    if (isRecentlyRead) { 
+                    if (isFinalPath) {
+                        bg = "bg-emerald-100 border-emerald-500 text-emerald-900 shadow-md scale-105 border-2";
+                        icon = "✨ PATH";
+                    } else if (isRecentlyRead) { 
                         bg = "bg-green-100 border-green-400 text-green-900 scale-105 shadow-sm"; 
-                        icon = "✨ HIT"; 
+                        icon = "⚡ HIT"; 
                     } else if (isRecentlyAdded) { 
                         bg = "bg-purple-100 border-purple-400 text-purple-900 scale-105 shadow-sm"; 
                         icon = "💾 SAVED"; 
