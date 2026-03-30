@@ -172,6 +172,19 @@
           "ProblemNumber": 2946
         },
         {
+          "Title": "Minimum Path Sum",
+          "Path": "Matrix/minimum-path-sum.html",
+          "ProblemUri": "https://leetcode.com/problems/minimum-path-sum",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Array",
+            "Dynamic",
+            "Programming",
+            "Matrix"
+          ],
+          "ProblemNumber": 64
+        },
+        {
           "Title": "Number of Islands",
           "Path": "Matrix/number-of-islands.html",
           "ProblemUri": "https://leetcode.com/problems/number-of-islands/",
