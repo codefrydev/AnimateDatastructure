@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Collisions - Algorithm Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    },
+                    animation: {
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                        'pop-in': 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'float': 'float 3s ease-in-out infinite',
+                        'cylon': 'cylon 1.2s ease-in-out infinite alternate',
+                        'explode': 'explode 0.6s ease-out forwards',
+                        'glow-pulse': 'glowPulse 2s infinite',
+                        'laser-move': 'laserMove 3s linear infinite',
+                    },
+                    keyframes: {
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-2px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(4px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-6px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(6px, 0, 0)' }
+                        },
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.5) translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'scale(1) translateY(0)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        },
+                        cylon: {
+                            '0%, 5%': { left: '0%', transform: 'translateX(0)' },
+                            '95%, 100%': { left: '100%', transform: 'translateX(-100%)' }
+                        },
+                        explode: {
+                            '0%': { transform: 'scale(0.5) rotate(-15deg)', opacity: '1', filter: 'brightness(2)' },
+                            '50%': { transform: 'scale(1.8) rotate(10deg)', opacity: '0.9', filter: 'brightness(1)' },
+                            '100%': { transform: 'scale(2.2) rotate(20deg)', opacity: '0', filter: 'brightness(0.5)' }
+                        },
+                        glowPulse: {
+                            '0%, 100%': { opacity: '0.6' },
+                            '50%': { opacity: '1', filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.8))' }
+                        },
+                        laserMove: {
+                            '0%': { backgroundPosition: '200% center' },
+                            '100%': { backgroundPosition: '-200% center' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Cyberpunk Grid Background */
+        body {
+            background-color: #020617;
+            background-image: 
+                linear-gradient(to right, rgba(30, 41, 59, 0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(30, 41, 59, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center top;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; border: 1px solid #0f172a; }
+        ::-webkit-scrollbar-thumb:hover { background: #4f46e5; box-shadow: 0 0 10px #4f46e5; }
+
+        .robot-card {
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .zone-container {
+            min-height: 140px;
+            position: relative;
+        }
+
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            left: 23px;
+            top: 40px;
+            bottom: -20px;
+            width: 2px;
+            background: linear-gradient(to bottom, #4f46e5, rgba(79, 70, 229, 0.2));
+            z-index: 0;
+        }
+        .timeline-item:last-child .timeline-line::before {
+            display: none;
+        }
+    </style>
+</head>
+<body class="text-slate-300 font-sans antialiased overflow-x-hidden relative">
+
+    <!-- Glowing Background Orbs -->
+    <div class="fixed top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-indigo-900/20 blur-[120px] pointer-events-none -z-10"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-900/20 blur-[120px] pointer-events-none -z-10"></div>
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-indigo-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3 group cursor-pointer">
+                    <div class="bg-indigo-500/10 p-2 rounded-lg border border-indigo-500/50 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white group-hover:shadow-[0_0_15px_rgba(99,102,241,0.6)] transition-all duration-300">
+                        <i class="fa-solid fa-robot text-xl animate-glow-pulse"></i>
+                    </div>
+                    <span class="font-black text-xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400 tracking-tight">Robot Collisions <span class="text-[10px] uppercase tracking-widest bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 px-2 py-1 rounded ml-2 align-middle">LC 2751</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="flex items-baseline space-x-2">
+                        <a href="#problem" class="hover:text-white hover:bg-slate-800/50 px-3 py-2 rounded-md text-sm font-medium transition-colors"><i class="fa-solid fa-book text-slate-500 mr-1"></i> Problem</a>
+                        <a href="#thinking" class="hover:text-white hover:bg-slate-800/50 px-3 py-2 rounded-md text-sm font-medium transition-colors"><i class="fa-solid fa-brain text-slate-500 mr-1"></i> Logic</a>
+                        <a href="#visualizer" class="bg-indigo-600/90 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-[0_0_15px_rgba(79,70,229,0.4)] hover:shadow-[0_0_25px_rgba(79,70,229,0.7)] border border-indigo-400/50 ml-4"><i class="fa-solid fa-play mr-2"></i> Launch Visualizer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-24">
+        
+        <!-- Error Toast -->
+        <div id="errorToast" class="fixed top-24 right-4 bg-red-950/90 backdrop-blur-md border border-red-500 text-white px-6 py-4 rounded-xl shadow-[0_0_30px_rgba(239,68,68,0.4)] z-50 transform transition-transform translate-x-full duration-300 flex items-center gap-4 hidden">
+            <div class="bg-red-500/20 p-2 rounded-full text-red-400">
+                <i class="fa-solid fa-triangle-exclamation text-xl animate-pulse"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-red-200">System Alert</h4>
+                <p id="errorMessage" class="text-sm text-red-300/80">Invalid coordinates detected.</p>
+            </div>
+            <button onclick="hideError()" class="ml-4 text-red-400 hover:text-white bg-red-900/50 hover:bg-red-800 p-2 rounded-lg transition-colors"><i class="fa-solid fa-times"></i></button>
+        </div>
+
+        <!-- Section: Problem Statement -->
+        <section id="problem" class="scroll-mt-24">
+            <div class="bg-slate-900/60 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+                <div class="bg-gradient-to-r from-slate-850 to-slate-900 px-8 py-5 border-b border-slate-800/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/50">
+                            <i class="fa-solid fa-satellite-dish text-blue-400 text-sm"></i>
+                        </div>
+                        <h2 class="text-xl font-black text-white tracking-wide">Mission Briefing</h2>
+                    </div>
+                </div>
+                
+                <div class="p-8 space-y-8">
+                    <p class="text-lg text-slate-300 leading-relaxed max-w-4xl">
+                        You command <code class="bg-indigo-900/40 text-indigo-300 px-2 py-1 rounded-md font-mono text-sm border border-indigo-500/20">n</code> drones deployed on a 1D coordinate line. Each drone is programmed with a <strong class="text-white">starting position</strong>, a specific <strong class="text-white">health (HP) level</strong>, and a <strong class="text-white">trajectory</strong> ('L' for Left, 'R' for Right). All drones fire their thrusters simultaneously at matching speeds.
+                    </p>
+
+                    <div class="mt-8">
+                        <h3 class="text-sm font-black uppercase text-slate-500 tracking-widest mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs text-indigo-500"></i> Collision Protocols
+                        </h3>
+                        
+                        <!-- Visual Rule Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            <!-- Rule 1: Weaker destroyed -->
+                            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 hover:bg-slate-800/60 hover:border-indigo-500/50 transition-all group relative overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <h4 class="font-bold text-white mb-4 text-sm"><span class="text-indigo-400">Rule Alpha:</span> Survival of the Fittest</h4>
+                                <p class="text-xs text-slate-400 mb-4 h-8">The weaker robot is obliterated. The victor loses exactly 1 HP.</p>
+                                
+                                <div class="flex items-center justify-center gap-2 bg-slate-900/80 p-3 rounded-lg border border-slate-700">
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-blue-600 w-8 h-8 rounded-md flex items-center justify-center font-bold text-white shadow-[0_0_10px_blue] border border-blue-400">10</div>
+                                        <i class="fa-solid fa-arrow-right text-blue-400 mt-1 text-xs"></i>
+                                    </div>
+                                    <span class="text-xl mx-1 filter drop-shadow-[0_0_5px_red] group-hover:scale-125 transition-transform">💥</span>
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-red-600 w-8 h-8 rounded-md flex items-center justify-center font-bold text-white opacity-60 border border-red-400 border-dashed">4</div>
+                                        <i class="fa-solid fa-arrow-left text-red-400 mt-1 text-xs opacity-60"></i>
+                                    </div>
+                                    <i class="fa-solid fa-angles-right text-slate-600 mx-2"></i>
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-blue-600 w-8 h-8 rounded-md flex items-center justify-center font-bold text-green-300 shadow-[0_0_15px_rgba(59,130,246,0.5)] border border-green-400 relative">
+                                            9
+                                            <span class="absolute -top-2 -right-2 text-[8px] text-red-400 font-black">-1</span>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right text-blue-400 mt-1 text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Rule 2: Mutual Destruction -->
+                            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 hover:bg-slate-800/60 hover:border-yellow-500/50 transition-all group relative overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <h4 class="font-bold text-white mb-4 text-sm"><span class="text-yellow-400">Rule Beta:</span> Mutual Destruction</h4>
+                                <p class="text-xs text-slate-400 mb-4 h-8">If HP levels match perfectly, the impact destroys both units instantly.</p>
+                                
+                                <div class="flex items-center justify-center gap-2 bg-slate-900/80 p-3 rounded-lg border border-slate-700">
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-blue-600 w-8 h-8 rounded-md flex items-center justify-center font-bold text-white border border-blue-400">7</div>
+                                        <i class="fa-solid fa-arrow-right text-blue-400 mt-1 text-xs"></i>
+                                    </div>
+                                    <span class="text-xl mx-1 filter drop-shadow-[0_0_5px_red] group-hover:scale-125 transition-transform">💥</span>
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-red-600 w-8 h-8 rounded-md flex items-center justify-center font-bold text-white border border-red-400">7</div>
+                                        <i class="fa-solid fa-arrow-left text-red-400 mt-1 text-xs"></i>
+                                    </div>
+                                    <i class="fa-solid fa-angles-right text-slate-600 mx-2"></i>
+                                    <div class="text-2xl opacity-50 grayscale group-hover:animate-pulse">
+                                        💨
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Objective -->
+                            <div class="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-5 hover:bg-indigo-900/40 transition-all flex flex-col justify-center relative overflow-hidden">
+                                <div class="absolute -right-4 -bottom-4 text-6xl text-indigo-500/10"><i class="fa-solid fa-flag-checkered"></i></div>
+                                <h4 class="font-bold text-indigo-300 mb-2 text-sm flex items-center gap-2"><i class="fa-solid fa-bullseye"></i> Primary Objective</h4>
+                                <p class="text-sm text-indigo-100/80 leading-relaxed">
+                                    Compute the final battlefield state. Return an array of the surviving robots' HP <strong class="text-white border-b border-indigo-400 border-dashed">in the exact sequence they were originally provided</strong> in the input data.
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Thinking Process -->
+        <section id="thinking" class="scroll-mt-24">
+            <h2 class="text-2xl font-black text-white mb-8 flex items-center gap-3">
+                <i class="fa-solid fa-microchip text-teal-400"></i> Architectural Logic
+            </h2>
+            
+            <div class="bg-slate-900/40 backdrop-blur-sm border border-slate-800 rounded-2xl p-8 shadow-xl">
+                <div class="relative space-y-12 pl-2">
+                    
+                    <!-- Step 1 -->
+                    <div class="relative timeline-item flex gap-6">
+                        <div class="timeline-line absolute left-0 top-0 w-12 h-full flex justify-center z-10 pointer-events-none">
+                            <div class="w-12 h-12 rounded-full bg-slate-900 border-2 border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.3)] flex items-center justify-center text-teal-400 font-black text-xl z-20">1</div>
+                        </div>
+                        <div class="pl-16 w-full">
+                            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">Spatial Sorting <span class="bg-teal-900/50 text-teal-300 text-[10px] uppercase px-2 py-0.5 rounded border border-teal-500/30">Crucial</span></h3>
+                            <p class="text-slate-400 leading-relaxed mb-4">
+                                Time flows sequentially across space. Because our input arrays are unsorted, evaluating them as-is is impossible. We must aggregate each robot's `(id, position, health, direction)` into a data packet, and <strong class="text-white">sort them ascending by position</strong> (Left to Right).
+                            </p>
+                            <div class="bg-slate-950 rounded-lg p-3 border border-slate-800 font-mono text-xs text-slate-500 flex gap-4 overflow-x-auto">
+                                <div class="opacity-50 line-through">Input: [P:5, P:2, P:8]</div>
+                                <i class="fa-solid fa-arrow-right text-teal-500"></i>
+                                <div class="text-teal-200">Sorted Line: [P:2] → [P:5] → [P:8]</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative timeline-item flex gap-6">
+                        <div class="timeline-line absolute left-0 top-0 w-12 h-full flex justify-center z-10 pointer-events-none">
+                            <div class="w-12 h-12 rounded-full bg-slate-900 border-2 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center text-blue-400 font-black text-xl z-20">2</div>
+                        </div>
+                        <div class="pl-16 w-full">
+                            <h3 class="text-xl font-bold text-white mb-2">The Stack Mechanism (LIFO)</h3>
+                            <p class="text-slate-400 leading-relaxed">
+                                As we scan from left to right:
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div class="bg-blue-900/10 border border-blue-500/20 rounded-lg p-3">
+                                    <div class="font-bold text-blue-400 mb-1"><i class="fa-solid fa-arrow-right mr-1"></i> Right-Movers ('R')</div>
+                                    <p class="text-sm text-slate-400">Pushed to a <strong class="text-white">Stack</strong>. They fly to the right, waiting in limbo to see if they crash into a Left-mover later down the line.</p>
+                                </div>
+                                <div class="bg-red-900/10 border border-red-500/20 rounded-lg p-3">
+                                    <div class="font-bold text-red-400 mb-1"><i class="fa-solid fa-arrow-left mr-1"></i> Left-Movers ('L')</div>
+                                    <p class="text-sm text-slate-400">Instantly trigger collisions. They smash into the <strong class="text-white border-b border-red-500/50">most recent</strong> Right-mover (the Top of the Stack).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative timeline-item flex gap-6">
+                        <div class="timeline-line absolute left-0 top-0 w-12 h-full flex justify-center z-10 pointer-events-none">
+                            <div class="w-12 h-12 rounded-full bg-slate-900 border-2 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.3)] flex items-center justify-center text-indigo-400 font-black text-xl z-20">3</div>
+                        </div>
+                        <div class="pl-16 w-full">
+                            <h3 class="text-xl font-bold text-white mb-3">Reassembling the Output</h3>
+                            <p class="text-slate-400 leading-relaxed">
+                                Once the dust settles, the Stack holds the sole survivors. However, the mission requires HP values ordered by their <em class="text-indigo-300">original input ID</em>. We simply sort the remaining stack contents by `id` and map out the health values. Mission accomplished.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Visualizer -->
+        <section id="visualizer" class="scroll-mt-24">
+            <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col relative z-10">
+                
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-indigo-900 via-blue-900 to-indigo-900 px-6 py-4 flex items-center justify-between border-b border-indigo-500/50 shadow-lg relative overflow-hidden">
+                    <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50"></div>
+                    <div class="flex items-center gap-3 relative z-10">
+                        <div class="relative flex h-3 w-3 mr-1">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </div>
+                        <h2 class="text-lg font-black text-white uppercase tracking-widest text-shadow-sm">Live Simulator</h2>
+                    </div>
+                </div>
+
+                <!-- Setup Panel -->
+                <div class="p-6 bg-slate-850/80 border-b border-slate-800 flex flex-col xl:flex-row gap-8 justify-between relative">
+                    
+                    <div class="flex-1 space-y-5">
+                        <h3 class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <i class="fa-solid fa-terminal"></i> Terminal Input
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div class="group">
+                                <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 group-focus-within:text-indigo-400 transition-colors">Positions</label>
+                                <input type="text" id="inPos" class="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner" placeholder="1,2,3">
+                            </div>
+                            <div class="group">
+                                <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 group-focus-within:text-indigo-400 transition-colors">Healths</label>
+                                <input type="text" id="inHealth" class="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner" placeholder="10,15,20">
+                            </div>
+                            <div class="group">
+                                <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 group-focus-within:text-indigo-400 transition-colors">Directions (L/R)</label>
+                                <input type="text" id="inDir" class="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner uppercase" placeholder="RLR">
+                            </div>
+                        </div>
+                        <button onclick="startCustom()" class="bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500 text-indigo-300 hover:text-white px-6 py-2.5 rounded-lg shadow-[0_0_10px_rgba(79,70,229,0.2)] hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all text-sm font-bold tracking-wide w-full md:w-auto group">
+                            <i class="fa-solid fa-satellite-dish mr-2 group-hover:animate-pulse"></i> Initialize Sequence
+                        </button>
+                    </div>
+                    
+                    <div class="w-full xl:w-px bg-slate-800 hidden xl:block"></div>
+                    
+                    <div class="xl:w-[350px]">
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Quick Deploy Datasets</h3>
+                        <div class="flex flex-col gap-2.5">
+                            <button onclick="loadExample(1)" class="text-left px-4 py-3 bg-slate-900/50 hover:bg-indigo-900/30 hover:border-indigo-500/50 border border-slate-700/50 rounded-lg transition-all text-sm flex justify-between items-center group relative overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent w-0 group-hover:w-full transition-all duration-300 ease-out"></div>
+                                <span class="relative z-10 font-medium text-slate-300 group-hover:text-white">Same Direction</span>
+                                <div class="flex gap-1 relative z-10">
+                                    <span class="bg-blue-600/80 border border-blue-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_blue]">R</span>
+                                    <span class="bg-blue-600/80 border border-blue-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_blue]">R</span>
+                                    <span class="bg-blue-600/80 border border-blue-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_blue]">R</span>
+                                </div>
+                            </button>
+                            <button onclick="loadExample(2)" class="text-left px-4 py-3 bg-slate-900/50 hover:bg-indigo-900/30 hover:border-indigo-500/50 border border-slate-700/50 rounded-lg transition-all text-sm flex justify-between items-center group relative overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent w-0 group-hover:w-full transition-all duration-300 ease-out"></div>
+                                <span class="relative z-10 font-medium text-slate-300 group-hover:text-white">Chain Collisions</span>
+                                <div class="flex gap-1 relative z-10">
+                                    <span class="bg-blue-600/80 border border-blue-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_blue]">R</span>
+                                    <span class="bg-red-600/80 border border-red-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_red]">L</span>
+                                    <span class="bg-blue-600/80 border border-blue-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_blue]">R</span>
+                                </div>
+                            </button>
+                            <button onclick="loadExample(3)" class="text-left px-4 py-3 bg-slate-900/50 hover:bg-indigo-900/30 hover:border-indigo-500/50 border border-slate-700/50 rounded-lg transition-all text-sm flex justify-between items-center group relative overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent w-0 group-hover:w-full transition-all duration-300 ease-out"></div>
+                                <span class="relative z-10 font-medium text-slate-300 group-hover:text-white">Mutual Destruction</span>
+                                <div class="flex gap-1 relative z-10">
+                                    <span class="bg-blue-600/80 border border-blue-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_blue]">R</span>
+                                    <span class="bg-red-600/80 border border-red-400 text-white text-[10px] px-1.5 py-0.5 rounded shadow-[0_0_5px_red]">L</span>
+                                    <span class="text-[10px] px-1 opacity-50">💥</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualizer Main Area -->
+                <div class="p-8 bg-[#050B14] relative min-h-[550px] flex flex-col justify-between overflow-hidden" id="visArena">
+                    
+                    <!-- Background aesthetic grid inside arena -->
+                    <div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(90deg, #1e293b 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+                    <!-- Top Zone: The Stack -->
+                    <div class="mb-4 relative z-10">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-blue-400 flex items-center gap-2 tracking-wide"><i class="fa-solid fa-database text-sm"></i> Secure Stack Buffer</h3>
+                            <span class="text-[10px] uppercase font-bold bg-blue-900/30 text-blue-300 px-2 py-1 rounded border border-blue-500/20 shadow-inner">Safe Zone (LIFO)</span>
+                        </div>
+                        <div id="uiStack" class="zone-container bg-blue-950/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-5 flex flex-wrap gap-5 items-center min-h-[160px] shadow-[inset_0_0_30px_rgba(59,130,246,0.1)]">
+                            <div class="w-full text-center text-blue-500/50 text-sm font-mono italic" id="uiStackEmpty">Buffer Empty_</div>
+                        </div>
+                    </div>
+
+                    <!-- Middle Zone: Arena (Collisions happen here) -->
+                    <div class="my-4 relative py-12">
+                        <!-- Laser Track -->
+                        <div class="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_15px_rgba(99,102,241,0.8)] opacity-70">
+                            <!-- Moving light particle on track -->
+                            <div class="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)] w-[100px] animate-[laser-move_2s_linear_infinite]"></div>
+                        </div>
+                        
+                        <h3 class="absolute top-0 left-2 text-[10px] font-black text-indigo-400/50 uppercase tracking-[0.3em]">Collision Coordinate</h3>
+                        
+                        <div id="uiArena" class="relative z-10 flex justify-center items-center gap-12 min-h-[140px]">
+                            <!-- Arena items injected here -->
+                            <div class="text-slate-600 font-mono text-sm italic bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800" id="uiArenaEmpty">Awaiting Entities...</div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Zone: Upcoming (Sorted Line) -->
+                    <div class="mt-4 relative z-10">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-teal-400 flex items-center gap-2 tracking-wide"><i class="fa-solid fa-satellite text-sm"></i> Incoming Entities</h3>
+                            <span class="text-[10px] uppercase font-bold bg-teal-900/30 text-teal-300 px-2 py-1 rounded border border-teal-500/20">Sorted Sequence</span>
+                        </div>
+                        <div id="uiUpcoming" class="zone-container bg-teal-950/10 backdrop-blur-sm border border-teal-500/20 rounded-xl p-5 flex overflow-x-auto gap-5 items-center min-h-[160px] shadow-[inset_0_0_30px_rgba(20,184,166,0.05)] pb-6 custom-scroll">
+                            <!-- Upcoming items injected here -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Controls & Status -->
+                <div class="border-t border-slate-800 bg-slate-900 relative z-20">
+                    <!-- Progress Bar -->
+                    <div class="h-1 w-full bg-slate-800 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-slate-900/50"></div>
+                        <div id="progressBar" class="h-full bg-gradient-to-r from-indigo-500 to-blue-400 transition-all duration-300 w-0 shadow-[0_0_10px_rgba(99,102,241,1)] relative z-10"></div>
+                    </div>
+                    
+                    <div class="p-5 flex flex-col md:flex-row items-center justify-between gap-6">
+                        
+                        <!-- Log Message -->
+                        <div class="flex-1 w-full bg-[#0B1120] rounded-xl p-4 border border-slate-700/50 shadow-inner min-h-[70px] flex items-center relative overflow-hidden group">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_indigo]"></div>
+                            <p id="uiLog" class="text-sm font-medium text-slate-200 break-words w-full px-2">
+                                System Standby. Awaiting initialization command.
+                            </p>
+                        </div>
+
+                        <!-- Player Controls -->
+                        <div class="flex items-center gap-5 shrink-0 bg-slate-850 p-2 rounded-xl border border-slate-700/50 shadow-lg">
+                            <div class="text-xs font-mono text-indigo-300 font-bold w-14 text-center tracking-widest bg-slate-900 py-1.5 px-2 rounded-lg border border-slate-700/50 shadow-inner">
+                                <span id="stepCounter">0/0</span>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="stepPrev()" class="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-indigo-900 hover:text-indigo-300 border border-slate-700 hover:border-indigo-500/50 rounded-lg text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed group" id="btnPrev">
+                                    <i class="fa-solid fa-step-backward group-hover:-translate-x-0.5 transition-transform"></i>
+                                </button>
+                                <button onclick="togglePlay()" class="w-12 h-10 flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.4)] transition-all border border-indigo-400/50" id="btnPlay">
+                                    <i class="fa-solid fa-play" id="iconPlay"></i>
+                                </button>
+                                <button onclick="stepNext()" class="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-indigo-900 hover:text-indigo-300 border border-slate-700 hover:border-indigo-500/50 rounded-lg text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed group" id="btnNext">
+                                    <i class="fa-solid fa-step-forward group-hover:translate-x-0.5 transition-transform"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="w-px h-8 bg-slate-700"></div>
+
+                            <button onclick="resetSim()" class="w-10 h-10 flex items-center justify-center bg-slate-900 hover:bg-red-900/40 text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-500/50 rounded-lg transition-all" title="Reset Simulation">
+                                <i class="fa-solid fa-power-off"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Keyboard Navigation Hints -->
+                    <div class="px-6 pb-4 flex justify-end gap-5 text-[10px] font-mono text-slate-500 uppercase tracking-wider relative z-20">
+                        <span class="flex items-center"><kbd class="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 shadow-sm mr-2 font-bold">Space</kbd> Play / Pause</span>
+                        <span class="flex items-center"><kbd class="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 shadow-sm mr-1 font-bold">←</kbd> <kbd class="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 shadow-sm mr-2 font-bold">→</kbd> Step Frames</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        
+        <!-- Footer Spacer -->
+        <div class="h-16"></div>
+    </main>
+
+    <script>
+        // --- Examples Data ---
+        const examples = {
+            1: { pos: "5,4,3,2,1", hp: "2,17,9,15,10", dir: "RRRRR" },
+            2: { pos: "3,5,2,6", hp: "10,10,15,12", dir: "RLRL" },
+            3: { pos: "1,2,5,6", hp: "10,10,11,11", dir: "RLRL" }
+        };
+
+        // --- State Management ---
+        let simFrames = [];
+        let currentFrameIndex = 0;
+        let isPlaying = false;
+        let playInterval = null;
+
+        // DOM Elements
+        const elInPos = document.getElementById('inPos');
+        const elInHp = document.getElementById('inHealth');
+        const elInDir = document.getElementById('inDir');
+        
+        const uiStack = document.getElementById('uiStack');
+        const uiStackEmpty = document.getElementById('uiStackEmpty');
+        const uiArena = document.getElementById('uiArena');
+        const uiArenaEmpty = document.getElementById('uiArenaEmpty');
+        const uiUpcoming = document.getElementById('uiUpcoming');
+        
+        const uiLog = document.getElementById('uiLog');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const iconPlay = document.getElementById('iconPlay');
+        const progressBar = document.getElementById('progressBar');
+        const stepCounter = document.getElementById('stepCounter');
+        
+        const errToast = document.getElementById('errorToast');
+        const errMsg = document.getElementById('errorMessage');
+
+        // --- Utility Functions ---
+        function showError(msg) {
+            errMsg.textContent = msg;
+            errToast.classList.remove('hidden', 'translate-x-full');
+            setTimeout(hideError, 5000);
+        }
+
+        function hideError() {
+            errToast.classList.add('translate-x-full');
+            setTimeout(() => { errToast.classList.add('hidden'); }, 300);
+        }
+
+        function loadExample(num) {
+            elInPos.value = examples[num].pos;
+            elInHp.value = examples[num].hp;
+            elInDir.value = examples[num].dir;
+            startCustom();
+        }
+
+        // --- Simulation Logic Core ---
+        function generateFrames(positions, healths, directions) {
+            let frames = [];
+            let n = positions.length;
+            let robots = [];
+            
+            for (let i = 0; i < n; i++) {
+                robots.push({ id: i + 1, p: positions[i], h: healths[i], d: directions[i], alive: true }); // ID 1-indexed for logic clarity visually
+            }
+
+            // Initial State clone helpers
+            let stack = [];
+            let upcoming = [...robots];
+            let arena = [];
+            
+            const createFrame = (msg, arenaState = [], collisionFx = false) => {
+                return {
+                    msg: msg,
+                    stack: JSON.parse(JSON.stringify(stack)),
+                    upcoming: JSON.parse(JSON.stringify(upcoming)),
+                    arena: JSON.parse(JSON.stringify(arenaState)),
+                    collisionFx: collisionFx
+                };
+            };
+
+            frames.push(createFrame("System Online. Initializing robot matrices."));
+
+            // Step 1: Sort by Position
+            upcoming.sort((a, b) => a.p - b.p);
+            frames.push(createFrame("Spatial Sort Complete: Robots aligned by Position (Left → Right)."));
+
+            // Step 2: Process Queue
+            while (upcoming.length > 0) {
+                let curr = upcoming.shift();
+                
+                frames.push(createFrame(`Deploying Unit [ID:${curr.id}] at Pos ${curr.p}. Trajectory: ${curr.d === 'R' ? 'RIGHT ➡️' : '⬅️ LEFT'}.`, [curr]));
+
+                if (curr.d === 'R') {
+                    stack.push(curr);
+                    frames.push(createFrame(`Unit [ID:${curr.id}] moving Right. Transferred to Safe Stack to await potential intercepts.`, []));
+                } else {
+                    // Moving Left -> Check Stack for 'R'
+                    let resolved = false;
+                    
+                    while (stack.length > 0 && stack[stack.length - 1].d === 'R' && curr.alive) {
+                        let top = stack.pop(); // pull top from stack to arena
+                        
+                        frames.push(createFrame(`⚠️ INTERCEPT DETECTED! Left-mover [ID:${curr.id}] meets Right-mover [ID:${top.id}].`, [top, curr], true));
+
+                        if (top.h > curr.h) {
+                            top.h -= 1;
+                            curr.alive = false;
+                            curr.h = 0;
+                            stack.push(top);
+                            frames.push(createFrame(`Right-mover [ID:${top.id}] SURVIVES! HP reduced to ${top.h}. Left-mover destroyed.`, []));
+                            resolved = true;
+                        } else if (top.h < curr.h) {
+                            curr.h -= 1;
+                            top.alive = false;
+                            top.h = 0;
+                            // Top is dead, loop continues to check next in stack
+                            frames.push(createFrame(`Left-mover [ID:${curr.id}] SURVIVES! HP reduced to ${curr.h}. Stack unit destroyed. Continuing Left trajectory.`, [curr]));
+                        } else {
+                            // Equal health
+                            curr.alive = false;
+                            curr.h = 0;
+                            top.alive = false;
+                            top.h = 0;
+                            frames.push(createFrame(`HP Parity achieved (${curr.h+1}). MUTUAL DESTRUCTION! Both units obliterated.`, []));
+                            resolved = true;
+                        }
+                    }
+
+                    if (curr.alive && !resolved) {
+                        stack.push(curr);
+                        frames.push(createFrame(`Left-mover [ID:${curr.id}] clear of obstacles. Entering Safe Stack.`, []));
+                    }
+                }
+            }
+
+            frames.push(createFrame("All sequences processed. Scanning for surviving units in Stack."));
+
+            // Final Step: Sort stack by original ID
+            let finalOutput = [...stack].sort((a, b) => a.id - b.id);
+            stack = finalOutput; // Swap stack visually to show final answer
+            
+            let healthArrStr = finalOutput.length > 0 ? "[" + finalOutput.map(r => r.h).join(', ') + "]" : "[]";
+            frames.push(createFrame(`Objective Complete. Surviving HP restored to Original ID order: <strong class="text-green-400 font-mono text-lg">${healthArrStr}</strong>`));
+
+            return frames;
+        }
+
+        function startCustom() {
+            pauseSim();
+            
+            const posStr = elInPos.value.trim();
+            const hpStr = elInHp.value.trim();
+            const dirStr = elInDir.value.trim().toUpperCase();
+
+            if (!posStr || !hpStr || !dirStr) {
+                showError("Missing parameters. All fields required.");
+                return;
+            }
+
+            const pos = posStr.split(',').map(s => parseInt(s.trim()));
+            const hp = hpStr.split(',').map(s => parseInt(s.trim()));
+            
+            if (pos.some(isNaN) || hp.some(isNaN)) {
+                showError("Data corruption: Positions and Healths must be valid integers.");
+                return;
+            }
+            if (pos.length !== hp.length || hp.length !== dirStr.length) {
+                showError(`Array mismatch! Pos(${pos.length}), HP(${hp.length}), Dir(${dirStr.length}) must align.`);
+                return;
+            }
+            if (!/^[LR]+$/.test(dirStr)) {
+                showError("Invalid trajectory code. Use only 'L' or 'R'.");
+                return;
+            }
+            if (new Set(pos).size !== pos.length) {
+                showError("Spatial violation: Positions must be strictly unique.");
+                return;
+            }
+            if (pos.length > 20) {
+                 showError("Buffer overflow. Max 20 units supported for visual rendering.");
+                 return;
+            }
+
+            try {
+                simFrames = generateFrames(pos, hp, dirStr);
+                currentFrameIndex = 0;
+                renderFrame();
+                
+                // Scroll to visualizer
+                document.getElementById('visualizer').scrollIntoView({ behavior: 'smooth' });
+            } catch (e) {
+                showError("Simulation fault: " + e.message);
+            }
+        }
+
+        // --- UI Rendering ---
+
+        function createRobotNode(robot, isArena = false, isDead = false) {
+            const isRight = robot.d === 'R';
+            
+            // Neon Cyberpunk colors
+            const aliveClasses = isRight 
+                ? 'bg-gradient-to-b from-blue-800 to-blue-950 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.6)]' 
+                : 'bg-gradient-to-b from-red-800 to-red-950 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.6)]';
+            
+            const deadClasses = 'bg-slate-900 border-slate-700 opacity-40 grayscale border-dashed shadow-none transform translate-y-4';
+            
+            const wrapperClass = `robot-card relative w-16 h-[6.5rem] rounded-xl border-2 flex flex-col items-center justify-between shrink-0 overflow-visible ${isDead ? deadClasses : aliveClasses} ${isArena && !isDead ? 'animate-float scale-110 z-20' : ''}`;
+            
+            // Cylon Visor logic
+            const visorColor = isRight ? 'bg-cyan-300 shadow-[0_0_10px_#67e8f9]' : 'bg-orange-400 shadow-[0_0_10px_#fb923c]';
+            const visorAnimation = isDead ? '' : 'animate-cylon';
+            
+            // Direction top tag
+            const dirIcon = isRight 
+                ? `<div class="absolute -top-6 right-0 text-blue-400 text-xs font-black drop-shadow-[0_0_5px_blue] ${!isDead && 'animate-pulse'}">R <i class="fa-solid fa-angles-right"></i></div>`
+                : `<div class="absolute -top-6 left-0 text-red-400 text-xs font-black drop-shadow-[0_0_5px_red] ${!isDead && 'animate-pulse'}"><i class="fa-solid fa-angles-left"></i> L</div>`;
+
+            return `
+                <div class="${wrapperClass}">
+                    ${dirIcon}
+
+                    <!-- ID Badge -->
+                    <div class="absolute -top-2 bg-slate-950 text-slate-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded border border-slate-600 shadow-md z-10">
+                        ID:${robot.id}
+                    </div>
+                    
+                    <!-- Cyber Visor -->
+                    <div class="w-10 h-2 mt-4 bg-black rounded-full overflow-hidden border border-slate-700 relative shadow-inner">
+                        <div class="absolute top-0 bottom-0 w-3 rounded-full ${visorColor} ${visorAnimation}"></div>
+                    </div>
+
+                    <!-- Health Display -->
+                    <div class="flex-1 flex items-center justify-center w-full">
+                        <span class="text-2xl font-black tracking-tighter text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${isDead ? 'line-through text-slate-500' : ''}">
+                            ${robot.h}
+                        </span>
+                    </div>
+                    
+                    <!-- Position Base Track -->
+                    <div class="w-full bg-black/60 py-1 text-center border-t border-white/10 flex items-center justify-center gap-1 rounded-b-[10px]">
+                        <i class="fa-solid fa-location-crosshairs text-[8px] ${isRight ? 'text-blue-400' : 'text-red-400'}"></i>
+                        <span class="text-[10px] font-mono font-bold text-white/90">P:${robot.p}</span>
+                    </div>
+
+                    <!-- Thruster Glow -->
+                    ${!isDead ? `<div class="absolute -bottom-2 w-10 h-2 bg-${isRight ? 'blue' : 'red'}-500/50 blur-[6px] rounded-full"></div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderFrame() {
+            if (!simFrames || simFrames.length === 0) return;
+
+            const frame = simFrames[currentFrameIndex];
+
+            // Render Message
+            uiLog.innerHTML = `<span class="inline-block animate-pop-in"><i class="fa-solid fa-terminal text-indigo-500 mr-2"></i>${frame.msg}</span>`;
+
+            // Update Controls
+            stepCounter.textContent = `${currentFrameIndex + 1}/${simFrames.length}`;
+            progressBar.style.width = `${((currentFrameIndex + 1) / simFrames.length) * 100}%`;
+            btnPrev.disabled = currentFrameIndex === 0;
+            btnNext.disabled = currentFrameIndex === simFrames.length - 1;
+
+            if (currentFrameIndex === simFrames.length - 1 && isPlaying) {
+                pauseSim();
+            }
+
+            // Render Stack
+            uiStack.innerHTML = '';
+            if (frame.stack.length === 0) {
+                uiStackEmpty.style.display = 'block';
+            } else {
+                uiStackEmpty.style.display = 'none';
+                frame.stack.forEach(r => {
+                    uiStack.innerHTML += createRobotNode(r);
+                });
+            }
+
+            // Render Arena
+            uiArena.innerHTML = '';
+            if (frame.arena.length === 0) {
+                uiArenaEmpty.style.display = 'block';
+            } else {
+                uiArenaEmpty.style.display = 'none';
+                
+                let arenaHTML = '';
+                if(frame.arena.length === 2) {
+                    // Collision View
+                    arenaHTML += createRobotNode(frame.arena[0], true);
+                    
+                    // Intense Explosion Effects
+                    const explosionFX = frame.collisionFx ? `
+                        <div class="absolute inset-0 bg-red-500/30 blur-2xl rounded-full animate-ping z-0"></div>
+                        <div class="text-6xl filter drop-shadow-[0_0_20px_rgba(239,68,68,1)] animate-explode origin-center relative z-20">💥</div>
+                        <div class="text-3xl absolute animate-ping z-10 mix-blend-screen text-yellow-300">✨</div>
+                    ` : '<div class="text-4xl">⚔️</div>';
+
+                    arenaHTML += `
+                        <div class="relative flex flex-col items-center justify-center px-4 w-24 h-24 ${frame.collisionFx ? 'animate-shake' : ''}">
+                            ${explosionFX}
+                        </div>
+                    `;
+                    arenaHTML += createRobotNode(frame.arena[1], true);
+                } else {
+                    // Single Processing View
+                    arenaHTML += createRobotNode(frame.arena[0], true);
+                }
+                uiArena.innerHTML = arenaHTML;
+            }
+
+            // Render Upcoming
+            uiUpcoming.innerHTML = '';
+            frame.upcoming.forEach(r => {
+                uiUpcoming.innerHTML += createRobotNode(r);
+            });
+        }
+
+        // --- Controls Logic ---
+        function stepNext() {
+            if (currentFrameIndex < simFrames.length - 1) {
+                currentFrameIndex++;
+                renderFrame();
+            }
+        }
+
+        function stepPrev() {
+            if (currentFrameIndex > 0) {
+                currentFrameIndex--;
+                renderFrame();
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                pauseSim();
+            } else {
+                if (currentFrameIndex >= simFrames.length - 1) {
+                    currentFrameIndex = 0; // Reset if at end
+                }
+                isPlaying = true;
+                iconPlay.classList.replace('fa-play', 'fa-pause');
+                btnPlay.classList.replace('bg-indigo-600', 'bg-amber-500');
+                btnPlay.classList.replace('hover:bg-indigo-500', 'hover:bg-amber-400');
+                btnPlay.classList.add('shadow-[0_0_20px_rgba(245,158,11,0.6)]');
+                
+                playInterval = setInterval(() => {
+                    if (currentFrameIndex < simFrames.length - 1) {
+                        stepNext();
+                    } else {
+                        pauseSim();
+                    }
+                }, 1500); // 1.5s delay to let animations breathe
+            }
+        }
+
+        function pauseSim() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            iconPlay.classList.replace('fa-pause', 'fa-play');
+            btnPlay.classList.replace('bg-amber-500', 'bg-indigo-600');
+            btnPlay.classList.replace('hover:bg-amber-400', 'hover:bg-indigo-500');
+            btnPlay.classList.remove('shadow-[0_0_20px_rgba(245,158,11,0.6)]');
+        }
+
+        function resetSim() {
+            pauseSim();
+            currentFrameIndex = 0;
+            renderFrame();
+        }
+
+        // --- Keyboard Navigation Support ---
+        document.addEventListener('keydown', (e) => {
+            // Ignore keypresses if the user is typing in the input fields
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                return;
+            }
+
+            switch(e.code) {
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (!btnNext.disabled) stepNext();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (!btnPrev.disabled) stepPrev();
+                    break;
+                case 'Space':
+                    e.preventDefault(); // Prevents page from scrolling down
+                    togglePlay();
+                    break;
+            }
+        });
+
+        // Init with Example 2 on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadExample(2);
+        });
+
+    </script>
+</body>
+</html>
