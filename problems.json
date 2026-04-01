@@ -255,6 +255,29 @@
           "ProblemNumber": 3
         }
       ]
+    },
+    {
+      "Name": "Stack",
+      "Problems": [
+        {
+          "Title": "Robot Collisions",
+          "Path": "Stack/robot-collisions.html",
+          "ProblemUri": "https://leetcode.com/problems/robot-collisions",
+          "Difficulty": "Hard",
+          "Topics": [
+            "Senior",
+            "Staff",
+            "Array",
+            "Stack",
+            "Sorting",
+            "Simulation",
+            "Weekly",
+            "Contest",
+            "351"
+          ],
+          "ProblemNumber": 2751
+        }
+      ]
     }
   ]
 }
