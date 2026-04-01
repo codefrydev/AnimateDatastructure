@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masterclass: Lexicographically Smallest Generated String</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .pulse-active { animation: pulseActive 1s infinite; }
+        @keyframes pulseActive { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
+
+        .shake-error { animation: shakeError 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shakeError { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        
+        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* Custom Scrollbar for logs */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-indigo-200 min-h-screen">
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
+        
+        <!-- Header / Masterclass Lesson Section -->
+        <header class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 fade-in">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">String Generation:</span> 
+                The "Last Available Exit"
+            </h1>
+            
+            <!-- NEW: The Problem & Thinking Process -->
+            <div class="space-y-8">
+                
+                <!-- What is the question asking? -->
+                <div class="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center">
+                        <span class="bg-slate-200 text-slate-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm">❓</span>
+                        What is the question asking?
+                    </h3>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        You are given a rule string <code>str1</code> (consisting of 'T' and 'F') of length <code class="font-bold">N</code>, and a target string <code>str2</code> of length <code class="font-bold">M</code>. Your goal is to construct the <strong>lexicographically smallest</strong> (alphabetically first) string of length <code class="font-bold">N + M - 1</code> that satisfies these rules:
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-lg border border-emerald-100 shadow-sm flex items-start">
+                            <span class="text-emerald-500 font-black text-xl mr-3 mt-0.5">T</span>
+                            <p class="text-sm text-slate-600">If <code>str1[i] == 'T'</code>, the substring starting at index <code>i</code> of length M <strong>MUST exactly match</strong> <code>str2</code>.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-rose-100 shadow-sm flex items-start">
+                            <span class="text-rose-500 font-black text-xl mr-3 mt-0.5">F</span>
+                            <p class="text-sm text-slate-600">If <code>str1[i] == 'F'</code>, the substring starting at index <code>i</code> of length M <strong>MUST NOT match</strong> <code>str2</code>.</p>
+                        </div>
+                    </div>
+
+                    <!-- NEW STATIC VISUAL: Rule Example -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-inner">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center">
+                            <svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            Visual Example: str1 = "TF", str2 = "ab"
+                        </h4>
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                            <!-- Diagram T -->
+                            <div class="flex flex-col items-center">
+                                <div class="text-sm font-bold text-emerald-600 mb-2">1. The 'T' Rule (Index 0)</div>
+                                <div class="flex gap-1 relative">
+                                    <div class="absolute -top-6 left-0 right-0 flex justify-center"><span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-300">Forces "ab"</span></div>
+                                    <div class="w-10 h-10 border-2 border-emerald-400 bg-emerald-50 rounded flex items-center justify-center font-bold text-emerald-800 shadow-sm z-10">a</div>
+                                    <div class="w-10 h-10 border-2 border-emerald-400 bg-emerald-50 rounded flex items-center justify-center font-bold text-emerald-800 shadow-sm z-10">b</div>
+                                    <div class="w-10 h-10 border-2 border-slate-200 bg-slate-50 rounded flex items-center justify-center text-slate-400 border-dashed">_</div>
+                                </div>
+                                <div class="flex gap-1 mt-1 text-[10px] text-slate-400 font-mono w-full justify-around"><span class="w-10 text-center">0</span><span class="w-10 text-center">1</span><span class="w-10 text-center">2</span></div>
+                            </div>
+                            
+                            <svg class="w-6 h-6 text-slate-300 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            
+                            <!-- Diagram F -->
+                            <div class="flex flex-col items-center">
+                                <div class="text-sm font-bold text-rose-600 mb-2">2. The 'F' Rule (Index 1)</div>
+                                <div class="flex gap-1 relative">
+                                    <div class="absolute -top-6 left-[44px] right-0 flex justify-center"><span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-300">Blocks "ab"</span></div>
+                                    <div class="w-10 h-10 border-2 border-slate-200 bg-slate-100 rounded flex items-center justify-center font-bold text-slate-400 opacity-50">a</div>
+                                    <div class="w-10 h-10 border-2 border-emerald-400 bg-emerald-50 rounded flex items-center justify-center font-bold text-emerald-800 shadow-sm">b</div>
+                                    <div class="w-10 h-10 border-2 border-rose-400 bg-rose-50 rounded flex items-center justify-center font-bold text-rose-800 shadow-sm animate-pulse">?</div>
+                                </div>
+                                <div class="flex gap-1 mt-1 text-[10px] text-slate-400 font-mono w-full justify-around"><span class="w-10 text-center">0</span><span class="w-10 text-center">1</span><span class="w-10 text-center">2</span></div>
+                                <div class="text-[11px] text-rose-600 mt-2 font-medium bg-rose-50 px-2 py-1 rounded">Since idx 1 is 'b', idx 2 CANNOT be 'b'.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- The Thinking Process -->
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <span class="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm">🧠</span>
+                        The Thinking Process & Intuition
+                    </h3>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <!-- Step 1 -->
+                        <div class="relative bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                            <div class="absolute -top-3 -left-3 w-8 h-8 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center border-4 border-slate-50">1</div>
+                            <h4 class="font-bold text-slate-800 mb-2 mt-2">Lock the Dictators</h4>
+                            <p class="text-sm text-slate-600 flex-grow">The 'T' rules are non-negotiable. Before guessing anything, we must place <code>str2</code> exactly where every 'T' demands it. If two 'T' rules overlap and require different characters at the same spot, the task is <strong>impossible</strong>.</p>
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex justify-center">
+                                <span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded font-mono border border-slate-200">Greedy Start: Lock 'T's</span>
+                            </div>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="relative bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                            <div class="absolute -top-3 -left-3 w-8 h-8 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center border-4 border-slate-50">2</div>
+                            <h4 class="font-bold text-slate-800 mb-2 mt-2">Greedy Defaults</h4>
+                            <p class="text-sm text-slate-600 flex-grow">We want the <em>smallest</em> possible string. Therefore, for every remaining empty spot, our default choice should <strong>always be 'a'</strong>. We only change our mind if placing an 'a' breaks a rule.</p>
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex justify-center gap-1">
+                                <div class="w-6 h-6 bg-slate-100 border border-slate-300 text-slate-400 rounded flex justify-center items-center text-xs">a</div>
+                                <div class="w-6 h-6 bg-slate-100 border border-slate-300 text-slate-400 rounded flex justify-center items-center text-xs">a</div>
+                                <div class="w-6 h-6 bg-slate-100 border border-slate-300 text-slate-400 rounded flex justify-center items-center text-xs">a</div>
+                            </div>
+                        </div>
+                        <!-- Step 3 (Enhanced Trapdoor Visual) -->
+                        <div class="relative bg-white p-5 rounded-xl border border-indigo-200 bg-indigo-50/50 shadow-md flex flex-col">
+                            <div class="absolute -top-3 -left-3 w-8 h-8 bg-rose-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-slate-50 shadow-sm">3</div>
+                            <h4 class="font-bold text-indigo-900 mb-2 mt-2">The "Last Exit" Trapdoor</h4>
+                            <p class="text-sm text-indigo-800 mb-3">An 'F' rule only fails if the <em>entire</em> window matches <code>str2</code>. If we stand at the <strong>last empty spot</strong> of an 'F' window, and all previous spots match, we are forced to pick the next smallest valid character.</p>
+                            
+                            <!-- Static Infographic for Trapdoor -->
+                            <div class="mt-auto bg-white rounded-lg border border-indigo-100 p-3 shadow-sm">
+                                <div class="text-[10px] text-indigo-500 uppercase font-bold mb-2 text-center tracking-wider">Target: "abc"</div>
+                                <div class="flex justify-center gap-1.5 mb-2 relative">
+                                    <div class="w-7 h-7 bg-rose-50 text-rose-700 font-bold rounded flex items-center justify-center text-xs border border-rose-200">a</div>
+                                    <div class="w-7 h-7 bg-rose-50 text-rose-700 font-bold rounded flex items-center justify-center text-xs border border-rose-200">b</div>
+                                    <div class="w-7 h-7 bg-slate-800 text-white font-bold rounded flex items-center justify-center text-xs shadow-inner relative group">
+                                        ?
+                                        <!-- Mini toolip arrow -->
+                                        <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-rose-500 text-white text-[9px] py-0.5 px-1.5 rounded whitespace-nowrap shadow-md hidden group-hover:block">Cannot be 'c'</div>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-center text-slate-600 bg-slate-50 rounded py-1 border border-slate-100">
+                                    If <strong class="text-rose-600">? = 'c'</strong>, rule fails ❌<br>
+                                    Greedy choice: <strong class="text-emerald-600">'d'</strong> ✅
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- Mode Selection & Input Section -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 fade-in" style="animation-delay: 0.1s;">
+            <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-800">Select Algorithm to Visualize:</h2>
+                <div class="flex bg-slate-100 p-1 rounded-lg self-start md:self-auto border border-slate-200">
+                    <button id="tab-greedy" class="px-4 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-indigo-700 transition-all">Optimal (Greedy)</button>
+                    <button id="tab-backtrack" class="px-4 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-slate-700 transition-all">Naive (Backtracking)</button>
+                </div>
+            </div>
+
+            <!-- Dynamic Description text based on Tab -->
+            <p id="theory-desc" class="text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                Solving this in $O(N \times M)$ time requires a <strong>Greedy Sweep</strong>. We lock in mandatory characters dictacted by 'T', and then scan left-to-right filling 'a's, unless doing so triggers the "Last Available Exit" trapdoor of an 'F' constraint.
+            </p>
+
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">String 1 (T/F Rules)</label>
+                    <input type="text" id="str1-input" value="FTF" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase font-mono text-lg transition-shadow">
+                </div>
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">String 2 (Target)</label>
+                    <input type="text" id="str2-input" value="ab" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none lowercase font-mono text-lg transition-shadow">
+                </div>
+                <button id="run-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-all shadow-md hover:shadow-lg w-full md:w-auto flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    Initialize Simulation
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <main id="dashboard" class="hidden space-y-6 fade-in" style="animation-delay: 0.2s;">
+            
+            <!-- Array Display -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800" id="canvas-title">The Array Canvas</h2>
+                        <p class="text-sm text-slate-500" id="canvas-subtitle">Building the final string...</p>
+                    </div>
+                    
+                    <!-- Playback Controls -->
+                    <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                        <button id="prev-btn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="Previous Step">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button id="play-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center text-sm shadow-sm min-w-[110px] justify-center">
+                            <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg> Auto Play
+                        </button>
+                        <button id="next-btn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="Next Step">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                        <div class="h-6 w-px bg-slate-300 mx-1"></div>
+                        <select id="speed-select" class="bg-transparent text-sm font-bold text-slate-600 focus:outline-none cursor-pointer pr-1">
+                            <option value="1000">0.5x</option>
+                            <option value="500" selected>1.0x</option>
+                            <option value="200">2.0x</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- NEW: Progress Bar and Layout -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span id="step-counter" class="text-xs font-bold text-indigo-600 tracking-widest uppercase bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Step 0 / 0</span>
+                        <span id="sim-status" class="text-xs font-bold text-slate-400 tracking-wider uppercase">Idle</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
+                        <div id="sim-progress" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-300 ease-out w-0 relative">
+                            <div class="absolute top-0 right-0 bottom-0 left-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress_1s_linear_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+                <style>@keyframes progress { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }</style>
+                
+                <div id="word-container" class="flex flex-wrap justify-center gap-3 bg-slate-50 p-6 rounded-xl border border-slate-100 min-h-[140px] shadow-inner relative">
+                    <!-- Main array blocks injected here -->
+                </div>
+
+                <!-- NEW: Color Legend -->
+                <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500 mt-6 pt-4 border-t border-slate-100">
+                    <div class="flex items-center"><span class="w-3 h-3 rounded bg-emerald-50 border border-emerald-400 mr-2"></span> 'T' Locked</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded bg-indigo-100 border border-indigo-500 mr-2 shadow-[0_0_0_2px_rgba(99,102,241,0.2)]"></span> Active Eval</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-500 mr-2 shadow-[0_0_0_2px_rgba(244,63,94,0.2)]"></span> Rule Violation</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-500 mr-2"></span> Branch Guess (DFS)</div>
+                    <div class="flex items-center line-through opacity-70"><span class="w-3 h-3 rounded bg-slate-200 border border-slate-500 mr-2"></span> Backtracked</div>
+                </div>
+            </div>
+
+            <!-- Context Dependent View: Greedy Inspector OR Backtrack Log -->
+            <div class="grid lg:grid-cols-3 gap-6">
+                
+                <!-- Logic Console (Shared) -->
+                <div id="console-wrapper" class="lg:col-span-1 bg-slate-900 rounded-xl p-6 text-slate-300 font-mono text-sm shadow-inner flex flex-col h-[350px]">
+                    <h3 class="text-slate-400 font-bold uppercase tracking-wider text-xs mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
+                        <span>Algorithm Logs</span>
+                        <span id="algo-indicator" class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-white">Greedy O(N)</span>
+                    </h3>
+                    <div id="logic-console" class="flex-grow space-y-3 overflow-y-auto scroll-smooth">
+                        <!-- Logs injected here -->
+                    </div>
+                </div>
+
+                <!-- Window Inspection (Greedy Only) -->
+                <div id="greedy-inspector" class="lg:col-span-2 bg-indigo-50/50 rounded-xl p-6 border border-indigo-100 h-[350px] overflow-y-auto">
+                    <h3 class="font-bold text-indigo-900 mb-4 flex items-center sticky top-0 bg-indigo-50/90 backdrop-blur pb-2 z-10">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        Active 'F' Window Inspection
+                    </h3>
+                    <p id="inspection-desc" class="text-sm text-indigo-700 mb-4">No active windows being inspected.</p>
+                    <div id="windows-container" class="space-y-4">
+                        <!-- Mini F-Windows injected here -->
+                    </div>
+                </div>
+
+                <!-- Backtrack Stats (Backtrack Only) -->
+                <div id="backtrack-stats" class="hidden lg:col-span-2 bg-rose-50/50 rounded-xl p-6 border border-rose-100 flex flex-col justify-center items-center text-center h-[350px]">
+                    <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-500 mb-4 shadow-sm">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-rose-900 mb-2">The Backtracking Trap</h3>
+                    <p class="text-rose-700 max-w-md mx-auto mb-6">
+                        Trying every possible character ('a'-'z') and backtracking on failures leads to an exponential time complexity of <code class="font-mono bg-rose-200 px-1 rounded">O(26^N)</code>.
+                    </p>
+                    <div class="grid grid-cols-2 gap-4 w-full max-w-sm">
+                        <div class="bg-white p-4 rounded-lg border border-rose-100 shadow-sm">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Total Branches</div>
+                            <div class="text-2xl font-black text-slate-800" id="bt-branches">0</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-rose-100 shadow-sm">
+                            <div class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Backtracks</div>
+                            <div class="text-2xl font-black text-rose-600" id="bt-undos">0</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // DOM Elements
+        const str1Input = document.getElementById('str1-input');
+        const str2Input = document.getElementById('str2-input');
+        const runBtn = document.getElementById('run-btn');
+        const dashboard = document.getElementById('dashboard');
+        const wordContainer = document.getElementById('word-container');
+        const logicConsole = document.getElementById('logic-console');
+        const inspectionDesc = document.getElementById('inspection-desc');
+        const windowsContainer = document.getElementById('windows-container');
+        const stepCounter = document.getElementById('step-counter');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const playBtn = document.getElementById('play-btn');
+        const speedSelect = document.getElementById('speed-select');
+        
+        // Tabs & Views
+        const tabGreedy = document.getElementById('tab-greedy');
+        const tabBacktrack = document.getElementById('tab-backtrack');
+        const theoryDesc = document.getElementById('theory-desc');
+        const greedyInspector = document.getElementById('greedy-inspector');
+        const backtrackStats = document.getElementById('backtrack-stats');
+        const consoleWrapper = document.getElementById('console-wrapper');
+        const algoIndicator = document.getElementById('algo-indicator');
+
+        // State
+        let currentMode = 'greedy'; // 'greedy' or 'backtrack'
+        let steps = [];
+        let currentStep = 0;
+        let playInterval = null;
+        let isPlaying = false;
+        
+        let backtrackMetrics = { branches: 0, undos: 0 };
+
+        // --- Event Listeners: Tabs ---
+        tabGreedy.addEventListener('click', () => switchMode('greedy'));
+        tabBacktrack.addEventListener('click', () => switchMode('backtrack'));
+
+        function switchMode(mode) {
+            if (isPlaying) togglePlay();
+            currentMode = mode;
+            
+            if (mode === 'greedy') {
+                tabGreedy.className = "px-4 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-indigo-700 transition-all";
+                tabBacktrack.className = "px-4 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-slate-700 transition-all";
+                theoryDesc.innerHTML = "Solving this in $O(N \\times M)$ time requires a <strong>Greedy Sweep</strong>. We lock in mandatory characters dictacted by 'T', and then scan left-to-right filling 'a's, unless doing so triggers the \"Last Available Exit\" trapdoor of an 'F' constraint.";
+                
+                greedyInspector.classList.remove('hidden');
+                backtrackStats.classList.add('hidden');
+                consoleWrapper.classList.replace('lg:col-span-3', 'lg:col-span-1');
+                algoIndicator.innerText = "Greedy O(N)";
+                algoIndicator.className = "text-[10px] bg-indigo-600 px-2 py-0.5 rounded text-white";
+                
+            } else {
+                tabBacktrack.className = "px-4 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-rose-700 transition-all";
+                tabGreedy.className = "px-4 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-slate-700 transition-all";
+                theoryDesc.innerHTML = "The <strong>Backtracking (DFS)</strong> approach is highly inefficient. It tries 'a'-'z' for every empty spot and reverses choices upon hitting constraints. This results in an exponential $O(26^N)$ complexity, leading directly to a Time Limit Exceeded (TLE) error.";
+                
+                greedyInspector.classList.add('hidden');
+                backtrackStats.classList.remove('hidden');
+                consoleWrapper.classList.replace('lg:col-span-1', 'lg:col-span-1'); // Keep sidebar size, stats take the rest
+                algoIndicator.innerText = "DFS O(26^N)";
+                algoIndicator.className = "text-[10px] bg-rose-600 px-2 py-0.5 rounded text-white";
+            }
+            
+            if (!dashboard.classList.contains('hidden')) {
+                runSimulation();
+            }
+        }
+
+        // --- Core Application Logic ---
+        
+        runBtn.addEventListener('click', () => {
+            if (isPlaying) togglePlay();
+            dashboard.classList.remove('hidden');
+            runSimulation();
+            // Scroll to dashboard smoothly
+            setTimeout(() => dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        });
+
+        function runSimulation() {
+            const s1 = str1Input.value.trim().toUpperCase();
+            const s2 = str2Input.value.trim().toLowerCase();
+            
+            if (!/^[TF]+$/.test(s1) || !/^[a-z]+$/.test(s2)) {
+                alert("Please ensure String 1 has only T/F, and String 2 has only lowercase letters.");
+                return;
+            }
+
+            logicConsole.innerHTML = '';
+            windowsContainer.innerHTML = '';
+            backtrackMetrics = { branches: 0, undos: 0 };
+            document.getElementById('bt-branches').innerText = "0";
+            document.getElementById('bt-undos').innerText = "0";
+            
+            if (currentMode === 'greedy') {
+                steps = calculateGreedySteps(s1, s2);
+            } else {
+                steps = calculateBacktrackingSteps(s1, s2);
+            }
+            
+            currentStep = 0;
+            renderStep(0);
+        }
+
+        // --- ALGORITHM 1: GREEDY SWEEP (O(N)) ---
+        function calculateGreedySteps(str1, str2) {
+            const n = str1.length;
+            const m = str2.length;
+            const len = n + m - 1;
+            let word = Array(len).fill(null);
+            let simSteps = [];
+            let locked = new Set();
+
+            const createStep = (title, logHtml, activeIndex = -1, inspectionData = [], cellState = 'normal') => {
+                simSteps.push({ algorithm: 'greedy', word: [...word], locked: new Set(locked), title, logHtml, activeIndex, inspectionData, cellState });
+            };
+
+            createStep("Init", `<span class="text-indigo-400">System initialized.</span><br>Array size: ${n} + ${m} - 1 = ${len}.`);
+
+            // Phase 1: Dictator Sweep
+            let hasPhase1Conflict = false;
+            for (let i = 0; i < n; i++) {
+                if (str1[i] === 'T') {
+                    for (let j = 0; j < m; j++) {
+                        let idx = i + j;
+                        if (word[idx] !== null && word[idx] !== str2[j]) {
+                            hasPhase1Conflict = true;
+                            createStep("Conflict", `<span class="text-rose-400 font-bold">FATAL ERROR:</span> Index ${idx} requires '${word[idx]}' and '${str2[j]}'. Impossible.`, idx, [], 'error');
+                            return simSteps;
+                        }
+                        word[idx] = str2[j];
+                        locked.add(idx);
+                    }
+                    createStep("T-Lock", `<span class="text-emerald-400">T Rule at str1[${i}].</span><br>Locked "${str2}" into indices ${i} to ${i+m-1}.`);
+                }
+            }
+
+            // Phase 1.5: Validation
+            for (let i = 0; i < n; i++) {
+                if (str1[i] === 'F') {
+                    let fullMatch = true;
+                    for (let j = 0; j < m; j++) {
+                        if (word[i+j] !== str2[j]) fullMatch = false;
+                    }
+                    if (fullMatch) {
+                        createStep("Conflict", `<span class="text-rose-400 font-bold">FATAL ERROR:</span> T rules accidentally completed an F rule at index ${i}. Impossible.`);
+                        return simSteps;
+                    }
+                }
+            }
+
+            if (locked.size < len && !hasPhase1Conflict) {
+                createStep("Sweep Phase", `<span class="text-yellow-400">Starting Greedy Sweep.</span><br>Scanning left-to-right to place lexicographically smallest characters.`);
+            }
+
+            // Phase 2: Greedy Sweep
+            for (let i = 0; i < len; i++) {
+                if (word[i] !== null) {
+                    createStep(`Skip ${i}`, `<span class="text-slate-500">Index ${i} is pre-locked. Skipping.</span>`, i);
+                    continue;
+                }
+
+                let badChars = new Set();
+                let inspectionData = [];
+
+                for (let k = 0; k < n; k++) {
+                    if (str1[k] === 'F' && i >= k && i < k + m) {
+                        let isSafe = false;
+                        let emptyCount = 0;
+                        let windowState = [];
+
+                        for (let j = k; j < k + m; j++) {
+                            let expectedChar = str2[j-k];
+                            if (word[j] !== null && word[j] !== expectedChar) isSafe = true;
+                            if (word[j] === null) emptyCount++;
+                            windowState.push({ idx: j, char: word[j], expected: expectedChar, isCurrentFocus: j === i });
+                        }
+
+                        let status = "";
+                        let isDanger = false;
+
+                        if (isSafe) status = "SAFE: Rule broken elsewhere.";
+                        else if (emptyCount > 1) status = `DEFERRED: ${emptyCount} exits remain.`;
+                        else {
+                            let forbiddenChar = str2[i - k];
+                            badChars.add(forbiddenChar);
+                            status = `DANGER! Last Exit! Cannot place '${forbiddenChar}'.`;
+                            isDanger = true;
+                        }
+
+                        inspectionData.push({ startIdx: k, state: windowState, status, isDanger });
+                    }
+                }
+
+                let chosen = 'a';
+                const alphabet = "abcdefghijklmnopqrstuvwxyz";
+                for (let c of alphabet) {
+                    if (!badChars.has(c)) { chosen = c; break; }
+                }
+
+                word[i] = chosen;
+                
+                let logMsg = `<span class="text-blue-400">Evaluating index ${i}...</span><br>`;
+                if (badChars.size > 0) logMsg += `<span class="text-rose-400">Last-Exit restrictions: {${Array.from(badChars).join(',')}}</span><br>`;
+                logMsg += `<span class="text-green-400 font-bold">Placed '${chosen}'</span>`;
+
+                createStep(`Process ${i}`, logMsg, i, inspectionData, 'success');
+            }
+
+            createStep("Done", `<span class="text-emerald-400 font-bold text-lg">ALGORITHM COMPLETE</span><br>Result: <span class="text-white">${word.join('')}</span>`);
+            return simSteps;
+        }
+
+        // --- ALGORITHM 2: BACKTRACKING (O(26^N)) ---
+        function calculateBacktrackingSteps(str1, str2) {
+            const n = str1.length;
+            const m = str2.length;
+            const len = n + m - 1;
+            let word = Array(len).fill(null);
+            let simSteps = [];
+            let branches = 0;
+            let undos = 0;
+            const STEP_LIMIT = 60; // Keep it very small so the browser doesn't freeze, but enough to show the TLE explosion
+            let found = false;
+
+            const createStep = (logHtml, activeIndex = -1, cellState = 'normal') => {
+                simSteps.push({ 
+                    algorithm: 'backtrack', 
+                    word: [...word], 
+                    logHtml, activeIndex, cellState,
+                    metrics: { branches, undos }
+                });
+            };
+
+            function isValidPartial(w) {
+                // Check 'T' rules
+                for (let k = 0; k < n; k++) {
+                    if (str1[k] === 'T') {
+                        for (let j = 0; j < m; j++) {
+                            let idx = k + j;
+                            if (w[idx] !== null && w[idx] !== str2[j]) return false;
+                        }
+                    } else if (str1[k] === 'F') {
+                        let fullyFilled = true;
+                        let matchCount = 0;
+                        for (let j = 0; j < m; j++) {
+                            let idx = k + j;
+                            if (w[idx] === null) { fullyFilled = false; break; }
+                            if (w[idx] === str2[j]) matchCount++;
+                        }
+                        if (fullyFilled && matchCount === m) return false;
+                    }
+                }
+                return true;
+            }
+
+            createStep(`<span class="text-rose-400">Starting DFS Search</span><br>Will try 'a'-'z' sequentially for every slot.`);
+
+            function dfs(idx) {
+                if (simSteps.length > STEP_LIMIT) return false;
+                if (found) return true;
+
+                if (idx === len) {
+                    if (isValidPartial(word)) { found = true; return true; }
+                    return false;
+                }
+
+                const alphabet = "abcdefghijklmnopqrstuvwxyz";
+                for (let i = 0; i < alphabet.length; i++) {
+                    if (simSteps.length > STEP_LIMIT) return false;
+                    
+                    let c = alphabet[i];
+                    word[idx] = c;
+                    branches++;
+                    
+                    createStep(`<span class="text-yellow-400">Branch</span>: Trying '${c}' at index ${idx}...`, idx, 'try');
+
+                    if (isValidPartial(word)) {
+                        createStep(`<span class="text-green-400">Valid so far</span>. Descending deeper...`, idx, 'success');
+                        if (dfs(idx + 1)) return true;
+                    } else {
+                        createStep(`<span class="text-rose-400">Constraint Failed!</span> Rule violation detected for '${c}'.`, idx, 'error');
+                    }
+
+                    // Backtrack
+                    if (simSteps.length <= STEP_LIMIT && !found) {
+                        word[idx] = null;
+                        undos++;
+                        createStep(`<span class="text-slate-400">Backtrack</span>: Undoing index ${idx}.`, idx, 'backtrack');
+                    }
+                }
+                return false;
+            }
+
+            dfs(0);
+
+            if (!found && simSteps.length > STEP_LIMIT) {
+                createStep(`<span class="text-rose-500 font-bold text-lg animate-pulse">TIME LIMIT EXCEEDED</span><br>The branching factor is too large. Execution aborted to prevent crash.`, -1, 'error');
+            } else if (found) {
+                createStep(`<span class="text-emerald-400 font-bold text-lg">SOLUTION FOUND</span> (Lucky small input!)<br>Result: <span class="text-white">${word.join('')}</span>`);
+            } else {
+                createStep(`<span class="text-rose-500 font-bold">NO SOLUTION EXISTS.</span> Exiting DFS.`, -1, 'error');
+            }
+
+            return simSteps;
+        }
+
+        // --- RENDER ENGINE ---
+        function renderStep(index) {
+            const step = steps[index];
+            stepCounter.innerText = `Step ${index + 1} / ${steps.length}`;
+            
+            // NEW: Update Progress Bar & Status Text
+            const progressPercent = steps.length > 1 ? (index / (steps.length - 1)) * 100 : 100;
+            document.getElementById('sim-progress').style.width = `${progressPercent}%`;
+            
+            const statusEl = document.getElementById('sim-status');
+            if (index === 0) { statusEl.innerText = "Initializing"; statusEl.className = "text-xs font-bold text-slate-400 tracking-wider uppercase"; }
+            else if (index === steps.length - 1) { 
+                if (step.title === "Conflict" || step.cellState === 'error') {
+                    statusEl.innerText = "Failed"; statusEl.className = "text-xs font-bold text-rose-500 tracking-wider uppercase animate-pulse";
+                    document.getElementById('sim-progress').classList.replace('from-indigo-500', 'from-rose-500');
+                    document.getElementById('sim-progress').classList.replace('to-violet-500', 'to-red-500');
+                } else {
+                    statusEl.innerText = "Complete"; statusEl.className = "text-xs font-bold text-emerald-500 tracking-wider uppercase";
+                    document.getElementById('sim-progress').classList.replace('from-indigo-500', 'from-emerald-500');
+                    document.getElementById('sim-progress').classList.replace('to-violet-500', 'to-teal-500');
+                }
+            }
+            else { 
+                statusEl.innerText = step.algorithm === 'greedy' ? "Scanning" : "Searching"; 
+                statusEl.className = "text-xs font-bold text-indigo-500 tracking-wider uppercase"; 
+                // Reset colors if user scrubs backwards
+                document.getElementById('sim-progress').className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-300 ease-out w-0 relative";
+                document.getElementById('sim-progress').style.width = `${progressPercent}%`;
+            }
+
+            // 1. Render Main Array
+            wordContainer.innerHTML = '';
+            step.word.forEach((char, i) => {
+                let isLocked = step.locked && step.locked.has(i);
+                let isActive = step.activeIndex === i;
+                let bgClass = "bg-white border-slate-300";
+                let textClass = "text-slate-800";
+                let animationClass = "pop-in";
+
+                if (char === null) {
+                    bgClass = "bg-slate-100 border-dashed border-slate-300";
+                    textClass = "text-transparent";
+                    animationClass = "";
+                } else if (isLocked) {
+                    bgClass = "bg-emerald-50 border-emerald-400";
+                    textClass = "text-emerald-800 font-bold";
+                }
+
+                // Handle active state colors based on algorithm status
+                if (isActive) {
+                    if (step.cellState === 'error') {
+                        bgClass = "bg-rose-100 border-rose-500 shake-error text-rose-800 font-bold shadow-sm";
+                    } else if (step.cellState === 'try') {
+                        bgClass = "bg-amber-100 border-amber-500 text-amber-800 font-bold shadow-sm";
+                    } else if (step.cellState === 'backtrack') {
+                        bgClass = "bg-slate-200 border-slate-500 text-slate-500 line-through opacity-70";
+                        char = '?';
+                    } else {
+                        bgClass = "bg-indigo-100 border-indigo-500 pulse-active text-indigo-800 font-bold shadow-sm";
+                    }
+                }
+
+                const block = `
+                    <div class="flex flex-col items-center transform transition-transform duration-200 ${isActive ? 'scale-110 z-10' : ''}">
+                        <span class="text-[10px] text-slate-400 font-mono mb-1">${i}</span>
+                        <div class="w-10 h-12 md:w-12 md:h-14 flex items-center justify-center text-xl md:text-2xl rounded shadow-sm border-2 ${bgClass} ${textClass} ${animationClass}">
+                            ${char === null ? '_' : char}
+                        </div>
+                    </div>
+                `;
+                wordContainer.insertAdjacentHTML('beforeend', block);
+            });
+
+            // 2. Render Logs
+            logicConsole.innerHTML += `<div class="mb-3 fade-in pb-2 border-b border-slate-800/50 last:border-0">${step.logHtml}</div>`;
+            logicConsole.scrollTop = logicConsole.scrollHeight;
+
+            // 3. Render Specifics (Greedy Window vs Backtrack Stats)
+            if (step.algorithm === 'greedy') {
+                windowsContainer.innerHTML = '';
+                if (!step.inspectionData || step.inspectionData.length === 0) {
+                    inspectionDesc.innerText = step.activeIndex !== -1 && step.word[step.activeIndex] !== null && step.locked.has(step.activeIndex) 
+                        ? "Index locked by 'T'. No 'F' window inspection needed." 
+                        : "No overlapping 'F' windows at this position.";
+                } else {
+                    inspectionDesc.innerHTML = `Analyzing <strong>${step.inspectionData.length}</strong> 'F' constraint(s) crossing index <strong>${step.activeIndex}</strong>:`;
+                    
+                    step.inspectionData.forEach(win => {
+                        let blocksHtml = win.state.map(cell => {
+                            let statusColor = "bg-slate-100 text-slate-400 border-slate-200"; 
+                            let subText = `!= ${cell.expected}`;
+                            
+                            if (cell.char !== null) {
+                                if (cell.char === cell.expected) {
+                                    statusColor = "bg-rose-100 border-rose-300 text-rose-700"; 
+                                } else {
+                                    statusColor = "bg-emerald-100 border-emerald-300 text-emerald-700"; 
+                                }
+                            }
+
+                            if (cell.isCurrentFocus) {
+                                statusColor = win.isDanger ? "bg-rose-500 border-rose-600 text-white font-bold pulse-active" : "bg-indigo-500 border-indigo-600 text-white font-bold";
+                            }
+
+                            return `
+                                <div class="flex flex-col items-center">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded border ${statusColor} text-sm md:text-base pop-in shadow-sm">
+                                        ${cell.char === null ? '?' : cell.char}
+                                    </div>
+                                    <span class="text-[9px] mt-1 text-slate-500 font-mono tracking-tighter">${subText}</span>
+                                </div>
+                            `;
+                        }).join('');
+
+                        const alertClass = win.isDanger ? "bg-rose-50 border-rose-200" : "bg-white border-slate-200";
+                        const statusTextClass = win.isDanger ? "text-rose-700 font-bold" : (win.status.includes("SAFE") ? "text-emerald-600 font-medium" : "text-slate-600");
+
+                        const winHtml = `
+                            <div class="p-4 rounded-xl border shadow-sm ${alertClass} fade-in">
+                                <div class="flex justify-between items-center mb-3 border-b border-slate-100/50 pb-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center">
+                                        <span class="bg-slate-200 text-slate-600 w-5 h-5 flex items-center justify-center rounded-full mr-2">${win.startIdx}</span> 
+                                        'F' Window
+                                    </span>
+                                    <span class="text-xs ${statusTextClass}">${win.status}</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    ${blocksHtml}
+                                </div>
+                            </div>
+                        `;
+                        windowsContainer.insertAdjacentHTML('beforeend', winHtml);
+                    });
+                }
+            } else if (step.algorithm === 'backtrack' && step.metrics) {
+                // Update Backtrack Stats
+                document.getElementById('bt-branches').innerText = step.metrics.branches;
+                document.getElementById('bt-undos').innerText = step.metrics.undos;
+            }
+
+            // Button states
+            prevBtn.disabled = index === 0;
+            prevBtn.className = index === 0 ? "p-2 text-slate-300 rounded cursor-not-allowed" : "p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors";
+            
+            nextBtn.disabled = index === steps.length - 1;
+            nextBtn.className = index === steps.length - 1 ? "p-2 text-slate-300 rounded cursor-not-allowed" : "p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors";
+        }
+
+        // --- PLAYBACK CONTROLS ---
+        function togglePlay() {
+            if (steps.length === 0) return;
+            
+            if (isPlaying) {
+                clearInterval(playInterval);
+                isPlaying = false;
+                playBtn.innerHTML = `<svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg> Auto Play`;
+                playBtn.classList.replace('bg-rose-500', 'bg-indigo-600');
+                playBtn.classList.replace('hover:bg-rose-600', 'hover:bg-indigo-700');
+            } else {
+                if (currentStep >= steps.length - 1) {
+                    // Restart logic logs before resetting
+                    logicConsole.innerHTML = '';
+                    currentStep = 0; 
+                }
+                
+                isPlaying = true;
+                playBtn.innerHTML = `<svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> Pause`;
+                playBtn.classList.replace('bg-indigo-600', 'bg-rose-500');
+                playBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-rose-600');
+                
+                const speed = parseInt(speedSelect.value) || 500;
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        currentStep++;
+                        renderStep(currentStep);
+                    } else {
+                        togglePlay(); // Stop when finished
+                    }
+                }, speed);
+            }
+        }
+
+        playBtn.addEventListener('click', togglePlay);
+        
+        speedSelect.addEventListener('change', () => {
+            if (isPlaying) {
+                togglePlay(); // pause
+                togglePlay(); // resume with new speed
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (isPlaying) togglePlay();
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                renderStep(currentStep);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (isPlaying) togglePlay();
+            if (currentStep > 0) {
+                currentStep--;
+                
+                // Re-render logs cleanly
+                logicConsole.innerHTML = '';
+                for(let i = 0; i <= currentStep; i++) {
+                     logicConsole.innerHTML += `<div class="mb-3 pb-2 border-b border-slate-800/50 last:border-0">${steps[i].logHtml}</div>`;
+                }
+                logicConsole.scrollTop = logicConsole.scrollHeight;
+                
+                const tempLogs = steps[currentStep].logHtml;
+                steps[currentStep].logHtml = '';
+                renderStep(currentStep);
+                steps[currentStep].logHtml = tempLogs; 
+            }
+        });
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            if (e.key === 'ArrowRight' && !nextBtn.disabled && !dashboard.classList.contains('hidden')) {
+                e.preventDefault(); nextBtn.click();
+            } else if (e.key === 'ArrowLeft' && !prevBtn.disabled && !dashboard.classList.contains('hidden')) {
+                e.preventDefault(); prevBtn.click();
+            } else if (e.key === ' ' && !dashboard.classList.contains('hidden')) {
+                e.preventDefault(); togglePlay();
+            }
+        });
+
+        // Initial default run
+        setTimeout(() => runBtn.click(), 300);
+
+    </script>
+</body>
+</html>
