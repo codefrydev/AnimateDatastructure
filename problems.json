@@ -20,6 +20,28 @@
       ]
     },
     {
+      "Name": "Greedy",
+      "Problems": [
+        {
+          "Title": "Lexicographically Smallest Generated String",
+          "Path": "Greedy/lexicographically-smallest-generated-string.html",
+          "ProblemUri": "https://leetcode.com/problems/lexicographically-smallest-generated-string",
+          "Difficulty": "Hard",
+          "Topics": [
+            "Principal",
+            "String",
+            "Greedy",
+            "String",
+            "Matching",
+            "Weekly",
+            "Contest",
+            "439"
+          ],
+          "ProblemNumber": 3474
+        }
+      ]
+    },
+    {
       "Name": "LinkedList",
       "Problems": [
         {
