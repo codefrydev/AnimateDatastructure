@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professor Algo's Masterclass: Maximum Walls</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .mono { font-family: 'Space Mono', monospace; }
+
+        /* ==================== LECTURE STYLES ==================== */
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .math-box {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Space Mono', monospace;
+            margin: 1rem 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .zone-visual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 1rem;
+            position: relative;
+            margin: 2rem 0;
+            border: 2px dashed #475569;
+        }
+
+        .zone-barrier {
+            width: 4px;
+            height: 80px;
+            background: #ef4444;
+            box-shadow: 0 0 15px #ef4444;
+        }
+        
+        .zone-label {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #3b82f6;
+            padding: 0.2rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        @property --num { syntax: "<integer>"; initial-value: 0; inherits: false; }
+        .counter { animation: count 2s forwards ease-in-out; counter-reset: num var(--num); }
+        .counter::after { content: counter(num) "+"; }
+        @keyframes count { from { --num: 0; } to { --num: 999999; } }
+
+
+        /* ==================== LAB SIMULATION STYLES ==================== */
+        .number-line {
+            position: relative;
+            width: 100%;
+            height: 4px;
+            background-color: #334155;
+            border-radius: 2px;
+            margin-top: 100px;
+            margin-bottom: 60px;
+        }
+        .tick {
+            position: absolute;
+            top: -6px;
+            width: 2px;
+            height: 16px;
+            background-color: #475569;
+            transform: translateX(-50%);
+        }
+        .tick-label {
+            position: absolute;
+            top: 16px;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-family: 'Space Mono', monospace;
+        }
+        .entity {
+            position: absolute;
+            transform: translate(-50%, -100%);
+            bottom: 0;
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+        .robot { font-size: 2.5rem; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3)); z-index: 22;}
+        .wall { font-size: 2rem; z-index: 10; }
+
+        .laser {
+            position: absolute;
+            height: 6px;
+            background: linear-gradient(90deg, #ef4444, #f87171, #ef4444);
+            bottom: 20px;
+            z-index: 15;
+            border-radius: 4px;
+            box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+            transform-origin: left center;
+        }
+        .laser.right { animation: shootRight 0.4s ease-out forwards; }
+        .laser.left { transform-origin: right center; animation: shootLeft 0.4s ease-out forwards; }
+        
+        .ghost-laser {
+            background: transparent !important;
+            border-top: 2px dashed #ef4444;
+            border-bottom: 2px dashed #ef4444;
+            box-shadow: none !important;
+            opacity: 0.5;
+            z-index: 14;
+        }
+
+        @keyframes shootRight { 0% { transform: scaleX(0); opacity: 1; } 50% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+        @keyframes shootLeft { 0% { transform: scaleX(0); opacity: 1; } 50% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+
+        .explosion { animation: explode 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; z-index: 30; position: relative;}
+        @keyframes explode {
+            0% { transform: translate(-50%, -100%) scale(1); opacity: 1; filter: brightness(1) hue-rotate(0deg); }
+            50% { transform: translate(-50%, -100%) scale(2); opacity: 0.9; filter: brightness(2) hue-rotate(45deg); text-shadow: 0 0 20px #fbbf24;}
+            100% { transform: translate(-50%, -100%) scale(0); opacity: 0; }
+        }
+
+        .shield-block {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 4px solid #3b82f6;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            bottom: -10px;
+            opacity: 0;
+            box-shadow: 0 0 20px #3b82f6 inset, 0 0 20px #3b82f6;
+            pointer-events: none;
+            z-index: 25;
+            background: radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0) 70%);
+        }
+        .block-anim { animation: blockHit 0.8s ease-out; }
+        @keyframes blockHit { 
+            0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } 
+            15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 
+            30% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } 
+        }
+
+        .prof-avatar {
+            width: 80px; height: 80px; border-radius: 50%; background: #1e293b;
+            border: 3px solid #3b82f6; display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .bubble { position: relative; background: #1e293b; border: 1px solid #3b82f6; border-radius: .4em; }
+        .bubble:after {
+            content: ''; position: absolute; left: 0; top: 50%; width: 0; height: 0;
+            border: 10px solid transparent; border-right-color: #1e293b; border-left: 0; border-bottom: 0;
+            margin-top: -5px; margin-left: -10px;
+        }
+
+        /* DP Grid Visuals */
+        .dp-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 4px; background: #334155; border: 1px solid #475569; padding: 4px; border-radius: 8px;}
+        .dp-cell { background: #1e293b; padding: 12px; text-align: center; border-radius: 4px; display: flex; flex-direction: column; justify-content: center;}
+        .dp-header { background: #0f172a; font-weight: bold; color: #94a3b8; }
+
+        /* Matrix Grid Styles (Inspired by Screenshot) */
+        .matrix-grid { display: grid; gap: 10px; }
+        .matrix-cell {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.25rem; font-weight: bold;
+            color: #94a3b8; /* slate-400 for ? */
+            height: 64px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .matrix-cell.filled {
+            background-color: #1e3a8a; /* blue-900 */
+            border-color: #1e40af; /* blue-800 */
+            color: #4ade80; /* green-400 */
+        }
+        .matrix-cell.active-cell {
+            background-color: #2563eb; /* blue-600 */
+            border-color: #60a5fa; /* blue-400 */
+            color: #4ade80; /* green-400 */
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        .matrix-header {
+            color: #94a3b8; font-size: 0.8rem; font-weight: bold;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            text-align: center; padding-bottom: 4px;
+        }
+        .matrix-row-header {
+            background-color: #1e293b;
+            color: #cbd5e1; font-size: 0.875rem; font-weight: bold; font-family: 'Inter', sans-serif;
+            border-radius: 8px; padding: 0 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        
+        .code-panel-container { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; font-family: 'Space Mono', monospace; font-size: 0.85rem; color: #a5b4fc; }
+        .code-highlight { color: #facc15; font-weight: bold; } /* yellow-400 */
+        .code-success { color: #4ade80; font-weight: bold; } /* green-400 */
+
+        /* Custom scrollbars */
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Global Header & Tab Navigation -->
+    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-4 z-50 sticky top-0 shadow-lg">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(37,99,235,0.5)]">👨‍🏫</div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wide text-blue-100">Professor Algo</h1>
+                    <p class="text-xs text-blue-400">Masterclass: Deep Dive into Dynamic Programming</p>
+                </div>
+            </div>
+            
+            <!-- 4-Tab System -->
+            <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700 overflow-x-auto">
+                <button onclick="switchTab('dp')" id="tab-dp" class="px-5 py-2 rounded-md text-sm font-bold transition-all bg-blue-600 text-white shadow whitespace-nowrap">
+                    <i class="fas fa-brain mr-2"></i>DP 101
+                </button>
+                <button onclick="switchTab('lecture')" id="tab-lecture" class="px-5 py-2 rounded-md text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap bg-transparent shadow-none">
+                    <i class="fas fa-book-open mr-2"></i>Algorithm Strategy
+                </button>
+                <button onclick="switchTab('trace')" id="tab-trace" class="px-5 py-2 rounded-md text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap bg-transparent shadow-none">
+                    <i class="fas fa-search-plus mr-2"></i>DP Matrix Simulation
+                </button>
+                <button onclick="switchTab('lab')" id="tab-lab" class="px-5 py-2 rounded-md text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap bg-transparent shadow-none">
+                    <i class="fas fa-flask mr-2"></i>Interactive Lab
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-6xl mx-auto p-6 relative">
+        
+        <!-- ==================== TAB 1: DP FUNDAMENTALS ==================== -->
+        <section id="section-dp" class="flex flex-col justify-center min-h-[70vh]">
+            
+            <!-- Slide 0: Identifying DP -->
+            <div class="slide active">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 pointer-events-none"></div>
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-search text-purple-400 mr-4"></i> 1. How to spot a DP Problem</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">When looking at a completely new problem like "Maximum Walls", how do we know it requires Dynamic Programming? We look for the <strong>Three Golden Signatures:</strong></p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 shadow-inner flex items-start gap-4">
+                            <div class="text-2xl mt-1">🏆</div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg">Signature 1: Optimization Request</h3>
+                                <p class="text-sm text-slate-400">The problem asks for the <em>"Maximum number of unique walls"</em>. When a problem asks for a Max, Min, or "number of ways", it is almost always either a Greedy Algorithm or DP.</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 shadow-inner flex items-start gap-4">
+                            <div class="text-2xl mt-1">📏</div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg">Signature 2: Sequential Ordering</h3>
+                                <p class="text-sm text-slate-400">The entities (Robots and Walls) exist on a 1D straight line. We can sort them from Left to Right. DP thrives when we can process decisions sequentially (Robot 0, Robot 1... Robot N).</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900 p-5 rounded-xl border border-purple-900/80 shadow-[0_0_15px_rgba(168,85,247,0.15)] flex items-start gap-4 relative overflow-hidden">
+                            <div class="absolute right-0 top-0 bottom-0 w-2 bg-purple-500"></div>
+                            <div class="text-2xl mt-1">🧱</div>
+                            <div>
+                                <h3 class="font-bold text-purple-300 text-lg">Signature 3: The Markov Property (The Clincher!)</h3>
+                                <p class="text-sm text-slate-300">The rule states: <em>"A bullet stops if it hits another robot."</em> This is the most important clue! It means <strong>Robot 1's decision only overlaps with Robot 0 and Robot 2.</strong> Because the "future" only depends on the "immediate past", we can use DP.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 1: Optimal Substructure -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-cubes text-emerald-400 mr-4"></i> 2. Optimal Substructure in Action</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">DP is fast because of <strong>State Compression</strong>. Let's look at a real scenario: <strong class="text-white">Example 2</strong>.</p>
+                    
+                    <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 shadow-inner my-6">
+                        <div class="flex gap-4 mb-4 text-sm font-mono text-slate-300 bg-slate-800 p-3 rounded">
+                            <div>Robots: <span class="text-blue-300">[2, 10]</span></div>
+                            <div>Distances: <span class="text-blue-300">[1, 5]</span></div>
+                            <div>Walls: <span class="text-blue-300">[2, 5, 7]</span></div>
+                        </div>
+                        
+                        <p class="text-slate-300 mb-4">When deciding the best move for <strong>Robot 1 (at pos 10)</strong>, DP doesn't re-evaluate the whole board.</p>
+                        
+                        <div class="flex gap-4 text-center items-center">
+                            <div class="flex-1 bg-slate-800 border border-slate-600 p-4 rounded-lg">
+                                <h4 class="text-slate-400 font-bold mb-2">Step 1: Robot 0 (Pos 2)</h4>
+                                <p class="text-xs text-slate-300 mono">
+                                    dp[0][Left] = 1 wall (at pos 2)<br>
+                                    dp[0][Right] = 1 wall (at pos 2)
+                                </p>
+                            </div>
+                            <div class="text-2xl text-emerald-500 font-bold"><i class="fas fa-arrow-right"></i></div>
+                            <div class="flex-1 bg-emerald-900/20 border border-emerald-900 p-4 rounded-lg">
+                                <h4 class="text-emerald-400 font-bold mb-2">Step 2: Robot 1 (Pos 10)</h4>
+                                <p class="text-xs text-slate-300">"I don't recalculate the walls at pos 2! I just look at Robot 0's locked-in scores of <span class="text-emerald-400 font-bold">1</span>, add the walls I hit (5 and 7), and determine my final max score is 3."</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-r-xl">
+                        <p class="text-blue-100 text-sm">By summarizing the entire past into a single number (the max score) and a single condition (the direction of the previous robot), we compress the timeline into just <strong>two states</strong> per robot. This is Optimal Substructure!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Why a 2D Array? -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-layer-group text-blue-400 mr-4"></i> 3. Designing the DP State Memory</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">In basic DP problems, we use a 1D array: <span class="mono text-blue-300 bg-slate-900 px-2 py-1 rounded">dp[i] = max score up to i</span>. <br><strong>Why isn't that enough here?</strong></p>
+                    
+                    <div class="math-box bg-slate-900 border-slate-700 shadow-inner my-6 p-6">
+                        <p class="text-slate-300 mb-4 text-sm">If Robot <span class="mono">i</span> shoots LEFT, it shoots towards Robot <span class="mono">i-1</span>. To calculate the walls destroyed accurately, we <strong class="text-red-400">MUST</strong> know which way <span class="mono">i-1</span> shot!</p>
+                        
+                        <ul class="space-y-3 mt-4 text-sm">
+                            <li class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-slate-600">A</span>
+                                <span class="text-slate-400">If <span class="mono">i-1</span> shot <strong>LEFT</strong> <i class="fas fa-arrow-left text-blue-400"></i> : The blast zones move away from each other. Simple addition!</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-slate-600">B</span>
+                                <span class="text-slate-400">If <span class="mono">i-1</span> shot <strong>RIGHT</strong> <i class="fas fa-arrow-right text-red-400"></i> : The blast zones collide! We have to calculate a complex overlapping union.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <p class="text-slate-300">Because the math changes completely based on the previous robot's direction, we must maintain <strong>two parallel timelines</strong>. This dictates a 2D Array:</p>
+                    <div class="mt-4 flex gap-4">
+                        <div class="bg-blue-900/40 border border-blue-500/50 p-3 rounded flex-1 text-center font-mono text-blue-200">dp[i][0] <br><span class="text-xs text-slate-400 font-sans">Max score if Robot i shoots Left</span></div>
+                        <div class="bg-red-900/40 border border-red-500/50 p-3 rounded flex-1 text-center font-mono text-red-200">dp[i][1] <br><span class="text-xs text-slate-400 font-sans">Max score if Robot i shoots Right</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Visualizing DP -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-project-diagram text-indigo-400 mr-4"></i> 4. The Parallel DP Timelines</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">Here is how the DP table logically builds the optimal solution by branching and selecting the maximums at each step, using the real values from <strong>Example 2</strong>.</p>
+                    
+                    <div class="bg-slate-900 p-8 rounded-xl border border-slate-700 my-8 shadow-inner overflow-x-auto">
+                        <div class="flex items-center justify-between min-w-[600px] relative pb-8">
+                            
+                            <!-- Robot 0 -->
+                            <div class="flex flex-col gap-8 z-10 w-40">
+                                <div class="text-center text-sm font-bold text-slate-400 mb-2 border-b border-slate-700 pb-2">Robot 0 (pos: 2)</div>
+                                <div class="bg-blue-900/50 border-2 border-blue-500 p-3 rounded text-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                                    <div class="text-xs mono text-blue-300">dp[0][0] = 1</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">Ended facing Left</div>
+                                </div>
+                                <div class="bg-red-900/50 border-2 border-red-500 p-3 rounded text-center shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+                                    <div class="text-xs mono text-red-300">dp[0][1] = 1</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">Ended facing Right</div>
+                                </div>
+                            </div>
+
+                            <!-- Connections -->
+                            <div class="flex-1 relative h-48">
+                                <svg class="absolute inset-0 w-full h-full" style="z-index: 1;">
+                                    <path d="M 0,40 C 100,40 150,40 250,40" fill="transparent" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5" class="animate-pulse" />
+                                    <path d="M 0,150 C 100,150 150,40 250,40" fill="transparent" stroke="#a855f7" stroke-width="2" stroke-dasharray="5,5" />
+                                    <path d="M 0,40 C 100,40 150,150 250,150" fill="transparent" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5" />
+                                    <path d="M 0,150 C 100,150 150,150 250,150" fill="transparent" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5" />
+                                </svg>
+                                
+                                <div class="absolute top-[25px] left-1/2 -translate-x-1/2 bg-slate-800 text-[10px] px-2 py-1 rounded border border-slate-600 text-slate-300 z-10">Select Max()</div>
+                                <div class="absolute bottom-[25px] left-1/2 -translate-x-1/2 bg-slate-800 text-[10px] px-2 py-1 rounded border border-slate-600 text-slate-300 z-10">Select Max()</div>
+                            </div>
+
+                            <!-- Robot 1 -->
+                            <div class="flex flex-col gap-8 z-10 w-40">
+                                <div class="text-center text-sm font-bold text-white mb-2 border-b border-slate-600 pb-2">Robot 1 (pos: 10)</div>
+                                <div class="bg-blue-600 border-2 border-blue-400 p-3 rounded text-center shadow-[0_0_20px_rgba(59,130,246,0.6)] transform scale-110">
+                                    <div class="text-xs mono text-white font-bold">dp[1][0] = 3</div>
+                                    <div class="text-[10px] text-blue-200 mt-1">Shoot Left</div>
+                                </div>
+                                <div class="bg-red-600 border-2 border-red-400 p-3 rounded text-center shadow-[0_0_20px_rgba(239,68,68,0.6)] transform scale-110">
+                                    <div class="text-xs mono text-white font-bold">dp[1][1] = 1</div>
+                                    <div class="text-[10px] text-red-200 mt-1">Shoot Right</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide Navigation Controls (DP) -->
+            <div class="mt-8 flex justify-center items-center gap-6">
+                <button onclick="prevSlide('dp')" id="btn-prev-dp" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-full font-bold shadow-lg border border-slate-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <i class="fas fa-chevron-left"></i> Prev
+                </button>
+                <div class="flex gap-2" id="nav-dots-dp"></div>
+                <button onclick="nextSlide('dp')" id="btn-next-dp" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ==================== TAB 2: ALGORITHM STRATEGY (LECTURE) ==================== -->
+        <section id="section-lecture" class="hidden flex flex-col justify-center min-h-[70vh]">
+            
+            <!-- Slide 0: The Problem -->
+            <div class="slide active">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 pointer-events-none"></div>
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-search-location text-blue-400 mr-4"></i> 1. The Battlefield Mechanics</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">Imagine an infinite 1D straight line. We are commanding Turrets (Robots) to destroy passive targets (Walls). To master this, you must respect the physics of our universe:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                        <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 hover:border-blue-500 transition-colors group">
+                            <div class="flex justify-center mb-4"><i class="fas fa-ruler-horizontal text-3xl text-blue-400 group-hover:scale-110 transition-transform"></i></div>
+                            <h3 class="font-bold text-center text-white mb-2">Limited Range</h3>
+                            <p class="text-sm text-slate-400 text-center">A robot's bullet travels exactly <span class="mono text-blue-300 bg-slate-800 px-1 rounded">distance[i]</span> meters.</p>
+                        </div>
+                        <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 hover:border-purple-500 transition-colors group">
+                            <div class="flex justify-center mb-4"><i class="fas fa-meteor text-3xl text-purple-400 group-hover:scale-110 transition-transform"></i></div>
+                            <h3 class="font-bold text-center text-white mb-2">Total Penetration</h3>
+                            <p class="text-sm text-slate-400 text-center">A bullet destroys <em>every</em> wall it touches simultaneously. Walls don't slow it down.</p>
+                        </div>
+                        <div class="bg-slate-900 p-6 rounded-xl border border-red-900 hover:border-red-500 transition-colors group shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                            <div class="flex justify-center mb-4"><i class="fas fa-shield-virus text-3xl text-red-500 group-hover:scale-125 transition-transform"></i></div>
+                            <h3 class="font-bold text-center text-red-400 mb-2">The Blocker Rule</h3>
+                            <p class="text-sm text-slate-300 text-center">A bullet <strong>stops instantly</strong> upon hitting another robot. Robots act as indestructible barriers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 1: The Aha Moment -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-lightbulb text-yellow-400 mr-4"></i> 2. The "Aha!" Observation</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">Let's look closer at the <strong class="text-red-400">Blocker Rule</strong>. Because robots stop bullets, the infinite line isn't continuous. It is fractured into strictly isolated <strong>Zones</strong>.</p>
+                    
+                    <div class="zone-visual my-10 overflow-hidden">
+                        <div class="zone-label shadow-lg">Independent Sub-Problem (Zone)</div>
+                        
+                        <!-- Left Outside -->
+                        <div class="text-center opacity-30 blur-[2px]">
+                            <div class="text-4xl mb-2">🤖</div><div class="text-xs mono">Rob_{i-1}</div>
+                        </div>
+                        
+                        <div class="zone-barrier relative">
+                            <div class="absolute -left-16 top-1/2 -translate-y-1/2 text-red-500 font-bold whitespace-nowrap text-sm"><i class="fas fa-ban mr-1"></i> Blocks</div>
+                        </div>
+                        
+                        <!-- Inside Zone -->
+                        <div class="flex-1 px-8 relative">
+                            <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-600 -translate-y-1/2 -z-10"></div>
+                            <div class="flex justify-between items-center w-full">
+                                <div class="text-center">
+                                    <div class="text-5xl mb-2 filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">🤖</div>
+                                    <div class="text-sm font-bold text-blue-300 mono">Robot i</div>
+                                </div>
+                                <div class="text-3xl text-slate-400 flex gap-4">🧱 🧱 🧱</div>
+                                <div class="text-center">
+                                    <div class="text-5xl mb-2 filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">🤖</div>
+                                    <div class="text-sm font-bold text-blue-300 mono">Robot i+1</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="zone-barrier relative">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 font-bold whitespace-nowrap text-sm"><i class="fas fa-ban mr-1"></i> Blocks</div>
+                        </div>
+
+                        <!-- Right Outside -->
+                        <div class="text-center opacity-30 blur-[2px]">
+                            <div class="text-4xl mb-2">🤖</div><div class="text-xs mono">Rob_{i+2}</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-900/30 border-l-4 border-blue-500 p-5 rounded-r-xl shadow-inner">
+                        <p class="text-blue-100 text-lg"><strong>The Independence Principle:</strong> What <span class="mono text-blue-300">Robot i</span> decides to do <em>only</em> affects the immediate zone to its Left and Right. It has absolutely <strong>zero impact</strong> on <span class="mono text-blue-300">Robot i+2</span>. This localized effect confirms we can use Dynamic Programming.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: The Sorting Mandate -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-sort-numeric-down text-blue-400 mr-4"></i> 3. Phase 1: The Spatial Sorting Mandate</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">Dynamic Programming relies on ordered sub-problems. Since our "Zones" are spatial, we <strong>must</strong> sort our arrays by position before anything else.</p>
+                    
+                    <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 mb-6 font-mono text-sm shadow-inner">
+                        <div class="text-slate-400 mb-2">// Raw Input (Chaotic)</div>
+                        <div class="flex gap-4 mb-4">
+                            <div class="bg-slate-800 px-3 py-2 rounded border border-red-900/50 text-red-300">Robots: [10, 2]</div>
+                            <div class="bg-slate-800 px-3 py-2 rounded border border-red-900/50 text-red-300">Distances: [5, 1]</div>
+                        </div>
+                        
+                        <div class="text-center text-blue-400 my-4 text-xl"><i class="fas fa-arrow-down"></i> Zip & Sort <i class="fas fa-arrow-down"></i></div>
+                        
+                        <div class="text-slate-400 mb-2">// Processed Input (Ordered Left-to-Right)</div>
+                        <div class="flex gap-4">
+                            <div class="bg-slate-800 px-3 py-2 rounded border border-green-900/50 text-green-300">Robots: [2, 10]</div>
+                            <div class="bg-slate-800 px-3 py-2 rounded border border-green-900/50 text-green-300">Distances: [1, 5]</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-r-xl">
+                        <p class="text-blue-100"><strong>Crucial:</strong> We must also sort the <span class="mono">walls</span> array! Without strict spatial ordering, concepts like "Robot i-1" and "Robot i+1" have absolutely no mathematical meaning.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Binary Search Pre-computation -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-microchip text-indigo-400 mr-4"></i> 4. Phase 2: Binary Search Pre-computation</h2>
+                    <p class="text-lg text-slate-300 leading-relaxed mb-6">Before running DP, we must calculate exactly how many walls each robot *could* destroy in either direction, strictly bounded by the adjacent robots.</p>
+                    
+                    <div class="math-box bg-slate-900 p-6 rounded-xl border border-slate-700 mb-6">
+                        <div class="flex items-center gap-6 mb-6 pb-6 border-b border-slate-700">
+                            <div class="w-1/3 text-right">
+                                <span class="text-red-400 font-bold text-xl"><i class="fas fa-arrow-left"></i> Left Shot</span><br>
+                                <span class="mono text-sm text-slate-400">walls_left[i]</span>
+                            </div>
+                            <div class="w-2/3 bg-slate-800 p-4 rounded relative border border-slate-600">
+                                <div class="absolute left-4 text-xs text-red-500 top-1">Blocker i-1</div>
+                                <div class="flex justify-between items-end h-12">
+                                    <div class="text-2xl opacity-50">🤖</div>
+                                    <div class="text-xl">🧱 🧱</div>
+                                    <div class="text-xl opacity-20 line-through">🧱</div>
+                                    <div class="text-3xl text-blue-400">🤖<span class="text-xs block text-center">i</span></div>
+                                </div>
+                                <div class="h-2 bg-gradient-to-r from-red-600 to-red-400 absolute bottom-4 right-12 w-[60%] rounded-l-full"></div>
+                                <p class="text-xs text-slate-400 mt-2 text-center">Count walls in <span class="mono text-blue-200">[ max(pos[i-1], pos[i]-dist[i]), pos[i] ]</span></p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            <div class="w-1/3 text-right">
+                                <span class="text-blue-400 font-bold text-xl">Right Shot <i class="fas fa-arrow-right"></i></span><br>
+                                <span class="mono text-sm text-slate-400">walls_right[i]</span>
+                            </div>
+                            <div class="w-2/3 bg-slate-800 p-4 rounded relative border border-slate-600">
+                                <div class="absolute right-4 text-xs text-red-500 top-1">Blocker i+1</div>
+                                <div class="flex justify-between items-end h-12">
+                                    <div class="text-3xl text-blue-400">🤖<span class="text-xs block text-center">i</span></div>
+                                    <div class="text-xl">🧱 🧱 🧱</div>
+                                    <div class="text-2xl opacity-50">🤖</div>
+                                    <div class="text-xl opacity-20 line-through">🧱</div>
+                                </div>
+                                <div class="h-2 bg-gradient-to-l from-blue-600 to-blue-400 absolute bottom-4 left-12 w-[65%] rounded-r-full"></div>
+                                <p class="text-xs text-slate-400 mt-2 text-center">Count walls in <span class="mono text-blue-200">[ pos[i], min(pos[i+1], pos[i]+dist[i]) ]</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-400 text-center"><i class="fas fa-bolt text-yellow-400 mr-2"></i><strong>Optimization:</strong> We use Binary Search (<span class="mono">bisect</span>) to quickly count walls in these specific coordinate ranges in <span class="mono">O(log W)</span> time per robot.</p>
+                </div>
+            </div>
+
+            <!-- Slide 4: Safe Transitions -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-shield-alt text-green-400 mr-4"></i> 5. Phase 3: Safe Transitions</h2>
+                    <p class="text-lg text-slate-300 mb-6">When we build our array <span class="mono text-blue-300 font-bold bg-slate-900 px-2 py-1 rounded">dp[i][dir]</span>, some calculations are completely independent and safe.</p>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                            <h3 class="text-blue-400 font-bold mb-3 text-lg"><i class="fas fa-arrow-right mr-2"></i>Safe Transition A: Robot <span class="mono">i</span> shoots RIGHT</h3>
+                            <p class="text-sm text-slate-300 mb-4">Shooting right aims away from the previous robots into unknown territory. It will never interfere with decisions made by <span class="mono text-white">i-1</span>.</p>
+                            <div class="bg-slate-800 p-3 rounded font-mono text-sm border border-slate-600 text-green-300">
+                                dp[i][1] = max(dp[i-1][0], dp[i-1][1]) + walls_right[i]
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                            <h3 class="text-blue-400 font-bold mb-3 text-lg"><i class="fas fa-arrow-left mr-2"></i>Safe Transition B: Both shoot LEFT</h3>
+                            <p class="text-sm text-slate-300 mb-4">If <span class="mono text-white">i-1</span> shot left, and <span class="mono text-white">i</span> shoots left, they fire in parallel. They cannot possibly collide!</p>
+                            <div class="bg-slate-800 p-3 rounded font-mono text-sm border border-slate-600 text-green-300">
+                                dp[i][0] = dp[i-1][0] + walls_left[i]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: The Collision Math -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-radiation text-red-500 mr-4"></i> 6. Phase 4: The Collision Math</h2>
+                    <p class="text-slate-300 mb-4 text-lg">The hardest part of the problem: What if <span class="mono text-white">i-1</span> shot <strong class="text-red-400">RIGHT</strong> and <span class="mono text-white">i</span> shoots <strong class="text-blue-400">LEFT</strong>? They might overlap!</p>
+                    
+                    <div class="math-box bg-slate-900 border-red-900/50 shadow-2xl">
+                        <p class="text-sm text-slate-400 mb-2">// 1. Calculate individual reaches bounded by each other</p>
+                        <div class="text-red-300 mb-1">reach_R = min(pos[i], pos[i-1] + dist[i-1])</div>
+                        <div class="text-blue-300 mb-4">reach_L = max(pos[i-1], pos[i] - dist[i])</div>
+                        
+                        <p class="text-sm text-slate-400 mb-2">// 2. Check for Overlap vs Gap</p>
+                        <div class="text-green-300 mb-2">if (reach_L > reach_R) { <span class="text-slate-500">// Disjoint (A Gap exists!)</span></div>
+                        <div class="ml-4 text-white">dp[i][0] = max(dp[i][0], dp[i-1][1] + walls_left[i])</div>
+                        <div class="text-green-300 mb-2">} else { <span class="text-slate-500">// Overlap occurs!</span></div>
+                        
+                        <div class="ml-4 text-slate-300 text-xs mb-2 bg-slate-800 p-3 rounded border border-yellow-700/50">
+                            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i> <strong class="text-yellow-400">Professor's Trick:</strong> The state <span class="mono text-blue-300">dp[i-1][1]</span> ALREADY includes walls destroyed up to <span class="mono text-blue-300">reach_R</span>.<br>
+                            To avoid double counting the overlapping blast zone, we ONLY add the uncounted walls from <span class="mono text-blue-300">(reach_R to pos[i]]</span>.
+                        </div>
+                        <div class="ml-4 text-white font-bold bg-blue-900/20 p-2 rounded">dp[i][0] = max(dp[i][0], dp[i-1][1] + walls_in(reach_R, pos[i]))</div>
+                        <div class="text-green-300 mt-2">}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: Complexity & Verdict -->
+            <div class="slide">
+                <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-6 flex items-center text-white"><i class="fas fa-flag-checkered text-green-400 mr-4"></i> 7. Phase 5: Complexity & Verdict</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 shadow-inner">
+                            <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2"><i class="fas fa-stopwatch text-blue-400 mr-2"></i>Time Complexity</h3>
+                            <ul class="space-y-3 text-sm text-slate-300 mono">
+                                <li class="flex justify-between"><span>Sorting:</span> <span class="text-green-400">O(N log N + W log W)</span></li>
+                                <li class="flex justify-between"><span>Binary Search:</span> <span class="text-green-400">O(N log W)</span></li>
+                                <li class="flex justify-between"><span>DP Pass:</span> <span class="text-green-400">O(N)</span></li>
+                                <li class="border-t border-slate-700 pt-2 flex justify-between font-bold text-white mt-2"><span>Total Time:</span> <span class="text-blue-400">O(N log N + W log W)</span></li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 shadow-inner">
+                            <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2"><i class="fas fa-memory text-purple-400 mr-2"></i>Space Complexity</h3>
+                            <ul class="space-y-3 text-sm text-slate-300 mono">
+                                <li class="flex justify-between"><span>Sorting Arrays:</span> <span class="text-green-400">O(N + W)</span></li>
+                                <li class="flex justify-between"><span>DP Table:</span> <span class="text-green-400">O(N)</span></li>
+                                <li class="border-t border-slate-700 pt-2 flex justify-between font-bold text-white mt-2"><span>Total Space:</span> <span class="text-purple-400">O(N + W)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-500/30 p-6 rounded-xl text-center shadow-lg">
+                        <p class="text-slate-300 mb-2">The final answer, representing the maximum unique walls destroyed across the optimal combinations, resides at the end of the line:</p>
+                        <div class="text-2xl font-bold mono text-white">
+                            Result = max( <span class="text-blue-400">dp[N-1][0]</span>, <span class="text-red-400">dp[N-1][1]</span> )
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide Navigation Controls (Lecture) -->
+            <div class="mt-8 flex justify-center items-center gap-6">
+                <button onclick="prevSlide('lecture')" id="btn-prev-lecture" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-full font-bold shadow-lg border border-slate-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <i class="fas fa-chevron-left"></i> Prev
+                </button>
+                <div class="flex gap-2" id="nav-dots-lecture"></div>
+                <button onclick="nextSlide('lecture')" id="btn-next-lecture" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ==================== TAB 3: DP MATRIX TRACE ==================== -->
+        <section id="section-trace" class="hidden flex flex-col min-h-[70vh]">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex gap-4 mb-6 shadow-md overflow-x-auto">
+                <button onclick="loadTrace(1)" class="px-5 py-2 bg-slate-700 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition whitespace-nowrap">Example 1</button>
+                <button onclick="loadTrace(2)" class="px-5 py-2 bg-slate-700 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition whitespace-nowrap">Example 2</button>
+                <button onclick="loadTrace(3)" class="px-5 py-2 bg-slate-700 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition whitespace-nowrap">Example 3</button>
+                <button onclick="loadTrace(4)" class="px-5 py-2 bg-slate-700 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition whitespace-nowrap border border-indigo-400">Example 4 (Chain)</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Matrix Panel -->
+                <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 shadow-2xl flex flex-col">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <i class="fas fa-th text-blue-400 mr-3"></i> DP Matrix Memory
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="tracePrev()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm text-white font-bold transition flex items-center gap-2"><i class="fas fa-step-backward text-xs"></i> Prev</button>
+                            <button onclick="traceNext()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm text-white font-bold transition flex items-center gap-2">Next <i class="fas fa-step-forward text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto flex-1 flex justify-center pb-4 custom-scroll">
+                        <div id="trace-matrix-container" class="matrix-grid w-full min-w-max">
+                            <!-- Matrix generated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code & Logic Panel -->
+                <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 shadow-2xl flex flex-col">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center"><i class="fas fa-code text-emerald-400 mr-3"></i> Execution Engine (i = <span id="trace-i-display" class="text-white ml-1">0</span>)</h3>
+                    
+                    <div class="code-panel-container flex-1 flex flex-col gap-6">
+                        <!-- Context Block -->
+                        <div>
+                            <div class="text-[11px] text-slate-500 uppercase font-bold mb-3 tracking-widest">Context</div>
+                            <div class="border-b border-slate-700/50 pb-5">
+                                <div id="trace-context" class="font-mono text-[13px] text-slate-300 leading-relaxed space-y-1">
+                                    <!-- Context generated via JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calculations Block -->
+                        <div class="flex-1 flex flex-col gap-6">
+                            <div>
+                                <div class="text-[13px] text-blue-300 mb-3 font-mono flex items-center gap-2"><i class="fas fa-arrow-left text-blue-400"></i> Calculating dp[i][0] (Left Shot)</div>
+                                <pre id="trace-code-left" class="whitespace-pre-wrap leading-relaxed text-[13px] text-slate-300 font-mono"></pre>
+                            </div>
+                            <div class="pt-6 border-t border-slate-700/50">
+                                <div class="text-[13px] text-red-300 mb-3 font-mono flex items-center gap-2">Calculating dp[i][1] (Right Shot) <i class="fas fa-arrow-right text-red-400"></i></div>
+                                <pre id="trace-code-right" class="whitespace-pre-wrap leading-relaxed text-[13px] text-slate-300 font-mono"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== TAB 4: LAB SIMULATION ==================== -->
+        <section id="section-lab" class="hidden">
+            <!-- Lab Header -->
+            <header class="w-full flex flex-col md:flex-row gap-6 items-center mb-8 bg-slate-800/50 p-6 rounded-2xl border border-slate-700 backdrop-blur-sm shadow-2xl">
+                <div class="prof-avatar shrink-0 relative">
+                    🦉
+                    <div class="absolute -bottom-2 -right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-slate-800 animate-pulse"></div>
+                </div>
+                <div class="bubble p-5 text-slate-300 flex-1 leading-relaxed shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-2"><i class="fas fa-flask text-green-400 mr-2"></i>The Physics Simulator</h2>
+                    <p id="prof-text">
+                        Welcome to the Lab! We have added <strong class="text-purple-400">Ghost Lasers</strong> to the simulator. If a robot is blocked, you will see a dashed phantom line representing the wasted range! Try Example 4 to test a chain reaction.
+                    </p>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Controls Panel -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 flex flex-col gap-3 shadow-xl">
+                    <h3 class="text-lg font-bold text-slate-100 border-b border-slate-600 pb-2 mb-2"><i class="fas fa-tasks mr-2 text-indigo-400"></i>Scenarios</h3>
+                    
+                    <button onclick="loadExample(1)" class="w-full text-left px-4 py-2 bg-slate-700 hover:bg-indigo-600 rounded-lg transition-colors border border-slate-600 hover:border-indigo-400 group">
+                        <span class="block font-bold text-white group-hover:text-white">Example 1</span>
+                        <span class="text-xs text-slate-400 group-hover:text-indigo-200">Basic Reach</span>
+                    </button>
+                    <button onclick="loadExample(2)" class="w-full text-left px-4 py-2 bg-slate-700 hover:bg-indigo-600 rounded-lg transition-colors border border-slate-600 hover:border-indigo-400 group">
+                        <span class="block font-bold text-white group-hover:text-white">Example 2</span>
+                        <span class="text-xs text-slate-400 group-hover:text-indigo-200">Multiple Targets</span>
+                    </button>
+                    <button onclick="loadExample(3)" class="w-full text-left px-4 py-2 bg-slate-700 hover:bg-indigo-600 rounded-lg transition-colors border border-slate-600 hover:border-indigo-400 group">
+                        <span class="block font-bold text-white group-hover:text-white">Example 3</span>
+                        <span class="text-xs text-slate-400 group-hover:text-indigo-200 text-red-300"><i class="fas fa-exclamation-triangle"></i> The Blocker Trap</span>
+                    </button>
+                    <button onclick="loadExample(4)" class="w-full text-left px-4 py-2 bg-slate-700 hover:bg-indigo-600 rounded-lg transition-colors border border-slate-600 hover:border-indigo-400 group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 pointer-events-none"></div>
+                        <span class="block font-bold text-white group-hover:text-white relative z-10"><i class="fas fa-link text-purple-400 mr-1"></i> Example 4 (New)</span>
+                        <span class="text-xs text-slate-400 group-hover:text-indigo-200 relative z-10">The DP Chain Reaction</span>
+                    </button>
+
+                    <div class="mt-auto pt-4 border-t border-slate-700">
+                        <div class="bg-slate-900 p-4 rounded-lg border border-slate-600 text-center shadow-inner relative overflow-hidden">
+                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiMzMzQxNTUiLz48L3N2Zz4=')] opacity-20"></div>
+                            <span class="text-xs text-slate-400 uppercase tracking-widest font-bold relative z-10">Walls Destroyed</span>
+                            <div class="text-5xl font-black text-green-400 mono mt-1 relative z-10 filter drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]" id="score">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Canvas -->
+                <div class="lg:col-span-3 bg-slate-900 rounded-2xl p-8 border border-slate-700 flex flex-col relative overflow-hidden shadow-xl">
+                    <h3 class="text-xl font-bold text-slate-100 mb-6 flex justify-between items-center">
+                        <span><i class="fas fa-satellite-dish text-blue-400 mr-2"></i>Live Number Line</span>
+                        <button onclick="resetCurrentLab()" class="text-sm px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 transition border border-slate-600 shadow-md">
+                            <i class="fas fa-undo mr-1 text-slate-400"></i> Reset Grid
+                        </button>
+                    </h3>
+
+                    <div id="sim-container" class="relative w-full h-56 my-4 px-8 border border-slate-800 rounded-xl bg-[#0b1121] shadow-inner flex items-center">
+                        <div class="number-line" id="number-line"></div>
+                    </div>
+
+                    <div class="mt-auto bg-slate-800 p-5 rounded-xl border border-slate-600 shadow-lg">
+                        <h4 class="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider flex items-center"><i class="fas fa-gamepad mr-2 text-indigo-400"></i> Manual Firing Sequence Panel</h4>
+                        <div id="robot-controls" class="flex flex-wrap gap-4"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /* ==================== GLOBAL & TAB LOGIC ==================== */
+        function switchTab(tabId) {
+            ['dp', 'lecture', 'trace', 'lab'].forEach(id => {
+                const btn = document.getElementById(`tab-${id}`);
+                const sec = document.getElementById(`section-${id}`);
+                
+                if (id === tabId) {
+                    btn.className = 'px-5 py-2 rounded-md text-sm font-bold transition-all bg-blue-600 text-white shadow whitespace-nowrap';
+                    sec.classList.remove('hidden');
+                    
+                    if(sliders[id]) updateSlideUI(id);
+                    if(id === 'trace' && traceData.length === 0) loadTrace(4); // default load
+                } else {
+                    btn.className = 'px-5 py-2 rounded-md text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap bg-transparent shadow-none';
+                    sec.classList.add('hidden');
+                }
+            });
+        }
+
+        /* ==================== LECTURE SLIDER LOGIC ==================== */
+        const sliders = {
+            dp: { current: 0, total: 4, dotsId: 'nav-dots-dp', prevId: 'btn-prev-dp', nextId: 'btn-next-dp', sectionId: 'section-dp' },
+            lecture: { current: 0, total: 7, dotsId: 'nav-dots-lecture', prevId: 'btn-prev-lecture', nextId: 'btn-next-lecture', sectionId: 'section-lecture' }
+        };
+
+        function initSlides() {
+            Object.keys(sliders).forEach(key => {
+                const slider = sliders[key];
+                const nav = document.getElementById(slider.dotsId);
+                nav.innerHTML = ''; // Clear existing
+                
+                for(let i=0; i < slider.total; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = `w-2 h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-blue-500 w-6 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-slate-600 shadow-none'}`;
+                    dot.id = `dot-${key}-${i}`;
+                    nav.appendChild(dot);
+                }
+                updateSlideUI(key);
+            });
+        }
+
+        function updateSlideUI(key) {
+            const slider = sliders[key];
+            const section = document.getElementById(slider.sectionId);
+            if (!section) return;
+
+            const slides = section.querySelectorAll('.slide');
+            
+            slides.forEach((slide, index) => {
+                if(index === slider.current) {
+                    slide.classList.add('active');
+                    slide.style.animation = 'none';
+                    slide.offsetHeight; 
+                    slide.style.animation = null; 
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            for(let i=0; i < slider.total; i++) {
+                const dot = document.getElementById(`dot-${key}-${i}`);
+                if (dot) {
+                    if(i === slider.current) {
+                        dot.className = 'w-6 h-2 rounded-full transition-all duration-300 bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]';
+                    } else {
+                        dot.className = 'w-2 h-2 rounded-full transition-all duration-300 bg-slate-600 shadow-none';
+                    }
+                }
+            }
+
+            document.getElementById(slider.prevId).disabled = slider.current === 0;
+            document.getElementById(slider.nextId).disabled = slider.current === slider.total - 1;
+        }
+
+        function nextSlide(key) { 
+            if (sliders[key].current < sliders[key].total - 1) { 
+                sliders[key].current++; 
+                updateSlideUI(key); 
+            } 
+        }
+        
+        function prevSlide(key) { 
+            if (sliders[key].current > 0) { 
+                sliders[key].current--; 
+                updateSlideUI(key); 
+            } 
+        }
+
+        /* ==================== TRACE SIMULATION LOGIC ==================== */
+        let traceData = [];
+        let currentTraceStep = 0;
+        let currentTraceScenario = null;
+
+        function countWalls(start, end, wallsArray) {
+            return wallsArray.filter(w => w >= start && w <= end).length;
+        }
+
+        function generateTraceData(scenario) {
+            const { robots, distance, walls } = scenario;
+            const N = robots.length;
+            const dp = Array.from({ length: N }, () => [0, 0]);
+            const trace = [];
+
+            for (let i = 0; i < N; i++) {
+                const pos = robots[i];
+                const dist = distance[i];
+                
+                const prevPos = i > 0 ? robots[i-1] : -Infinity;
+                const nextPos = i < N - 1 ? robots[i+1] : Infinity;
+
+                const reach_L = Math.max(prevPos, pos - dist);
+                const reach_R_current = Math.min(nextPos, pos + dist); 
+
+                const w_left = countWalls(reach_L, pos, walls);
+                const w_right = countWalls(pos, reach_R_current, walls);
+
+                let calcL = "";
+                let calcR = "";
+
+                if (i === 0) {
+                    dp[i][0] = w_left;
+                    dp[i][1] = w_right;
+                    calcL = `<span class="text-slate-500">// Base Case (i=0)</span>\n`;
+                    calcL += `w_left = walls in [${reach_L === -Infinity ? '-\u221E' : reach_L}, ${pos}] = <span class="code-highlight">${w_left}</span>\n`;
+                    calcL += `dp[0][0] = w_left = <span class="code-success">${dp[i][0]}</span>`;
+                    
+                    calcR = `<span class="text-slate-500">// Base Case (i=0)</span>\n`;
+                    calcR += `w_right = walls in [${pos}, ${reach_R_current === Infinity ? '\u221E' : reach_R_current}] = <span class="code-highlight">${w_right}</span>\n`;
+                    calcR += `dp[0][1] = w_right = <span class="code-success">${dp[i][1]}</span>`;
+                } else {
+                    const reach_R_prev = Math.min(pos, prevPos + distance[i-1]);
+
+                    // DP Left Calculation
+                    calcL = `w_left = walls in [${reach_L}, ${pos}] = <span class="code-highlight">${w_left}</span>\n`;
+                    let val_prev_L = dp[i-1][0] + w_left;
+                    let val_prev_R = 0;
+
+                    if (reach_L > reach_R_prev) {
+                        val_prev_R = dp[i-1][1] + w_left;
+                        calcL += `<span class="text-slate-500">// GAP exists (reach_L > reach_R_prev)</span>\n`;
+                        calcL += `dp[${i}][0] = max(\n  dp[${i-1}][0] + w_left <span class="text-slate-500">(${dp[i-1][0]}+${w_left}=<span class="code-highlight">${val_prev_L}</span>)</span>,\n  dp[${i-1}][1] + w_left <span class="text-slate-500">(${dp[i-1][1]}+${w_left}=<span class="code-highlight">${val_prev_R}</span>)</span>\n)`;
+                    } else {
+                        // Math.floor + 1 handles strictly greater for integers
+                        const uncountedWalls = countWalls(reach_R_prev + 0.1, pos, walls);
+                        val_prev_R = dp[i-1][1] + uncountedWalls;
+                        calcL += `<span class="text-slate-500">// OVERLAP! (reach_L <= reach_R_prev)</span>\n`;
+                        calcL += `uncounted_walls = walls in (${reach_R_prev}, ${pos}] = <span class="code-highlight">${uncountedWalls}</span>\n`;
+                        calcL += `dp[${i}][0] = max(\n  dp[${i-1}][0] + w_left <span class="text-slate-500">(${dp[i-1][0]}+${w_left}=<span class="code-highlight">${val_prev_L}</span>)</span>,\n  dp[${i-1}][1] + uncounted_walls <span class="text-slate-500">(${dp[i-1][1]}+${uncountedWalls}=<span class="code-highlight">${val_prev_R}</span>)</span>\n)`;
+                    }
+                    dp[i][0] = Math.max(val_prev_L, val_prev_R);
+                    calcL += `\n<br>dp[${i}][0] = <span class="code-success">${dp[i][0]}</span>`;
+
+                    // DP Right Calculation
+                    calcR = `w_right = walls in [${pos}, ${reach_R_current === Infinity ? '\u221E' : reach_R_current}] = <span class="code-highlight">${w_right}</span>\n`;
+                    const maxPrev = Math.max(dp[i-1][0], dp[i-1][1]);
+                    dp[i][1] = maxPrev + w_right;
+                    calcR += `dp[${i}][1] = max(dp[${i-1}][0], dp[${i-1}][1]) + w_right\n`;
+                    calcR += `         = max(${dp[i-1][0]}, ${dp[i-1][1]}) + ${w_right}\n`;
+                    calcR += `<br>dp[${i}][1] = <span class="code-success">${dp[i][1]}</span>`;
+                }
+
+                trace.push({ i, pos, dist, reach_L, reach_R_current, w_left, w_right, dp_left: dp[i][0], dp_right: dp[i][1], calcL, calcR });
+            }
+            return trace;
+        }
+
+        function buildTraceMatrixUI(N, scenario) {
+            const container = document.getElementById('trace-matrix-container');
+            container.style.gridTemplateColumns = `auto repeat(${N}, minmax(80px, 1fr))`;
+            container.innerHTML = '';
+            
+            // Header Row
+            container.innerHTML += `<div class="matrix-header text-right items-end pr-4">State</div>`;
+            for(let i=0; i<N; i++) {
+                container.innerHTML += `<div class="matrix-header"><span>Rob ${i}</span></div>`;
+            }
+
+            // Left Row
+            container.innerHTML += `<div class="matrix-row-header"><span class="text-blue-200">dp[i][0]</span> <i class="fas fa-arrow-left text-blue-400"></i></div>`;
+            for(let i=0; i<N; i++) {
+                container.innerHTML += `<div class="matrix-cell" id="tcell-${i}-0">?</div>`;
+            }
+
+            // Right Row
+            container.innerHTML += `<div class="matrix-row-header"><span class="text-red-200">dp[i][1]</span> <i class="fas fa-arrow-right text-red-400"></i></div>`;
+            for(let i=0; i<N; i++) {
+                container.innerHTML += `<div class="matrix-cell" id="tcell-${i}-1">?</div>`;
+            }
+        }
+
+        function loadTrace(exampleId) {
+            currentTraceScenario = examples[exampleId];
+            traceData = generateTraceData(currentTraceScenario);
+            currentTraceStep = 0;
+            
+            document.querySelectorAll('#section-trace button').forEach(btn => btn.classList.remove('border', 'border-indigo-400'));
+            event.target.classList.add('border', 'border-indigo-400');
+
+            buildTraceMatrixUI(traceData.length, currentTraceScenario);
+            updateTraceView();
+        }
+
+        function updateTraceView() {
+            const step = traceData[currentTraceStep];
+            document.getElementById('trace-i-display').innerText = step.i;
+            
+            // Render Math context using actual problem data
+            document.getElementById('trace-context').innerHTML = `
+                <div>Robot Position: <span class="text-white">${step.pos}</span> <span class="text-slate-600 mx-2">|</span> Range: <span class="text-white">${step.dist}</span></div>
+                <div class="text-slate-400 mt-2">reach_L bounded to: <span class="text-slate-300">${step.reach_L === -Infinity ? '-\u221E' : step.reach_L}</span></div>
+                <div class="text-slate-400">reach_R bounded to: <span class="text-slate-300">${step.reach_R_current === Infinity ? '\u221E' : step.reach_R_current}</span></div>
+            `;
+            
+            document.getElementById('trace-code-left').innerHTML = step.calcL;
+            document.getElementById('trace-code-right').innerHTML = step.calcR;
+
+            // Update Matrix UI
+            for(let i=0; i<traceData.length; i++) {
+                const cellL = document.getElementById(`tcell-${i}-0`);
+                const cellR = document.getElementById(`tcell-${i}-1`);
+                
+                cellL.classList.remove('active-cell', 'filled');
+                cellR.classList.remove('active-cell', 'filled');
+
+                if (i < currentTraceStep) {
+                    cellL.innerText = traceData[i].dp_left; cellL.classList.add('filled');
+                    cellR.innerText = traceData[i].dp_right; cellR.classList.add('filled');
+                } else if (i === currentTraceStep) {
+                    cellL.innerText = traceData[i].dp_left; cellL.classList.add('active-cell', 'filled');
+                    cellR.innerText = traceData[i].dp_right; cellR.classList.add('active-cell', 'filled');
+                } else {
+                    cellL.innerText = '?';
+                    cellR.innerText = '?';
+                }
+            }
+        }
+
+        function traceNext() {
+            if (currentTraceStep < traceData.length - 1) {
+                currentTraceStep++;
+                updateTraceView();
+            }
+        }
+
+        function tracePrev() {
+            if (currentTraceStep > 0) {
+                currentTraceStep--;
+                updateTraceView();
+            }
+        }
+
+        /* ==================== LAB SIMULATION LOGIC ==================== */
+        const examples = {
+            1: { robots: [4], distance: [3], walls: [1, 10], maxPos: 11, desc: "Robot at pos 4 shoots left, reaches (4-3) = 1, destroying the wall at 1! The wall at 10 is too far." },
+            2: { robots: [2, 10], distance: [1, 5], walls: [2, 5, 7], maxPos: 12, desc: "Two robots! Robot at 10 shoots left, covering [5, 10]. Robot at 2 shoots left hitting the wall at 2." },
+            3: { robots: [1, 2], distance: [100, 1], walls: [10], maxPos: 11, desc: "<span class='text-red-400 font-bold'>The Trap!</span> Robot 1 has massive range (100). But if it shoots right, it HITS Robot 2 and stops instantly, wasting all that range!" },
+            4: { robots: [2, 7, 12], distance: [6, 4, 10], walls: [1, 4, 5, 8, 9, 14], maxPos: 16, desc: "<strong>The Chain Reaction.</strong> Try finding the optimal setup. If Rob[7] shoots Left, he overlaps Rob[2]'s Right shot. Does Rob[12] shoot Left to hit 8 and 9, but get blocked by 7?" }
+        };
+
+        let currentScenario = null;
+        let destroyedWalls = new Set();
+        let isAnimating = false;
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        function setProfessorText(text) {
+            const el = document.getElementById('prof-text');
+            el.style.opacity = '0';
+            setTimeout(() => { el.innerHTML = text; el.style.opacity = '1'; }, 200);
+        }
+
+        function updateScore() { 
+            const el = document.getElementById('score');
+            el.innerText = destroyedWalls.size; 
+            el.classList.remove('scale-125');
+            void el.offsetWidth; // trigger reflow
+            el.classList.add('scale-125', 'transition-transform', 'duration-300');
+            setTimeout(() => el.classList.remove('scale-125'), 300);
+        }
+
+        function loadExample(id) {
+            if (isAnimating) return;
+            currentScenario = JSON.parse(JSON.stringify(examples[id]));
+            resetCurrentLab();
+            setProfessorText(`<strong>Loaded Example ${id}:</strong> ${currentScenario.desc}`);
+        }
+
+        function resetCurrentLab() {
+            if (!currentScenario || isAnimating) return;
+            destroyedWalls.clear();
+            document.getElementById('score').innerText = '0';
+            renderScene();
+        }
+
+        function getPosPercent(val, maxPos) { return (val / maxPos) * 100; }
+
+        function renderScene() {
+            const container = document.getElementById('number-line');
+            const controlsContainer = document.getElementById('robot-controls');
+            container.innerHTML = '';
+            controlsContainer.innerHTML = '';
+            
+            const max = currentScenario.maxPos;
+
+            // Draw ticks
+            for (let i = 0; i <= max; i++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick'; tick.style.left = `${getPosPercent(i, max)}%`;
+                const label = document.createElement('div');
+                label.className = 'tick-label'; label.innerText = i;
+                tick.appendChild(label); container.appendChild(tick);
+            }
+
+            // Draw entities
+            currentScenario.walls.forEach(w => {
+                if (destroyedWalls.has(w)) return;
+                const wall = document.createElement('div');
+                wall.className = 'entity wall'; wall.innerHTML = '🧱'; wall.id = `wall-${w}`;
+                wall.style.left = `${getPosPercent(w, max)}%`; container.appendChild(wall);
+            });
+
+            currentScenario.robots.forEach((r, idx) => {
+                const dist = currentScenario.distance[idx];
+                
+                const robot = document.createElement('div');
+                robot.className = 'entity robot'; robot.innerHTML = '🤖'; robot.id = `robot-${r}`;
+                robot.style.left = `${getPosPercent(r, max)}%`; container.appendChild(robot);
+
+                // Build modern control buttons
+                const ctrlGrp = document.createElement('div');
+                ctrlGrp.className = 'bg-slate-900/80 p-2 rounded-lg flex items-center gap-3 border border-slate-700 shadow-md';
+                
+                const label = document.createElement('div');
+                label.className = 'flex flex-col items-center bg-slate-800 px-3 py-1 rounded border border-slate-600';
+                label.innerHTML = `<span class="text-xs font-bold text-blue-300">Rob[${r}]</span><span class="text-[10px] text-slate-400 mono">Range:${dist}</span>`;
+                
+                const btnLeft = document.createElement('button');
+                btnLeft.className = 'px-3 py-2 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-blue-600 hover:to-blue-700 text-white text-xs font-bold rounded border border-slate-600 transition-all shadow-sm flex items-center gap-2';
+                btnLeft.innerHTML = '<i class="fas fa-arrow-left"></i> L';
+                btnLeft.onclick = () => fire(idx, 'left', btnLeft, btnRight);
+
+                const btnRight = document.createElement('button');
+                btnRight.className = 'px-3 py-2 bg-gradient-to-l from-slate-700 to-slate-800 hover:from-red-600 hover:to-red-700 text-white text-xs font-bold rounded border border-slate-600 transition-all shadow-sm flex items-center gap-2';
+                btnRight.innerHTML = 'R <i class="fas fa-arrow-right"></i>';
+                btnRight.onclick = () => fire(idx, 'right', btnRight, btnLeft);
+
+                ctrlGrp.appendChild(label); ctrlGrp.appendChild(btnLeft); ctrlGrp.appendChild(btnRight);
+                controlsContainer.appendChild(ctrlGrp);
+            });
+        }
+
+        async function fire(robotIdx, direction, clickedBtn, otherBtn) {
+            if (isAnimating || clickedBtn.disabled) return;
+            isAnimating = true;
+
+            // Lock this robot's buttons (one shot per robot)
+            clickedBtn.disabled = true;
+            otherBtn.disabled = true;
+            clickedBtn.classList.replace('hover:from-blue-600', 'opacity-50');
+            clickedBtn.classList.replace('hover:from-red-600', 'opacity-50');
+            clickedBtn.classList.add('cursor-not-allowed', 'ring-2', direction==='left'?'ring-blue-500':'ring-red-500');
+            otherBtn.classList.add('opacity-30', 'cursor-not-allowed');
+
+            const rPos = currentScenario.robots[robotIdx];
+            const maxDist = currentScenario.distance[robotIdx];
+            const maxLinePos = currentScenario.maxPos;
+            
+            let theoreticalPos = direction === 'left' ? rPos - maxDist : rPos + maxDist;
+            let targetPos = theoreticalPos;
+            let blockPos = null;
+            let hitRobot = false;
+
+            // DP Block Logic implementation
+            if (direction === 'left') {
+                for (let i = 0; i < currentScenario.robots.length; i++) {
+                    const otherPos = currentScenario.robots[i];
+                    if (otherPos < rPos && otherPos >= targetPos) {
+                        if (blockPos === null || otherPos > blockPos) blockPos = otherPos;
+                    }
+                }
+                if (blockPos !== null) { targetPos = blockPos; hitRobot = true; }
+            } else {
+                for (let i = 0; i < currentScenario.robots.length; i++) {
+                    const otherPos = currentScenario.robots[i];
+                    if (otherPos > rPos && otherPos <= targetPos) {
+                        if (blockPos === null || otherPos < blockPos) blockPos = otherPos;
+                    }
+                }
+                if (blockPos !== null) { targetPos = blockPos; hitRobot = true; }
+            }
+
+            // Boundary constraints for visualizer
+            if (targetPos < 0) targetPos = 0;
+            if (targetPos > maxLinePos) targetPos = maxLinePos;
+            if (theoreticalPos < 0) theoreticalPos = 0;
+            if (theoreticalPos > maxLinePos) theoreticalPos = maxLinePos;
+
+            // Professor Commentary
+            let msg = `Robot at <span class="mono">${rPos}</span> fires ${direction} with range ${maxDist}. `;
+            if (hitRobot) {
+                const lostDist = Math.abs(theoreticalPos - targetPos);
+                msg += `Oh no! <strong class="text-red-400">Blocked</strong> by Robot at <span class="mono">${blockPos}</span>! <span class="text-purple-400">Lost ${lostDist}m of range.</span> (See the dashed Ghost Laser)`;
+            } else {
+                msg += `Bullet travels freely to <span class="mono">${targetPos}</span>.`;
+            }
+            setProfessorText(msg);
+
+            const container = document.getElementById('number-line');
+
+            // Draw Real Laser
+            const laser = document.createElement('div');
+            laser.className = `laser ${direction}`;
+            const pStart = getPosPercent(rPos, maxLinePos);
+            const pEnd = getPosPercent(targetPos, maxLinePos);
+            laser.style.width = `${Math.abs(pStart - pEnd)}%`;
+            if (direction === 'left') laser.style.right = `${100 - pStart}%`;
+            else laser.style.left = `${pStart}%`;
+            container.appendChild(laser);
+
+            // Draw Ghost Laser if blocked
+            let ghostLaser = null;
+            if (hitRobot && theoreticalPos !== targetPos) {
+                ghostLaser = document.createElement('div');
+                ghostLaser.className = `laser ghost-laser ${direction}`;
+                const pGhostEnd = getPosPercent(theoreticalPos, maxLinePos);
+                ghostLaser.style.width = `${Math.abs(pEnd - pGhostEnd)}%`;
+                
+                if (direction === 'left') ghostLaser.style.right = `${100 - pEnd}%`;
+                else ghostLaser.style.left = `${pEnd}%`;
+                
+                container.appendChild(ghostLaser);
+            }
+
+            await sleep(200);
+
+            // Shield animation
+            if (hitRobot) {
+                const shield = document.createElement('div');
+                shield.className = 'shield-block block-anim';
+                shield.style.left = `${getPosPercent(blockPos, maxLinePos)}%`;
+                container.appendChild(shield);
+                setTimeout(() => shield.remove(), 800);
+            }
+
+            // Wall Destruction
+            let wallsDestroyedThisShot = 0;
+            const minHit = Math.min(rPos, targetPos);
+            const maxHit = Math.max(rPos, targetPos);
+
+            for (let w of currentScenario.walls) {
+                if (w >= minHit && w <= maxHit && !destroyedWalls.has(w)) {
+                    destroyedWalls.add(w);
+                    wallsDestroyedThisShot++;
+                    const wallEl = document.getElementById(`wall-${w}`);
+                    if (wallEl) {
+                        wallEl.classList.add('explosion');
+                        setTimeout(() => { if(wallEl && wallEl.parentNode) wallEl.parentNode.removeChild(wallEl); }, 500);
+                    }
+                }
+            }
+
+            if(wallsDestroyedThisShot > 0) {
+                setTimeout(() => updateScore(), 200);
+            }
+
+            await sleep(400); // let laser linger briefly
+            laser.remove();
+            if(ghostLaser) {
+                ghostLaser.style.transition = 'opacity 0.5s ease';
+                ghostLaser.style.opacity = '0';
+                setTimeout(() => ghostLaser.remove(), 500);
+            }
+            isAnimating = false;
+        }
+
+        /* ==================== INITIALIZATION ==================== */
+        window.onload = () => {
+            initSlides();
+            loadExample(1);
+            // Default trace loading handled inside switchTab
+        };
+    </script>
+</body>
+</html>
