@@ -20,6 +20,31 @@
       ]
     },
     {
+      "Name": "DP",
+      "Problems": [
+        {
+          "Title": "Maximum Walls Destroyed by Robots",
+          "Path": "DP/maximum-walls-destroyed-by-robots.html",
+          "ProblemUri": "https://leetcode.com/problems/maximum-walls-destroyed-by-robots",
+          "Difficulty": "Hard",
+          "Topics": [
+            "Senior",
+            "Staff",
+            "Array",
+            "Binary",
+            "Search",
+            "Dynamic",
+            "Programming",
+            "Sorting",
+            "Weekly",
+            "Contest",
+            "464"
+          ],
+          "ProblemNumber": 3661
+        }
+      ]
+    },
+    {
       "Name": "Greedy",
       "Problems": [
         {
