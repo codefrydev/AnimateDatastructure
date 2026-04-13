@@ -84,6 +84,26 @@
       ]
     },
     {
+      "Name": "Linear",
+      "Problems": [
+        {
+          "Title": "Minimum Distance to the Target Element",
+          "Path": "Linear/minimum-distance-to-the-target-element.html",
+          "ProblemUri": "https://leetcode.com/problems/minimum-distance-to-the-target-element",
+          "Difficulty": "Easy",
+          "Topics": [
+            "Mid",
+            "Level",
+            "Array",
+            "Weekly",
+            "Contest",
+            "239"
+          ],
+          "ProblemNumber": 1848
+        }
+      ]
+    },
+    {
       "Name": "LinkedList",
       "Problems": [
         {
