@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3740. Minimum Distance Between Three Equal Elements I - Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom animations and transitions */
+        .array-box {
+            transition: all 0.3s ease;
+        }
+        .dimmed {
+            opacity: 0.2;
+            filter: grayscale(100%);
+            transform: scale(0.95);
+        }
+        .highlight-current {
+            background-color: #3b82f6; /* Blue-500 */
+            color: white;
+            transform: translateY(-8px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+            border-color: #2563eb;
+            z-index: 10;
+        }
+        .highlight-best {
+            background-color: #22c55e; /* Green-500 */
+            color: white;
+            transform: translateY(-8px);
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.5);
+            border-color: #16a34a;
+            z-index: 10;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Scrollbar styling */
+        .hide-scrollbar::-webkit-scrollbar { height: 8px; }
+        .hide-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .hide-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Span line for visualizing distance */
+        #span-line-container {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #span-line {
+            position: absolute;
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 4px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+        }
+        #span-label {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border: 1px solid #bfdbfe;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans selection:bg-blue-200">
+
+    <div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        
+        <!-- Header -->
+        <header class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 fade-in">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                Minimum Distance Visualizer
+            </h1>
+            <p class="text-slate-600 mb-4">
+                Find 3 identical numbers in the array. We want them to be as close together as possible.
+            </p>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg text-sm text-blue-800 grid gap-2">
+                <p><strong>💡 The Visual Trick:</strong></p>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>We don't need to check all combinations. We only check <strong>consecutive</strong> triplets (e.g., the 1st, 2nd, and 3rd appearance of a number).</li>
+                    <li>The distance formula <code class="bg-blue-100 px-1 rounded">|i-j| + |j-k| + |k-i|</code> exactly equals <strong>2 &times; (Span)</strong>.</li>
+                    <li>The <strong>Span</strong> is simply the physical gap between the first and last element of the triplet <code class="bg-blue-100 px-1 rounded">(k - i)</code>.</li>
+                </ul>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 fade-in" style="animation-delay: 0.1s;">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label for="array-input" class="block text-sm font-medium text-slate-700 mb-1">Array (nums) - comma separated</label>
+                    <input type="text" id="array-input" value="1, 2, 1, 1, 3" 
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-mono"
+                        placeholder="e.g. 1, 2, 1, 1, 3">
+                </div>
+                <div class="flex-1 w-full">
+                    <label for="speed-input" class="block text-sm font-medium text-slate-700 mb-1">Animation Speed</label>
+                    <input type="range" id="speed-input" min="200" max="2500" value="1200" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" style="direction: rtl;">
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button onclick="startVisualization()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-sm hover:shadow transition-all">
+                        Visualize
+                    </button>
+                    <button onclick="stopVisualization()" class="flex-1 md:flex-none bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all">
+                        Reset
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <span class="text-sm font-medium text-slate-500 py-1">Try these:</span>
+                <button onclick="loadExample('1, 2, 1, 1, 3')" class="text-sm bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-full transition-colors">Ex 1: Small gap</button>
+                <button onclick="loadExample('1, 1, 2, 3, 2, 1, 2')" class="text-sm bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-full transition-colors">Ex 2: Multiple groups</button>
+                <button onclick="loadExample('5, 1, 5, 2, 5, 3, 5')" class="text-sm bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-full transition-colors">Ex 3: Long span</button>
+            </div>
+        </section>
+
+        <!-- Visualization Area -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-in" style="animation-delay: 0.2s;">
+            
+            <!-- Left Side: Array & Animation -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Array Visuals -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 min-h-[220px] flex flex-col justify-center relative overflow-hidden">
+                    <h2 class="text-lg font-semibold mb-8 text-center text-slate-700" id="status-text">Ready to visualize...</h2>
+                    
+                    <div class="w-full overflow-x-auto pb-6 pt-4 hide-scrollbar relative">
+                        
+                        <!-- Wrapper to handle drawing the distance span line correctly -->
+                        <div class="relative w-max mx-auto min-w-full px-4">
+                            <!-- Array elements injected here -->
+                            <div id="array-container" class="flex gap-4 justify-center relative z-10"></div>
+                            
+                            <!-- The line that shows physical distance between i and k -->
+                            <div id="span-line-container">
+                                <div id="span-line">
+                                    <div id="span-label">Span</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Current Calculation Panel -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">How Distance is Calculated</h3>
+                    <div id="calc-panel" class="opacity-50 text-center py-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p class="text-slate-500 mb-2">Select a triplet to see the span.</p>
+                        <div class="text-2xl font-mono text-slate-300">2 &times; Span = ?</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Stats & Logs -->
+            <div class="space-y-6">
+                <!-- Scoreboard -->
+                <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-green-500 opacity-20 rounded-full blur-2xl"></div>
+                    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Shortest Distance</h3>
+                    <div class="flex flex-col gap-1">
+                        <span id="min-dist-val" class="text-6xl font-bold tracking-tight text-white">-</span>
+                        <span id="min-dist-tuple" class="text-slate-400 text-sm h-5"></span>
+                    </div>
+                </div>
+
+                <!-- History Log -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[280px]">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
+                        <h3 class="text-sm font-bold text-slate-700">Algorithm Steps</h3>
+                    </div>
+                    <div id="log-container" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm font-mono hide-scrollbar">
+                        <!-- Logs injected here -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+
+    <script>
+        // Global State
+        let currentAnimationId = 0;
+        let isAnimating = false;
+
+        // DOM Elements
+        const arrayInput = document.getElementById('array-input');
+        const speedInput = document.getElementById('speed-input');
+        const arrayContainer = document.getElementById('array-container');
+        const statusText = document.getElementById('status-text');
+        const calcPanel = document.getElementById('calc-panel');
+        const minDistVal = document.getElementById('min-dist-val');
+        const minDistTuple = document.getElementById('min-dist-tuple');
+        const logContainer = document.getElementById('log-container');
+        const spanLine = document.getElementById('span-line');
+        const spanLabel = document.getElementById('span-label');
+
+        // Helper: Load Example
+        function loadExample(val) {
+            arrayInput.value = val;
+            stopVisualization();
+            renderInitialArray(parseArray(val));
+        }
+
+        // Helper: Parse Input
+        function parseArray(str) {
+            return str.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        }
+
+        // Helper: Delay for animation
+        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+        // Render initial array without highlights
+        function renderInitialArray(nums) {
+            arrayContainer.innerHTML = '';
+            spanLine.style.opacity = 0;
+
+            nums.forEach((num, idx) => {
+                const boxWrapper = document.createElement('div');
+                boxWrapper.className = 'flex flex-col items-center gap-2 relative';
+                boxWrapper.id = `wrapper-${idx}`;
+
+                const indexLabel = document.createElement('span');
+                indexLabel.className = 'text-xs font-mono text-slate-400';
+                indexLabel.innerText = `idx: ${idx}`;
+
+                const box = document.createElement('div');
+                box.id = `box-${idx}`;
+                box.className = 'array-box w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center bg-white border-2 border-slate-200 rounded-xl text-lg sm:text-2xl font-bold text-slate-700 shadow-sm relative z-10';
+                box.innerText = num;
+
+                boxWrapper.appendChild(indexLabel);
+                boxWrapper.appendChild(box);
+                arrayContainer.appendChild(boxWrapper);
+            });
+            
+            // Reset UI
+            statusText.innerHTML = "Ready to visualize...";
+            statusText.className = "text-lg font-semibold mb-8 text-center text-slate-700";
+            calcPanel.innerHTML = `
+                <p class="text-slate-500 mb-2">Select a triplet to see the span.</p>
+                <div class="text-2xl font-mono text-slate-300">2 &times; Span = ?</div>
+            `;
+            calcPanel.className = "opacity-50 text-center py-4 bg-slate-50 rounded-xl border border-slate-100";
+            minDistVal.innerText = "-";
+            minDistTuple.innerText = "";
+            logContainer.innerHTML = "";
+        }
+
+        // Stop current visualization
+        function stopVisualization() {
+            currentAnimationId++;
+            isAnimating = false;
+            renderInitialArray(parseArray(arrayInput.value));
+        }
+
+        // Log message
+        function addLog(message, type = 'normal') {
+            const el = document.createElement('div');
+            el.className = `p-3 rounded-lg border ${type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`;
+            el.innerHTML = message;
+            logContainer.prepend(el);
+        }
+
+        // Draws the physical span line between elements i and k
+        function drawSpanLine(i, k) {
+            const wrapperI = document.getElementById(`wrapper-${i}`);
+            const wrapperK = document.getElementById(`wrapper-${k}`);
+            
+            if(!wrapperI || !wrapperK) return;
+
+            // Calculate center points
+            const iLeft = wrapperI.offsetLeft + (wrapperI.offsetWidth / 2);
+            const kLeft = wrapperK.offsetLeft + (wrapperK.offsetWidth / 2);
+            const width = kLeft - iLeft;
+
+            spanLine.style.opacity = 1;
+            spanLine.style.left = `${iLeft}px`;
+            spanLine.style.width = `${width}px`;
+            
+            const spanLength = k - i;
+            spanLabel.innerHTML = `Span length = ${spanLength}`;
+            
+            // Change color depending on if it's the best so far
+            spanLine.style.backgroundColor = '#3b82f6';
+            spanLabel.style.color = '#1d4ed8';
+            spanLabel.style.borderColor = '#bfdbfe';
+            spanLabel.style.backgroundColor = '#eff6ff';
+        }
+
+        // Main Visualization Logic
+        async function startVisualization() {
+            const nums = parseArray(arrayInput.value);
+            if (nums.length === 0) {
+                alert("Please enter a valid array of numbers.");
+                return;
+            }
+
+            // Start a new animation session
+            currentAnimationId++;
+            const animId = currentAnimationId;
+            isAnimating = true;
+
+            // Reset UI
+            renderInitialArray(nums);
+            let speed = parseInt(speedInput.value);
+            
+            statusText.className = "text-lg font-semibold mb-8 text-center text-blue-600 fade-in";
+            statusText.innerText = "Step 1: Finding groups of numbers that appear 3+ times...";
+            addLog("Scanning array for valid number groups...", "normal");
+            
+            await delay(speed);
+            if (animId !== currentAnimationId) return;
+
+            // Group by value
+            const indicesMap = {};
+            for (let i = 0; i < nums.length; i++) {
+                if (!indicesMap[nums[i]]) indicesMap[nums[i]] = [];
+                indicesMap[nums[i]].push(i);
+            }
+
+            const validValues = Object.keys(indicesMap).filter(val => indicesMap[val].length >= 3);
+
+            if (validValues.length === 0) {
+                statusText.innerText = "No number appears 3 times. We return -1.";
+                statusText.className = "text-lg font-semibold mb-8 text-center text-red-500";
+                minDistVal.innerText = "-1";
+                addLog("No valid triplets found. Result: -1", "normal");
+                isAnimating = false;
+                return;
+            }
+
+            addLog(`Found valid number(s): [<b>${validValues.join(', ')}</b>]`, "info");
+            
+            let globalMinDist = Infinity;
+            let bestTupleGlobal = null;
+
+            // Process each valid value
+            for (let valStr of validValues) {
+                const val = parseInt(valStr);
+                const indices = indicesMap[val];
+                
+                // Dim elements that are NOT the current value
+                document.querySelectorAll('.array-box').forEach(el => {
+                    if (parseInt(el.innerText) !== val) {
+                        el.parentElement.classList.add('dimmed');
+                    } else {
+                        el.parentElement.classList.remove('dimmed');
+                    }
+                });
+
+                statusText.innerHTML = `Focusing on number <b>${val}</b>. Checking consecutive triplets...`;
+                addLog(`Checking consecutive groups of <b>${val}</b>...`, "info");
+                
+                await delay(speed);
+                if (animId !== currentAnimationId) return;
+
+                // Only check CONSECUTIVE occurrences (sliding window of size 3)
+                for (let idx = 0; idx <= indices.length - 3; idx++) {
+                    let i = indices[idx];
+                    let j = indices[idx+1];
+                    let k = indices[idx+2];
+
+                    // Clear previous highlights
+                    document.querySelectorAll('.array-box').forEach(el => el.classList.remove('highlight-current', 'highlight-best'));
+                    
+                    // Highlight the consecutive triplet
+                    document.getElementById(`box-${i}`).classList.add('highlight-current');
+                    document.getElementById(`box-${j}`).classList.add('highlight-current');
+                    document.getElementById(`box-${k}`).classList.add('highlight-current');
+
+                    // Draw the visual span connection
+                    drawSpanLine(i, k);
+
+                    statusText.innerHTML = `Calculating distance for <b>${val}</b> at indices <span class="font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded">(${i}, ${j}, ${k})</span>`;
+
+                    let span = k - i;
+                    let totalDist = 2 * span;
+
+                    // Update calc panel to be intuitive
+                    calcPanel.className = "text-center py-4 bg-white rounded-xl border-2 border-blue-400 shadow-sm fade-in";
+                    calcPanel.innerHTML = `
+                        <div class="flex flex-col justify-center items-center gap-2 mb-3">
+                            <span class="text-slate-500">Span from index ${i} to ${k} is <b>${span}</b></span>
+                        </div>
+                        <div class="text-3xl font-bold text-blue-600">2 &times; ${span} = ${totalDist}</div>
+                    `;
+
+                    speed = parseInt(speedInput.value);
+                    await delay(speed * 1.5); // Wait to show calculation
+                    if (animId !== currentAnimationId) return;
+
+                    // Check if best
+                    if (totalDist < globalMinDist) {
+                        globalMinDist = totalDist;
+                        bestTupleGlobal = [i, j, k];
+                        
+                        minDistVal.innerText = globalMinDist;
+                        minDistTuple.innerText = `Triplet: [${nums[i]}, ${nums[j]}, ${nums[k]}] at (${i}, ${j}, ${k})`;
+                        
+                        minDistVal.classList.add('text-green-400');
+                        setTimeout(() => minDistVal.classList.remove('text-green-400'), 500);
+
+                        addLog(`⭐ New Best! Distance <b>${globalMinDist}</b> at indices (${i}, ${j}, ${k})`, "success");
+                        
+                        // Flash line green briefly
+                        spanLine.style.backgroundColor = '#22c55e';
+                        spanLabel.style.color = '#15803d';
+                        spanLabel.style.borderColor = '#bbf7d0';
+                        spanLabel.style.backgroundColor = '#f0fdf4';
+                        
+                        await delay(speed * 0.5);
+                    } else {
+                        addLog(`Distance ${totalDist} at (${i}, ${j}, ${k}). (Not better than ${globalMinDist})`);
+                    }
+
+                    if (animId !== currentAnimationId) return;
+                }
+            }
+
+            // Final state
+            statusText.innerHTML = `Visualization Complete! Shortest distance is <b class="text-green-600">${globalMinDist}</b>.`;
+            statusText.className = "text-lg font-semibold mb-8 text-center text-green-600 fade-in";
+            
+            // Remove dimming from everyone so final state is clear
+            document.querySelectorAll('.dimmed').forEach(el => el.classList.remove('dimmed'));
+            document.querySelectorAll('.array-box').forEach(el => el.classList.remove('highlight-current'));
+            
+            // Highlight best tuple permanently
+            if (bestTupleGlobal) {
+                const [bestI, bestJ, bestK] = bestTupleGlobal;
+                document.getElementById(`box-${bestI}`).classList.add('highlight-best');
+                document.getElementById(`box-${bestJ}`).classList.add('highlight-best');
+                document.getElementById(`box-${bestK}`).classList.add('highlight-best');
+                
+                // Redraw span for best tuple and make it green
+                drawSpanLine(bestI, bestK);
+                spanLine.style.backgroundColor = '#22c55e';
+                spanLabel.style.color = '#15803d';
+                spanLabel.style.borderColor = '#bbf7d0';
+                spanLabel.style.backgroundColor = '#f0fdf4';
+            }
+
+            calcPanel.className = "text-center py-4 bg-green-50 rounded-xl border-2 border-green-500 shadow-sm fade-in";
+            calcPanel.innerHTML = `
+                <p class="text-green-700 font-semibold mb-1">Optimal Triplet Found!</p>
+                <div class="text-3xl font-bold text-green-600">Total Distance: ${globalMinDist}</div>
+            `;
+            
+            isAnimating = false;
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            renderInitialArray(parseArray(arrayInput.value));
+        };
+    </script>
+</body>
+</html>

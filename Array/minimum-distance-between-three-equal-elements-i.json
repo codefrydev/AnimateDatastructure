@@ -1,0 +1,18 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/minimum-distance-between-three-equal-elements-i",
+  "ProblemName": "Minimum Distance Between Three Equal Elements I",
+  "ProblemDescription": "You are given an integer array nums.\n\nA tuple (i, j, k) of 3 distinct indices is good if nums[i] == nums[j] == nums[k].\n\nThe distance of a good tuple is abs(i - j) \u002B abs(j - k) \u002B abs(k - i), where abs(x) denotes the absolute value of x.\n\nReturn an integer denoting the minimum possible distance of a good tuple. If no good tuples exist, return -1.\n\n ",
+  "ProblemSolution": "Array",
+  "Difficulty": "Easy",
+  "Topics": [
+    "Mid",
+    "Level",
+    "Array",
+    "Hash",
+    "Table",
+    "Weekly",
+    "Contest",
+    "475"
+  ],
+  "ProblemNumber": 3740
+}
