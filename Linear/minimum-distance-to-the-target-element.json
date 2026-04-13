@@ -1,0 +1,16 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/minimum-distance-to-the-target-element",
+  "ProblemName": "Minimum Distance to the Target Element",
+  "ProblemDescription": "Given an integer array nums (0-indexed) and two integers target and start, find an index i such that nums[i] == target and abs(i - start) is minimized. Note that abs(x) is the absolute value of x.\n\nReturn abs(i - start).\n\nIt is guaranteed that target exists in nums.",
+  "ProblemSolution": "Linear",
+  "Difficulty": "Easy",
+  "Topics": [
+    "Mid",
+    "Level",
+    "Array",
+    "Weekly",
+    "Contest",
+    "239"
+  ],
+  "ProblemNumber": 1848
+}

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1848. Minimum Distance to the Target Element</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .array-box {
+            transition: all 0.3s ease;
+        }
+        /* Custom Scrollbar for horizontal array */
+        .hide-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .hide-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .hide-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .hide-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
+            <h1 class="text-xl font-bold text-indigo-600 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code-xml"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                LeetCode 1848: Minimum Distance
+            </h1>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grid grid-cols-1 xl:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Interactive Visualization -->
+        <div class="xl:col-span-7 flex flex-col gap-6">
+            
+            <!-- Controls Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-semibold mb-4 text-slate-800 border-b pb-2">Configuration</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Array (nums)</label>
+                        <input type="text" id="input-nums" value="1, 2, 3, 4, 5" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                        <p class="text-xs text-slate-400 mt-1">Comma-separated</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Target</label>
+                        <input type="number" id="input-target" value="5" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Start Index</label>
+                        <input type="number" id="input-start" value="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                    </div>
+                </div>
+                <div class="mt-4 flex gap-3">
+                    <button id="btn-initialize" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                        Initialize / Reset
+                    </button>
+                    <div id="error-msg" class="text-red-500 text-sm flex items-center hidden"></div>
+                </div>
+            </div>
+
+            <!-- Visualization Canvas -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center justify-center min-h-[300px] overflow-hidden relative">
+                
+                <!-- Array Container -->
+                <div id="array-container" class="flex gap-2 sm:gap-4 overflow-x-auto w-full hide-scrollbar pb-8 pt-4 px-4">
+                    <!-- Boxes injected via JS -->
+                </div>
+
+                <!-- Distance Line Visualizer -->
+                <div id="distance-visualizer" class="w-full mt-8 hidden flex-col items-center">
+                    <div class="flex items-center justify-center gap-4 text-slate-700">
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Start Index</span>
+                            <span id="vis-start-idx" class="text-2xl font-bold text-indigo-600">-</span>
+                        </div>
+                        <div class="text-slate-400 font-light text-3xl">|</div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Index</span>
+                            <span id="vis-curr-idx" class="text-2xl font-bold text-amber-500">-</span>
+                        </div>
+                        <div class="text-slate-400 font-light text-3xl">=</div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Distance</span>
+                            <span id="vis-dist" class="text-2xl font-bold text-slate-800">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Playback Controls & Status -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 border-b pb-4">
+                    <div class="flex gap-2">
+                        <button id="btn-prev" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            Previous Step
+                        </button>
+                        <button id="btn-next" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                            Next Step
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-6">
+                        <div class="text-center">
+                            <div class="text-xs text-slate-500 font-semibold uppercase">Min Distance</div>
+                            <div id="stat-min-dist" class="text-2xl font-bold text-emerald-600">∞</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 rounded-lg p-4 border border-slate-100 min-h-[80px] flex items-center">
+                    <p id="step-description" class="text-slate-700 font-medium text-lg w-full text-center">
+                        Click "Initialize" to begin visualization.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Explanation & Theory -->
+        <div class="xl:col-span-5 flex flex-col gap-6">
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-full overflow-y-auto">
+                <div class="prose prose-slate prose-indigo max-w-none">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">Understanding the Problem</h2>
+                    
+                    <h3 class="text-lg font-semibold text-slate-800 mt-6 mb-2">What is the question asking?</h3>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        You are placed at a specific starting position (<code>start</code>) inside an array (<code>nums</code>). Your goal is to find a specific number (<code>target</code>). Because there might be multiple occurrences of this number, you want to find the one that requires the <strong>fewest steps</strong> to reach from your starting position.
+                    </p>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        Distance is calculated as the absolute difference between your current index and the target's index: <code>abs(i - start)</code>.
+                    </p>
+
+                    <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6 rounded-r-lg">
+                        <h4 class="text-indigo-800 font-semibold mb-1">Example Breakdown</h4>
+                        <p class="text-indigo-900 text-sm">
+                            Array: <code>[1, 2, 3, 4, 5]</code> | Target: <code>5</code> | Start: <code>3</code> <br>
+                            - You start at index 3 (value 4). <br>
+                            - The target (5) is at index 4. <br>
+                            - Distance = <code>abs(4 - 3) = 1</code>.
+                        </p>
+                    </div>
+
+                    <h3 class="text-lg font-semibold text-slate-800 mt-6 mb-2">The Thought Process</h3>
+                    <ol class="list-decimal pl-5 space-y-3 text-slate-600 mb-6">
+                        <li><strong>Identify constraints:</strong> The array length is small (up to 1000). This means an $O(N)$ linear scan is perfectly acceptable and will execute in milliseconds.</li>
+                        <li><strong>Formulate the brute-force plan:</strong> Iterate through the entire array. Every time I see a number that matches the <code>target</code>, I'll calculate how far it is from <code>start</code>.</li>
+                        <li><strong>Track the minimum:</strong> Keep a running variable (like <code>min_dist</code>) initialized to infinity. Update it whenever a smaller valid distance is found.</li>
+                    </ol>
+
+                    <h3 class="text-lg font-semibold text-slate-800 mt-6 mb-2">Alternative "Clever" Approach</h3>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        While looping from <code>0</code> to <code>n-1</code> works great, there is a more optimal way to think about it logically: <strong>Expand Outwards</strong>.
+                    </p>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        If we start exactly at the <code>start</code> index and look left and right simultaneously (distance 0, then distance 1, then distance 2...), <strong>the very first time we find the target, it is guaranteed to be the closest one!</strong> We can stop immediately.
+                    </p>
+
+                    <h3 class="text-lg font-semibold text-slate-800 mt-8 mb-2 border-b pb-2">Pattern Recognition 🧩</h3>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-5">
+                        <p class="font-medium text-slate-800 mb-2">This problem falls into two common patterns:</p>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>
+                                <span class="font-semibold text-indigo-600">Linear Scan with State Tracking:</span> 
+                                A fundamental pattern where you walk through a collection and continually update an "answer" variable (like min, max, or sum) based on conditions.
+                            </li>
+                            <li>
+                                <span class="font-semibold text-emerald-600">Two-Pointer Expansion (Advanced thought):</span> 
+                                A pattern used when searching for the "closest" item. By starting at the origin and expanding outward with two pointers (`left` and `right`), you guarantee optimal early exits.
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        let nums = [];
+        let target = null;
+        let startIdx = null;
+        
+        let steps = [];
+        let currentStepIdx = -1;
+        
+        // --- DOM Elements ---
+        const inputNums = document.getElementById('input-nums');
+        const inputTarget = document.getElementById('input-target');
+        const inputStart = document.getElementById('input-start');
+        const btnInit = document.getElementById('btn-initialize');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const errorMsg = document.getElementById('error-msg');
+        
+        const arrayContainer = document.getElementById('array-container');
+        const distVisualizer = document.getElementById('distance-visualizer');
+        const visStartIdx = document.getElementById('vis-start-idx');
+        const visCurrIdx = document.getElementById('vis-curr-idx');
+        const visDist = document.getElementById('vis-dist');
+        const statMinDist = document.getElementById('stat-min-dist');
+        const stepDescription = document.getElementById('step-description');
+
+        // --- Initialization ---
+        btnInit.addEventListener('click', () => {
+            if (parseInputs()) {
+                generateSteps();
+                currentStepIdx = 0;
+                renderArray();
+                applyStep(currentStepIdx);
+                updateControls();
+            }
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentStepIdx < steps.length - 1) {
+                currentStepIdx++;
+                applyStep(currentStepIdx);
+                updateControls();
+            }
+        });
+
+        btnPrev.addEventListener('click', () => {
+            if (currentStepIdx > 0) {
+                currentStepIdx--;
+                applyStep(currentStepIdx);
+                updateControls();
+            }
+        });
+
+        function parseInputs() {
+            errorMsg.classList.add('hidden');
+            try {
+                const numsStr = inputNums.value;
+                nums = numsStr.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                
+                if (nums.length === 0) throw new Error("Array cannot be empty.");
+                
+                target = parseInt(inputTarget.value, 10);
+                if (isNaN(target)) throw new Error("Target must be a number.");
+                if (!nums.includes(target)) throw new Error("Target MUST exist in the array.");
+                
+                startIdx = parseInt(inputStart.value, 10);
+                if (isNaN(startIdx) || startIdx < 0 || startIdx >= nums.length) {
+                    throw new Error(`Start index must be between 0 and ${nums.length - 1}.`);
+                }
+                return true;
+            } catch (e) {
+                errorMsg.textContent = e.message;
+                errorMsg.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            let currentMinDist = Infinity;
+            let bestIndices = []; // To keep track of all indices that gave min dist
+
+            // Step 0: Initial state
+            steps.push({
+                type: 'init',
+                desc: `Algorithm initialized. Start index is ${startIdx}. We are looking for target ${target}.`,
+                currIdx: null,
+                minDist: Infinity,
+                bestIndices: []
+            });
+
+            // We simulate the O(N) linear scan approach
+            for (let i = 0; i < nums.length; i++) {
+                const dist = Math.abs(i - startIdx);
+                const isTarget = nums[i] === target;
+                
+                // Step for checking the current element
+                steps.push({
+                    type: 'checking',
+                    desc: `Checking index ${i}. Value is ${nums[i]}. Is it ${target}? ${isTarget ? 'Yes!' : 'No.'}`,
+                    currIdx: i,
+                    dist: dist,
+                    isTarget: isTarget,
+                    minDist: currentMinDist,
+                    bestIndices: [...bestIndices]
+                });
+
+                // If it is target, evaluate distance
+                if (isTarget) {
+                    if (dist < currentMinDist) {
+                        currentMinDist = dist;
+                        bestIndices = [i];
+                        steps.push({
+                            type: 'new_min',
+                            desc: `Target found at index ${i}! Distance is |${i} - ${startIdx}| = ${dist}. This is the new minimum distance!`,
+                            currIdx: i,
+                            dist: dist,
+                            isTarget: true,
+                            minDist: currentMinDist,
+                            bestIndices: [...bestIndices]
+                        });
+                    } else {
+                        steps.push({
+                            type: 'skip_min',
+                            desc: `Target found at index ${i}, but distance ${dist} is not less than current minimum (${currentMinDist}).`,
+                            currIdx: i,
+                            dist: dist,
+                            isTarget: true,
+                            minDist: currentMinDist,
+                            bestIndices: [...bestIndices]
+                        });
+                    }
+                }
+            }
+
+            // Final Step
+            steps.push({
+                type: 'done',
+                desc: `Finished scanning! The minimum distance to target ${target} is ${currentMinDist}.`,
+                currIdx: null,
+                minDist: currentMinDist,
+                bestIndices: [...bestIndices]
+            });
+        }
+
+        function renderArray() {
+            arrayContainer.innerHTML = '';
+            nums.forEach((val, idx) => {
+                const boxWrapper = document.createElement('div');
+                boxWrapper.className = 'relative flex flex-col items-center flex-shrink-0';
+                
+                // Index label
+                const idxLabel = document.createElement('div');
+                idxLabel.className = 'text-xs text-slate-400 font-mono mb-2';
+                idxLabel.textContent = `i: ${idx}`;
+                
+                // The Box
+                const box = document.createElement('div');
+                box.id = `box-${idx}`;
+                box.className = `array-box w-14 h-14 sm:w-16 sm:h-16 border-2 border-slate-300 rounded-xl flex items-center justify-center text-xl font-bold bg-white text-slate-700 shadow-sm relative`;
+                box.textContent = val;
+
+                // Start Marker Indicator (Absolute positioning inside box logic, or below)
+                if (idx === startIdx) {
+                    box.classList.add('ring-4', 'ring-indigo-100', 'border-indigo-400');
+                    const startLabel = document.createElement('div');
+                    startLabel.className = 'absolute -bottom-7 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide shadow-sm whitespace-nowrap';
+                    startLabel.innerHTML = 'Start';
+                    box.appendChild(startLabel);
+                }
+
+                boxWrapper.appendChild(idxLabel);
+                boxWrapper.appendChild(box);
+                arrayContainer.appendChild(boxWrapper);
+            });
+        }
+
+        function applyStep(stepIndex) {
+            const step = steps[stepIndex];
+            
+            // 1. Reset all boxes to default state (except start marker styles)
+            nums.forEach((_, idx) => {
+                const box = document.getElementById(`box-${idx}`);
+                // Remove dynamic classes
+                box.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800', 'scale-110', 'z-10', 'shadow-lg');
+                box.classList.remove('bg-emerald-100', 'border-emerald-500', 'text-emerald-800');
+                box.classList.remove('bg-red-50', 'border-red-300', 'text-red-800');
+                
+                // Re-apply base based on role
+                if (idx !== startIdx) {
+                   box.classList.add('bg-white', 'border-slate-300', 'text-slate-700');
+                } else {
+                   box.classList.add('bg-white'); // keep the indigo ring from render
+                }
+
+                // Apply best known indices highlight
+                if (step.bestIndices.includes(idx)) {
+                    box.classList.remove('bg-white', 'border-slate-300', 'border-indigo-400');
+                    box.classList.add('bg-emerald-50', 'border-emerald-500', 'border-2');
+                }
+            });
+
+            // 2. Highlight current element
+            if (step.currIdx !== null) {
+                const box = document.getElementById(`box-${step.currIdx}`);
+                
+                // Specific styling based on step type
+                if (step.type === 'checking') {
+                    box.classList.remove('bg-white', 'bg-emerald-50');
+                    box.classList.add('bg-amber-100', 'border-amber-400', 'text-amber-800', 'scale-110', 'z-10', 'shadow-lg');
+                } else if (step.type === 'new_min') {
+                    box.classList.remove('bg-white', 'bg-amber-100');
+                    box.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-800', 'scale-110', 'z-10', 'shadow-lg');
+                } else if (step.type === 'skip_min') {
+                    box.classList.remove('bg-white', 'bg-amber-100');
+                    box.classList.add('bg-red-50', 'border-red-300', 'text-red-800', 'scale-110', 'z-10');
+                }
+
+                // Scroll to element to ensure it's visible in narrow views
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
+            // 3. Update Text & Stats
+            stepDescription.innerHTML = step.desc;
+            statMinDist.textContent = step.minDist === Infinity ? '∞' : step.minDist;
+
+            // 4. Update Distance Visualizer
+            if (step.currIdx !== null) {
+                distVisualizer.classList.remove('hidden');
+                distVisualizer.classList.add('flex');
+                visStartIdx.textContent = startIdx;
+                visCurrIdx.textContent = step.currIdx;
+                visDist.textContent = step.dist;
+                
+                // Color code the current index display based on if it's the target
+                visCurrIdx.className = `text-2xl font-bold ${step.isTarget ? 'text-emerald-500' : 'text-amber-500'}`;
+            } else {
+                distVisualizer.classList.add('hidden');
+                distVisualizer.classList.remove('flex');
+            }
+        }
+
+        function updateControls() {
+            btnPrev.disabled = currentStepIdx <= 0;
+            btnNext.disabled = currentStepIdx >= steps.length - 1;
+            
+            // Visual feedback on next button if done
+            if (currentStepIdx >= steps.length - 1) {
+                btnNext.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
+                btnNext.classList.add('bg-slate-300');
+            } else {
+                btnNext.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                btnNext.classList.remove('bg-slate-300');
+            }
+        }
+
+        // Initialize with default values on load
+        window.addEventListener('DOMContentLoaded', () => {
+            btnInit.click();
+        });
+
+    </script>
+</body>
+</html>
