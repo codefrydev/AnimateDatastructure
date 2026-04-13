@@ -4,6 +4,23 @@
       "Name": "Array",
       "Problems": [
         {
+          "Title": "Minimum Distance Between Three Equal Elements I",
+          "Path": "Array/minimum-distance-between-three-equal-elements-i.html",
+          "ProblemUri": "https://leetcode.com/problems/minimum-distance-between-three-equal-elements-i",
+          "Difficulty": "Easy",
+          "Topics": [
+            "Mid",
+            "Level",
+            "Array",
+            "Hash",
+            "Table",
+            "Weekly",
+            "Contest",
+            "475"
+          ],
+          "ProblemNumber": 3740
+        },
+        {
           "Title": "Reveal Cards In Increasing Order",
           "Path": "Array/reveal-cards-in-increasing-order.html",
           "ProblemUri": "https://leetcode.com/problems/reveal-cards-in-increasing-order/",
@@ -114,6 +131,21 @@
             "Weekly Contest 387"
           ],
           "ProblemNumber": 3070
+        },
+        {
+          "Title": "Decode the Slanted Ciphertext",
+          "Path": "Matrix/decode-the-slanted-ciphertext.html",
+          "ProblemUri": "https://leetcode.com/problems/decode-the-slanted-ciphertext",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Staff",
+            "String",
+            "Simulation",
+            "Weekly",
+            "Contest",
+            "267"
+          ],
+          "ProblemNumber": 2075
         },
         {
           "Title": "Determine Whether Matrix Can Be Obtained By Rotation",

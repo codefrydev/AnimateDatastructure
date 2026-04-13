@@ -2,109 +2,121 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://codefrydev.in/AnimateDatastructure/Array/minimum-distance-between-three-equal-elements-i.html</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Array/reveal-cards-in-increasing-order.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/DP/maximum-walls-destroyed-by-robots.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Greedy/lexicographically-smallest-generated-string.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/LinkedList/add-two-numbers.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/count-submatrices-with-equal-frequency-of-x-and-y.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/count-submatrices-with-top-left-element-and-sum-less-than-k.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codefrydev.in/AnimateDatastructure/Matrix/decode-the-slanted-ciphertext.html</loc>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/determine-whether-matrix-can-be-obtained-by-rotation.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/equal-sum-grid-partition-i.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/equal-sum-grid-partition-ii.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/find-the-string-with-lcp.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/flip-square-submatrix-vertically.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/matrix-similarity-after-cyclic-shifts.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/minimum-path-sum.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/number-of-islands.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Matrix/range-sum-of-bst.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/SlidingWindow/longest-substring-without-repeating-characters.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codefrydev.in/AnimateDatastructure/Stack/robot-collisions.html</loc>
-    <lastmod>2026-04-03</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
