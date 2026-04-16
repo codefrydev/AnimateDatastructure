@@ -37,6 +37,29 @@
       ]
     },
     {
+      "Name": "BinarySearch",
+      "Problems": [
+        {
+          "Title": "Closest Equal Element Queries",
+          "Path": "BinarySearch/closest-equal-element-queries.html",
+          "ProblemUri": "https://leetcode.com/problems/closest-equal-element-queries",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Senior",
+            "Array",
+            "Hash",
+            "Table",
+            "Binary",
+            "Search",
+            "Weekly",
+            "Contest",
+            "441"
+          ],
+          "ProblemNumber": 3488
+        }
+      ]
+    },
+    {
       "Name": "DP",
       "Problems": [
         {
