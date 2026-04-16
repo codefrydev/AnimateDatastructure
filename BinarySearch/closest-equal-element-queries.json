@@ -1,0 +1,19 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/closest-equal-element-queries",
+  "ProblemName": "Closest Equal Element Queries",
+  "ProblemDescription": "You are given a circular array nums and an array queries.\n\nFor each query i, you have to find the following:\n\nThe minimum distance between the element at index queries[i] and any other index j in the circular array, where nums[j] == nums[queries[i]]. If no such index exists, the answer for that query should be -1.\nReturn an array answer of the same size as queries, where answer[i] represents the result for query i.\n\n ",
+  "ProblemSolution": "BinarySearch",
+  "Difficulty": "Medium",
+  "Topics": [
+    "Senior",
+    "Array",
+    "Hash",
+    "Table",
+    "Binary",
+    "Search",
+    "Weekly",
+    "Contest",
+    "441"
+  ],
+  "ProblemNumber": 3488
+}
