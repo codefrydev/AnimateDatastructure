@@ -4,6 +4,23 @@
       "Name": "Array",
       "Problems": [
         {
+          "Title": "Minimum Absolute Distance Between Mirror Pairs",
+          "Path": "Array/minimum-absolute-distance-between-mirror-pairs.html",
+          "ProblemUri": "https://leetcode.com/problems/minimum-absolute-distance-between-mirror-pairs",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Staff",
+            "Array",
+            "Hash",
+            "Table",
+            "Math",
+            "Weekly",
+            "Contest",
+            "478"
+          ],
+          "ProblemNumber": 3761
+        },
+        {
           "Title": "Minimum Distance Between Three Equal Elements I",
           "Path": "Array/minimum-distance-between-three-equal-elements-i.html",
           "ProblemUri": "https://leetcode.com/problems/minimum-distance-between-three-equal-elements-i",
