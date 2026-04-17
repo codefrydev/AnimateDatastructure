@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mirror Pairs Distance Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        
+        .path-anim {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawPath 1.5s ease-out forwards;
+        }
+
+        .min-path-anim {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawPath 1.5s ease-out forwards, pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes drawPath {
+            to { stroke-dashoffset: 0; }
+        }
+
+        @keyframes pulseGlow {
+            from { filter: drop-shadow(0 0 4px #22c55e); }
+            to { filter: drop-shadow(0 0 12px #4ade80); }
+        }
+
+        /* Custom scrollbar for the visualization area */
+        ::-webkit-scrollbar {
+            height: 10px;
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <div class="w-full max-w-6xl mx-auto space-y-8">
+        
+        <!-- Header & Description -->
+        <div class="text-center space-y-3">
+            <h1 class="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                Minimum Absolute Distance Between Mirror Pairs
+            </h1>
+            <p class="text-slate-400 max-w-3xl mx-auto">
+                A pair (i, j) is a <strong>mirror pair</strong> if <code class="text-pink-400 bg-slate-800 px-1 rounded">reverse(nums[i]) == nums[j]</code> and <code class="text-pink-400 bg-slate-800 px-1 rounded">i < j</code>. 
+                This diagram connects mirror pairs and highlights the minimum absolute distance.
+            </p>
+        </div>
+
+        <!-- Controls -->
+        <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+                <label for="arrayInput" class="block text-sm font-medium text-slate-300 mb-2">Input Array (comma-separated integers)</label>
+                <input type="text" id="arrayInput" value="12, 21, 45, 33, 54" 
+                    class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="runExamples('12,21,45,33,54')" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition whitespace-nowrap">Ex 1</button>
+                <button onclick="runExamples('120,21')" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition whitespace-nowrap">Ex 2</button>
+                <button onclick="runExamples('21,120')" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition whitespace-nowrap">Ex 3</button>
+                <button onclick="processArray()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg font-bold shadow-lg transition whitespace-nowrap">
+                    Visualize
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Summary -->
+        <div id="resultSummary" class="text-center p-4 rounded-xl hidden border">
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Graph/Diagram Canvas Area -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 overflow-x-auto overflow-y-hidden shadow-inner w-full">
+            <!-- We use a min-width to allow scrolling if array is too large -->
+            <div id="drawArea" class="relative min-w-max pt-48 pb-16 px-10 flex justify-center">
+                
+                <!-- SVG Layer for Arcs -->
+                <svg id="svgLayer" class="absolute top-0 left-0 w-full h-full pointer-events-none z-10"></svg>
+                
+                <!-- Array Blocks Layer -->
+                <div id="arrayContainer" class="flex gap-6 relative z-20">
+                    <!-- Blocks injected here -->
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Details Table -->
+        <div id="detailsSection" class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden hidden">
+            <table class="w-full text-left text-sm text-slate-300">
+                <thead class="bg-slate-900/50 text-xs uppercase text-slate-400">
+                    <tr>
+                        <th class="px-6 py-4">Index i</th>
+                        <th class="px-6 py-4">Value nums[i]</th>
+                        <th class="px-6 py-4">Reverse(nums[i])</th>
+                        <th class="px-6 py-4">Index j</th>
+                        <th class="px-6 py-4">Value nums[j]</th>
+                        <th class="px-6 py-4 text-right">Distance abs(i - j)</th>
+                    </tr>
+                </thead>
+                <tbody id="detailsTableBody" class="divide-y divide-slate-700/50">
+                    <!-- Rows injected here -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        // Reverse utility, preserving logic: leading zeros are omitted naturally by parseInt
+        function reverseInt(num) {
+            return parseInt(num.toString().split('').reverse().join(''), 10);
+        }
+
+        function runExamples(arrStr) {
+            document.getElementById('arrayInput').value = arrStr;
+            processArray();
+        }
+
+        function processArray() {
+            const inputVal = document.getElementById('arrayInput').value;
+            // Parse input
+            const nums = inputVal.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            
+            if (nums.length === 0) {
+                alert("Please enter a valid array of numbers.");
+                return;
+            }
+
+            // Find all mirror pairs
+            let pairs = [];
+            let minDistance = Infinity;
+
+            for (let i = 0; i < nums.length; i++) {
+                let rev = reverseInt(nums[i]);
+                for (let j = i + 1; j < nums.length; j++) {
+                    if (rev === nums[j]) {
+                        let dist = j - i;
+                        pairs.push({ i, j, valI: nums[i], valJ: nums[j], revI: rev, dist });
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                        }
+                    }
+                }
+            }
+
+            renderUI(nums, pairs, minDistance);
+        }
+
+        function renderUI(nums, pairs, minDistance) {
+            // Elements
+            const arrayContainer = document.getElementById('arrayContainer');
+            const svgLayer = document.getElementById('svgLayer');
+            const resultSummary = document.getElementById('resultSummary');
+            const detailsSection = document.getElementById('detailsSection');
+            const detailsTableBody = document.getElementById('detailsTableBody');
+
+            // Clear previous
+            arrayContainer.innerHTML = '';
+            svgLayer.innerHTML = '';
+            detailsTableBody.innerHTML = '';
+
+            // 1. Render Array Blocks
+            nums.forEach((num, index) => {
+                const blockWrapper = document.createElement('div');
+                blockWrapper.className = 'flex flex-col items-center space-y-3';
+                
+                // Box
+                const box = document.createElement('div');
+                box.id = `box-${index}`;
+                box.className = 'w-16 h-16 bg-slate-700 border-2 border-slate-600 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg text-white relative z-20 transition hover:bg-slate-600 hover:border-blue-400';
+                box.innerText = num;
+
+                // Index
+                const idxLabel = document.createElement('div');
+                idxLabel.className = 'text-xs text-slate-400 font-mono bg-slate-900 px-2 py-1 rounded-md';
+                idxLabel.innerText = `[${index}]`;
+
+                blockWrapper.appendChild(box);
+                blockWrapper.appendChild(idxLabel);
+                arrayContainer.appendChild(blockWrapper);
+            });
+
+            // Handle No Pairs scenario
+            if (pairs.length === 0) {
+                resultSummary.className = "text-center p-6 rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 block";
+                resultSummary.innerHTML = `<span class="text-xl font-bold">Output: -1</span><p class="mt-2 text-sm">There are no mirror pairs in the array.</p>`;
+                detailsSection.classList.add('hidden');
+                return;
+            }
+
+            // Render Results scenario
+            resultSummary.className = "text-center p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 block";
+            resultSummary.innerHTML = `<span class="text-2xl font-bold">Minimum Absolute Distance: ${minDistance}</span><p class="mt-2 text-sm text-emerald-300">Found ${pairs.length} mirror pair(s).</p>`;
+            
+            // Populate Table
+            pairs.forEach(p => {
+                const isMin = p.dist === minDistance;
+                const rowClass = isMin ? 'bg-emerald-900/20' : '';
+                
+                const tr = document.createElement('tr');
+                tr.className = `transition hover:bg-slate-700/50 ${rowClass}`;
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-mono">${p.i}</td>
+                    <td class="px-6 py-4">${p.valI}</td>
+                    <td class="px-6 py-4 text-pink-400">${p.revI}</td>
+                    <td class="px-6 py-4 font-mono">${p.j}</td>
+                    <td class="px-6 py-4">${p.valJ}</td>
+                    <td class="px-6 py-4 text-right font-bold ${isMin ? 'text-emerald-400' : 'text-slate-300'}">
+                        ${p.dist} ${isMin ? '<span class="ml-2 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">MIN</span>' : ''}
+                    </td>
+                `;
+                detailsTableBody.appendChild(tr);
+            });
+            detailsSection.classList.remove('hidden');
+
+            // 2. Render SVG Arcs (need slight delay to ensure layout is computed)
+            setTimeout(() => {
+                drawArcs(pairs, minDistance);
+            }, 100);
+        }
+
+        function drawArcs(pairs, minDistance) {
+            const svgLayer = document.getElementById('svgLayer');
+            const drawArea = document.getElementById('drawArea');
+            
+            // Clear previous paths
+            svgLayer.innerHTML = '';
+
+            const drawAreaRect = drawArea.getBoundingClientRect();
+
+            pairs.forEach((p, index) => {
+                const boxI = document.getElementById(`box-${p.i}`);
+                const boxJ = document.getElementById(`box-${p.j}`);
+
+                if (!boxI || !boxJ) return;
+
+                // Calculate positions relative to the draw area
+                const rectI = boxI.getBoundingClientRect();
+                const rectJ = boxJ.getBoundingClientRect();
+
+                // Start at top center of Box I
+                const startX = (rectI.left - drawAreaRect.left) + (rectI.width / 2);
+                const startY = (rectI.top - drawAreaRect.top);
+
+                // End at top center of Box J
+                const endX = (rectJ.left - drawAreaRect.left) + (rectJ.width / 2);
+                const endY = (rectJ.top - drawAreaRect.top);
+
+                const isMin = p.dist === minDistance;
+
+                // Create control point for quadratic bezier curve
+                const midX = (startX + endX) / 2;
+                // Height of curve scales with distance to prevent overlapping flat lines
+                // Base height + staggered offset based on distance and index to separate overlapping arcs
+                const curveHeight = Math.min(250, 40 + (p.dist * 25) + (index * 5)); 
+                const midY = startY - curveHeight;
+
+                // Create Path
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`);
+                path.setAttribute('fill', 'none');
+                
+                if (isMin) {
+                    path.setAttribute('stroke', '#4ade80'); // Emerald 400
+                    path.setAttribute('stroke-width', '4');
+                    path.setAttribute('stroke-linecap', 'round');
+                    path.setAttribute('class', 'min-path-anim');
+                } else {
+                    path.setAttribute('stroke', '#60a5fa'); // Blue 400
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('stroke-dasharray', '5,5');
+                    path.setAttribute('opacity', '0.6');
+                    path.setAttribute('class', 'path-anim');
+                    // Delay animation for non-min paths slightly
+                    path.style.animationDelay = `${index * 0.1}s`;
+                }
+
+                // Create Label Background
+                const labelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                // Create Text Label for Distance
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                
+                // Estimate the vertex of the parabola (Q curve) to place text
+                // Since startY and endY are the same (array is horizontal), the vertex is exactly at (midX, midY/2 + startY/2)
+                const textY = (startY + midY) / 2 - 10; 
+
+                text.setAttribute('x', midX);
+                text.setAttribute('y', textY);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'middle');
+                text.setAttribute('font-size', isMin ? '16' : '12');
+                text.setAttribute('font-weight', isMin ? 'bold' : 'normal');
+                text.setAttribute('fill', isMin ? '#4ade80' : '#94a3b8');
+                text.textContent = `dist: ${p.dist}`;
+                
+                // Add staggered fade in for text
+                text.style.opacity = '0';
+                text.style.animation = `drawPath 0.5s ease-out forwards ${0.5 + index*0.1}s`;
+
+                svgLayer.appendChild(path);
+                svgLayer.appendChild(text);
+            });
+        }
+
+        // Handle window resize to redraw arcs correctly
+        window.addEventListener('resize', () => {
+            const inputVal = document.getElementById('arrayInput').value;
+            if (inputVal) {
+                // simple debounce
+                clearTimeout(window.resizeTimer);
+                window.resizeTimer = setTimeout(processArray, 200);
+            }
+        });
+
+        // Initialize on load
+        window.onload = () => {
+            processArray();
+        };
+
+    </script>
+</body>
+</html>

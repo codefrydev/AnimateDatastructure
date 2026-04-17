@@ -1,0 +1,18 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/minimum-absolute-distance-between-mirror-pairs",
+  "ProblemName": "Minimum Absolute Distance Between Mirror Pairs",
+  "ProblemDescription": "You are given an integer array nums.\n\nA mirror pair is a pair of indices (i, j) such that:\n\n0 \u003C= i \u003C j \u003C nums.length, and\nreverse(nums[i]) == nums[j], where reverse(x) denotes the integer formed by reversing the digits of x. Leading zeros are omitted after reversing, for example reverse(120) = 21.\nReturn the minimum absolute distance between the indices of any mirror pair. The absolute distance between indices i and j is abs(i - j).\n\nIf no mirror pair exists, return -1.\n\n\n ",
+  "ProblemSolution": "Array",
+  "Difficulty": "Medium",
+  "Topics": [
+    "Staff",
+    "Array",
+    "Hash",
+    "Table",
+    "Math",
+    "Weekly",
+    "Contest",
+    "478"
+  ],
+  "ProblemNumber": 3761
+}
