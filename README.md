@@ -1,6 +1,6 @@
 ## Animate Data Structures
 
-Standalone HTML visualizations for data structure and algorithm problems. Open any `.html` file (for example under `Matrix/`, `Array/`) directly in a browser.
+Standalone HTML visualizations for data structure and algorithm problems. Open a visualization file directly in a browser (for example `Matrix/<problem-slug>/<problem-slug>.html` under `Array/`, `Matrix/`, etc.).
 
 `problems.json` at the repo root is a generated index created by the `IndexGenerator.csproj` console app.
 
@@ -18,12 +18,12 @@ GitHub Actions (`.github/workflows/generate-index.yml`) runs the same command on
   - Use one of the existing folders like `Array`, `Matrix`, `Tree`, etc.
   - If you really need a new category, create a new top-level folder and keep the name short and generic (for example `Heap`, `Bit`, `Math`).
 
-- **2. Choose the file name (LeetCode-style slug)**
-  - Take the slug from the LeetCode URL and reuse it for both files.
+- **2. Create a per-problem folder (LeetCode-style slug)**
+  - Take the slug from the LeetCode URL and use it as the **folder name** and as the **base name** for both files.
     - Example: LeetCode URL `https://leetcode.com/problems/count-submatrices-with-top-left-element-and-sum-less-than-k/`
-    - Use `count-submatrices-with-top-left-element-and-sum-less-than-k.html`
-    - And `count-submatrices-with-top-left-element-and-sum-less-than-k.json`
-  - Put both files next to each other inside the category directory (for example under `Matrix/`).
+    - Create `Matrix/count-submatrices-with-top-left-element-and-sum-less-than-k/`
+    - Add `count-submatrices-with-top-left-element-and-sum-less-than-k.html` and `count-submatrices-with-top-left-element-and-sum-less-than-k.json` inside that folder.
+  - The folder name must match the `.html` / `.json` basename so the index generator can find the pair. You can add extra assets in the same folder (images, scripts, data files) and reference them with relative URLs from the HTML file.
 
 - **3. Create the JSON metadata file**
   - The JSON file should describe the problem and is what the index generator reads.
@@ -49,7 +49,8 @@ GitHub Actions (`.github/workflows/generate-index.yml`) runs the same command on
     - Visualize the input (arrays, matrices, trees, etc.).
     - Animate how the algorithm progresses step-by-step.
     - Use controls like play/pause, next step, speed sliders, and input editors when it makes sense.
-  - Keep everything self-contained in a single HTML file (no build step required).
+  - Prefer a self-contained visualization in the HTML file (no build step required). Optional co-located assets in the same slug folder are fine.
+  - Published URLs use the nested path `Category/<slug>/<slug>.html` (not `Category/<slug>.html`); update external links if you move or rename a problem.
 
 - **5. Regenerate the index**
   - From the repo root, run:

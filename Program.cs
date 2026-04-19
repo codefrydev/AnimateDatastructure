@@ -13,48 +13,14 @@ try
 
     foreach (var categoryDir in categories)
     {
-        var htmlFiles = Directory.EnumerateFiles(categoryDir, "*.html", SearchOption.TopDirectoryOnly)
-            .Where(f => !string.Equals(Path.GetFileName(f), "index.html", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var htmlFiles = EnumerateProblemHtmlFiles(categoryDir).ToList();
 
         if (!htmlFiles.Any())
             continue;
 
         var categoryName = Path.GetFileName(categoryDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         var problems = htmlFiles
-            .Select(file =>
-            {
-                var relativePath = GetRelativePath(rootPath, file).Replace(Path.DirectorySeparatorChar, '/');
-                var baseName = Path.GetFileNameWithoutExtension(file);
-                var titleFallback = MakeTitleFromFileName(baseName);
-
-                var metadataPath = Path.Combine(Path.GetDirectoryName(file)!, baseName + ".json");
-                ProblemMetadata? metadata = null;
-                if (File.Exists(metadataPath))
-                {
-                    try
-                    {
-                        var json = File.ReadAllText(metadataPath);
-                        metadata = JsonSerializer.Deserialize<ProblemMetadata>(json);
-                    }
-                    catch
-                    {
-                        // Ignore malformed metadata; fall back to basic info.
-                    }
-                }
-
-                var title = metadata?.ProblemName ?? titleFallback;
-
-                return new ManifestProblem(
-                    Title: title,
-                    Path: relativePath,
-                    ProblemUri: metadata?.ProblemUri,
-                    Difficulty: metadata?.Difficulty,
-                    Topics: metadata?.Topics,
-                    ProblemNumber: metadata?.ProblemNumber
-                );
-            })
+            .Select(file => CreateManifestProblem(rootPath, file))
             .ToList();
 
         manifestCategories.Add(new ManifestCategory(categoryName, problems));
@@ -116,10 +82,82 @@ static IEnumerable<string> GetCategories(string rootPath)
 
     var dynamicDirs = topDirectories
         .Except(existingDefaults)
-        .Where(d => Directory.EnumerateFiles(d, "*.html", SearchOption.TopDirectoryOnly).Any())
+        .Where(CategoryHasProblems)
         .ToList();
 
     return existingDefaults.Concat(dynamicDirs).OrderBy(d => d, StringComparer.OrdinalIgnoreCase);
+}
+
+static bool CategoryHasProblems(string categoryDir)
+{
+    var hasLegacy = Directory.EnumerateFiles(categoryDir, "*.html", SearchOption.TopDirectoryOnly)
+        .Any(f => !string.Equals(Path.GetFileName(f), "index.html", StringComparison.OrdinalIgnoreCase));
+
+    if (hasLegacy)
+        return true;
+
+    foreach (var sub in Directory.EnumerateDirectories(categoryDir))
+    {
+        if (IsHidden(Path.GetFileName(sub)))
+            continue;
+
+        if (Directory.EnumerateFiles(sub, "*.html", SearchOption.TopDirectoryOnly)
+            .Any(f => !string.Equals(Path.GetFileName(f), "index.html", StringComparison.OrdinalIgnoreCase)))
+            return true;
+    }
+
+    return false;
+}
+
+/// <summary>
+/// Legacy: Category/foo.html next to Category/foo.json.
+/// Nested: any Category/problemFolder/*.html (not index.html); each pairs with same-basename .json. Multiple HTML files per folder allowed.
+/// </summary>
+static IEnumerable<string> EnumerateProblemHtmlFiles(string categoryDir)
+{
+    var legacy = Directory.EnumerateFiles(categoryDir, "*.html", SearchOption.TopDirectoryOnly)
+        .Where(f => !string.Equals(Path.GetFileName(f), "index.html", StringComparison.OrdinalIgnoreCase));
+
+    var nested = Directory.EnumerateDirectories(categoryDir)
+        .Where(d => !IsHidden(Path.GetFileName(d)))
+        .SelectMany(problemDir =>
+            Directory.EnumerateFiles(problemDir, "*.html", SearchOption.TopDirectoryOnly)
+                .Where(f => !string.Equals(Path.GetFileName(f), "index.html", StringComparison.OrdinalIgnoreCase)));
+
+    return legacy.Concat(nested).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
+}
+
+static ManifestProblem CreateManifestProblem(string rootPath, string file)
+{
+    var relativePath = GetRelativePath(rootPath, file).Replace(Path.DirectorySeparatorChar, '/');
+    var baseName = Path.GetFileNameWithoutExtension(file);
+    var titleFallback = MakeTitleFromFileName(baseName);
+
+    var metadataPath = Path.Combine(Path.GetDirectoryName(file)!, baseName + ".json");
+    ProblemMetadata? metadata = null;
+    if (File.Exists(metadataPath))
+    {
+        try
+        {
+            var json = File.ReadAllText(metadataPath);
+            metadata = JsonSerializer.Deserialize<ProblemMetadata>(json);
+        }
+        catch
+        {
+            // Ignore malformed metadata; fall back to basic info.
+        }
+    }
+
+    var title = metadata?.ProblemName ?? titleFallback;
+
+    return new ManifestProblem(
+        Title: title,
+        Path: relativePath,
+        ProblemUri: metadata?.ProblemUri,
+        Difficulty: metadata?.Difficulty,
+        Topics: metadata?.Topics,
+        ProblemNumber: metadata?.ProblemNumber
+    );
 }
 
 static bool IsHidden(string? name)

@@ -5,7 +5,7 @@
       "Problems": [
         {
           "Title": "Minimum Absolute Distance Between Mirror Pairs",
-          "Path": "Array/minimum-absolute-distance-between-mirror-pairs.html",
+          "Path": "Array/minimum-absolute-distance-between-mirror-pairs/minimum-absolute-distance-between-mirror-pairs.html",
           "ProblemUri": "https://leetcode.com/problems/minimum-absolute-distance-between-mirror-pairs",
           "Difficulty": "Medium",
           "Topics": [
@@ -22,7 +22,7 @@
         },
         {
           "Title": "Minimum Distance Between Three Equal Elements I",
-          "Path": "Array/minimum-distance-between-three-equal-elements-i.html",
+          "Path": "Array/minimum-distance-between-three-equal-elements-i/minimum-distance-between-three-equal-elements-i.html",
           "ProblemUri": "https://leetcode.com/problems/minimum-distance-between-three-equal-elements-i",
           "Difficulty": "Easy",
           "Topics": [
@@ -39,7 +39,7 @@
         },
         {
           "Title": "Reveal Cards In Increasing Order",
-          "Path": "Array/reveal-cards-in-increasing-order.html",
+          "Path": "Array/reveal-cards-in-increasing-order/reveal-cards-in-increasing-order.html",
           "ProblemUri": "https://leetcode.com/problems/reveal-cards-in-increasing-order/",
           "Difficulty": "Medium",
           "Topics": [
@@ -58,7 +58,7 @@
       "Problems": [
         {
           "Title": "Closest Equal Element Queries",
-          "Path": "BinarySearch/closest-equal-element-queries.html",
+          "Path": "BinarySearch/closest-equal-element-queries/closest-equal-element-queries.html",
           "ProblemUri": "https://leetcode.com/problems/closest-equal-element-queries",
           "Difficulty": "Medium",
           "Topics": [
@@ -81,7 +81,7 @@
       "Problems": [
         {
           "Title": "Maximum Walls Destroyed by Robots",
-          "Path": "DP/maximum-walls-destroyed-by-robots.html",
+          "Path": "DP/maximum-walls-destroyed-by-robots/maximum-walls-destroyed-by-robots.html",
           "ProblemUri": "https://leetcode.com/problems/maximum-walls-destroyed-by-robots",
           "Difficulty": "Hard",
           "Topics": [
@@ -106,7 +106,7 @@
       "Problems": [
         {
           "Title": "Lexicographically Smallest Generated String",
-          "Path": "Greedy/lexicographically-smallest-generated-string.html",
+          "Path": "Greedy/lexicographically-smallest-generated-string/lexicographically-smallest-generated-string.html",
           "ProblemUri": "https://leetcode.com/problems/lexicographically-smallest-generated-string",
           "Difficulty": "Hard",
           "Topics": [
@@ -128,7 +128,7 @@
       "Problems": [
         {
           "Title": "Minimum Distance to the Target Element",
-          "Path": "Linear/minimum-distance-to-the-target-element.html",
+          "Path": "Linear/minimum-distance-to-the-target-element/minimum-distance-to-the-target-element.html",
           "ProblemUri": "https://leetcode.com/problems/minimum-distance-to-the-target-element",
           "Difficulty": "Easy",
           "Topics": [
@@ -148,7 +148,7 @@
       "Problems": [
         {
           "Title": "Add Two Numbers",
-          "Path": "LinkedList/add-two-numbers.html",
+          "Path": "LinkedList/add-two-numbers/add-two-numbers.html",
           "ProblemUri": "https://leetcode.com/problems/add-two-numbers",
           "Difficulty": "Medium",
           "Topics": [
@@ -167,7 +167,7 @@
       "Problems": [
         {
           "Title": "Count Submatrices With Equal Frequency of X and Y",
-          "Path": "Matrix/count-submatrices-with-equal-frequency-of-x-and-y.html",
+          "Path": "Matrix/count-submatrices-with-equal-frequency-of-x-and-y/count-submatrices-with-equal-frequency-of-x-and-y.html",
           "ProblemUri": "https://leetcode.com/problems/count-submatrices-with-equal-frequency-of-x-and-y/",
           "Difficulty": "Medium",
           "Topics": [
@@ -180,7 +180,7 @@
         },
         {
           "Title": "Count Submatrices With Top Left Element And Sum Less Than K",
-          "Path": "Matrix/count-submatrices-with-top-left-element-and-sum-less-than-k.html",
+          "Path": "Matrix/count-submatrices-with-top-left-element-and-sum-less-than-k/count-submatrices-with-top-left-element-and-sum-less-than-k.html",
           "ProblemUri": "https://leetcode.com/problems/count-submatrices-with-top-left-element-and-sum-less-than-k/",
           "Difficulty": "Medium",
           "Topics": [
@@ -194,7 +194,7 @@
         },
         {
           "Title": "Decode the Slanted Ciphertext",
-          "Path": "Matrix/decode-the-slanted-ciphertext.html",
+          "Path": "Matrix/decode-the-slanted-ciphertext/decode-the-slanted-ciphertext.html",
           "ProblemUri": "https://leetcode.com/problems/decode-the-slanted-ciphertext",
           "Difficulty": "Medium",
           "Topics": [
@@ -209,7 +209,7 @@
         },
         {
           "Title": "Determine Whether Matrix Can Be Obtained By Rotation",
-          "Path": "Matrix/determine-whether-matrix-can-be-obtained-by-rotation.html",
+          "Path": "Matrix/determine-whether-matrix-can-be-obtained-by-rotation/determine-whether-matrix-can-be-obtained-by-rotation.html",
           "ProblemUri": "https://leetcode.com/problems/determine-whether-matrix-can-be-obtained-by-rotation",
           "Difficulty": "Easy",
           "Topics": [
@@ -222,7 +222,7 @@
         },
         {
           "Title": "Equal Sum Grid Partition I",
-          "Path": "Matrix/equal-sum-grid-partition-i.html",
+          "Path": "Matrix/equal-sum-grid-partition-i/equal-sum-grid-partition-i.html",
           "ProblemUri": "https://leetcode.com/problems/equal-sum-grid-partition-i",
           "Difficulty": "Medium",
           "Topics": [
@@ -240,7 +240,7 @@
         },
         {
           "Title": "Equal Sum Grid Partition II",
-          "Path": "Matrix/equal-sum-grid-partition-ii.html",
+          "Path": "Matrix/equal-sum-grid-partition-ii/equal-sum-grid-partition-ii.html",
           "ProblemUri": "https://leetcode.com/problems/equal-sum-grid-partition-ii",
           "Difficulty": "Hard",
           "Topics": [
@@ -260,7 +260,7 @@
         },
         {
           "Title": "Find the String with LCP",
-          "Path": "Matrix/find-the-string-with-lcp.html",
+          "Path": "Matrix/find-the-string-with-lcp/find-the-string-with-lcp.html",
           "ProblemUri": "https://leetcode.com/problems/find-the-string-with-lcp",
           "Difficulty": "Hard",
           "Topics": [
@@ -281,7 +281,7 @@
         },
         {
           "Title": "Flip Square Submatrix Vertically",
-          "Path": "Matrix/flip-square-submatrix-vertically.html",
+          "Path": "Matrix/flip-square-submatrix-vertically/flip-square-submatrix-vertically.html",
           "ProblemUri": "https://leetcode.com/problems/flip-square-submatrix-vertically",
           "Difficulty": "Easy",
           "Topics": [
@@ -294,7 +294,7 @@
         },
         {
           "Title": "Matrix Similarity After Cyclic Shifts",
-          "Path": "Matrix/matrix-similarity-after-cyclic-shifts.html",
+          "Path": "Matrix/matrix-similarity-after-cyclic-shifts/matrix-similarity-after-cyclic-shifts.html",
           "ProblemUri": "https://leetcode.com/problems/matrix-similarity-after-cyclic-shifts",
           "Difficulty": "Easy",
           "Topics": [
@@ -312,7 +312,7 @@
         },
         {
           "Title": "Minimum Path Sum",
-          "Path": "Matrix/minimum-path-sum.html",
+          "Path": "Matrix/minimum-path-sum/minimum-path-sum.html",
           "ProblemUri": "https://leetcode.com/problems/minimum-path-sum",
           "Difficulty": "Medium",
           "Topics": [
@@ -325,7 +325,7 @@
         },
         {
           "Title": "Number of Islands",
-          "Path": "Matrix/number-of-islands.html",
+          "Path": "Matrix/number-of-islands/number-of-islands.html",
           "ProblemUri": "https://leetcode.com/problems/number-of-islands/",
           "Difficulty": "Medium",
           "Topics": [
@@ -339,7 +339,7 @@
         },
         {
           "Title": "Count Submatrices With Top Left Element and Sum Less Than K",
-          "Path": "Matrix/range-sum-of-bst.html",
+          "Path": "Matrix/range-sum-of-bst/range-sum-of-bst.html",
           "ProblemUri": "https://leetcode.com/problems/range-sum-of-bst/",
           "Difficulty": "Easy",
           "Topics": [
@@ -358,7 +358,7 @@
       "Problems": [
         {
           "Title": "Longest Substring Without Repeating Characters",
-          "Path": "SlidingWindow/longest-substring-without-repeating-characters.html",
+          "Path": "SlidingWindow/longest-substring-without-repeating-characters/longest-substring-without-repeating-characters.html",
           "ProblemUri": "https://leetcode.com/problems/longest-substring-without-repeating-characters",
           "Difficulty": "Medium",
           "Topics": [
@@ -378,7 +378,7 @@
       "Problems": [
         {
           "Title": "Robot Collisions",
-          "Path": "Stack/robot-collisions.html",
+          "Path": "Stack/robot-collisions/robot-collisions.html",
           "ProblemUri": "https://leetcode.com/problems/robot-collisions",
           "Difficulty": "Hard",
           "Topics": [
@@ -393,6 +393,29 @@
             "351"
           ],
           "ProblemNumber": 2751
+        }
+      ]
+    },
+    {
+      "Name": "TwoPointer",
+      "Problems": [
+        {
+          "Title": "Maximum Distance Between a Pair of Values",
+          "Path": "TwoPointer/minimum-absolute-distance-between-mirror-pairs/minimum-absolute-distance-between-mirror-pairs.html",
+          "ProblemUri": "https://leetcode.com/problems/minimum-absolute-distance-between-mirror-pairs",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Senior",
+            "Array",
+            "Two",
+            "Pointers",
+            "Binary",
+            "Search",
+            "Weekly",
+            "Contest",
+            "240"
+          ],
+          "ProblemNumber": 1855
         }
       ]
     }
