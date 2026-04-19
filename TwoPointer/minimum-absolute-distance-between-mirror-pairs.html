@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1855. Maximum Distance Between a Pair of Values - Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .bar {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pointer-arrow {
+            transition: all 0.3s ease;
+        }
+
+        /* Custom Scrollbar for container */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .active-element {
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.8);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Header -->
+        <header class="text-center">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                1855. Maximum Distance Between a Pair of Values
+            </h1>
+            <p class="text-slate-400 mt-2">Interactive Two-Pointer Algorithm Visualization</p>
+        </header>
+
+        <!-- Input & Controls Panel -->
+        <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Inputs -->
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-1">nums1 (Non-increasing)</label>
+                        <input type="text" id="nums1-input" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white mono focus:ring-2 focus:ring-blue-500 outline-none" value="55, 30, 5, 4, 2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-1">nums2 (Non-increasing)</label>
+                        <input type="text" id="nums2-input" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white mono focus:ring-2 focus:ring-emerald-500 outline-none" value="100, 20, 10, 10, 5">
+                    </div>
+                    <button id="apply-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition self-start w-full">
+                        Initialize Simulation
+                    </button>
+                </div>
+
+                <!-- Playback Controls & Status -->
+                <div class="flex flex-col justify-center gap-4 border-l border-slate-700 pl-0 md:pl-6">
+                    <div class="flex items-center justify-center gap-3">
+                        <button id="btn-reset" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-full transition tooltip" title="Reset">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        </button>
+                        <button id="btn-prev" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-full transition tooltip" title="Step Backward">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button id="btn-play" class="p-4 bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg shadow-blue-500/30 transition tooltip" title="Play/Pause">
+                            <svg id="icon-play" class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                            <svg id="icon-pause" class="w-6 h-6 text-white hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <button id="btn-next" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-full transition tooltip" title="Step Forward">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Speed:</span>
+                        <input type="range" id="speed-slider" min="100" max="1500" value="700" class="flex-grow accent-blue-500" style="direction: rtl;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Algorithm Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Panel: Rules & Variables -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col gap-4">
+                <h2 class="text-xl font-bold border-b border-slate-600 pb-2">Variables</h2>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-center">
+                        <div class="text-blue-400 font-bold text-sm">Pointer i</div>
+                        <div id="var-i" class="text-3xl font-bold mono mt-1">0</div>
+                        <div id="val-1" class="text-xs text-slate-400 mt-1">nums1[i] = -</div>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-center">
+                        <div class="text-emerald-400 font-bold text-sm">Pointer j</div>
+                        <div id="var-j" class="text-3xl font-bold mono mt-1">0</div>
+                        <div id="val-2" class="text-xs text-slate-400 mt-1">nums2[j] = -</div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-amber-500/20 to-orange-500/20 p-4 rounded-xl border border-amber-500/30 text-center mt-2">
+                    <div class="text-amber-400 font-bold text-sm uppercase tracking-wider">Max Distance</div>
+                    <div id="var-max" class="text-5xl font-bold text-amber-300 mt-2">0</div>
+                </div>
+
+                <div class="mt-auto bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <div class="font-bold text-sm text-slate-300 mb-2">Conditions for Valid Pair:</div>
+                    <div id="cond-1" class="text-sm mono flex items-center justify-between mb-1">
+                        <span>1. i &le; j</span>
+                        <span id="cond-1-status" class="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">-</span>
+                    </div>
+                    <div id="cond-2" class="text-sm mono flex items-center justify-between">
+                        <span>2. nums1[i] &le; nums2[j]</span>
+                        <span id="cond-2-status" class="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Visualization -->
+            <div class="lg:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col">
+                
+                <div class="mb-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <p id="action-desc" class="text-lg font-semibold text-white min-h-[3rem] flex items-center">
+                        Press 'Initialize Simulation' to begin.
+                    </p>
+                </div>
+
+                <!-- Graphs Container -->
+                <div class="flex-grow flex flex-col gap-8 overflow-x-auto p-4 relative" id="graph-container">
+                    
+                    <!-- nums1 -->
+                    <div class="relative w-max min-w-full">
+                        <div class="text-blue-400 font-bold mb-2 flex items-center gap-2">
+                            <span>nums1</span>
+                            <span class="text-xs text-slate-400 font-normal">(i moves right when val is too big)</span>
+                        </div>
+                        <div id="nums1-bars" class="flex items-end gap-2 h-40 border-b border-slate-600 pb-1 relative">
+                            <!-- Bars injected by JS -->
+                        </div>
+                        <div id="pointer-i" class="absolute pointer-arrow text-blue-400 flex flex-col items-center" style="top: 100%; left: 0; width: 40px; transform: translateX(0);">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span class="font-bold mono bg-slate-800 px-1 rounded border border-blue-500/50 text-sm">i</span>
+                        </div>
+                    </div>
+
+                    <!-- Distance Indicator -->
+                    <div id="distance-indicator" class="relative w-max min-w-full h-8 opacity-0 transition-opacity duration-300">
+                        <div id="dist-line" class="absolute h-1 bg-amber-400 top-1/2 transform -translate-y-1/2 left-0 w-0 transition-all duration-300 rounded"></div>
+                        <div id="dist-text" class="absolute text-amber-400 text-sm font-bold top-0 transform -translate-y-full text-center transition-all duration-300" style="left: 0; width: 0;">dist = ?</div>
+                    </div>
+
+                    <!-- nums2 -->
+                    <div class="relative w-max min-w-full mt-4">
+                        <div id="pointer-j" class="absolute pointer-arrow text-emerald-400 flex flex-col items-center" style="bottom: 100%; left: 0; width: 40px; transform: translateX(0);">
+                            <span class="font-bold mono bg-slate-800 px-1 rounded border border-emerald-500/50 text-sm">j</span>
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div id="nums2-bars" class="flex items-end gap-2 h-40 border-b border-slate-600 pb-1 mt-6 relative">
+                            <!-- Bars injected by JS -->
+                        </div>
+                        <div class="text-emerald-400 font-bold mt-2 flex items-center gap-2">
+                            <span>nums2</span>
+                            <span class="text-xs text-slate-400 font-normal">(j moves right to maximize distance)</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Variables ---
+        let nums1 = [];
+        let nums2 = [];
+        let states = [];
+        let currentStateIdx = 0;
+        let isPlaying = false;
+        let timer = null;
+        const BAR_WIDTH = 40; // 40px width per bar
+        const GAP_WIDTH = 8;  // gap-2 is 8px
+        const TOTAL_COL_WIDTH = BAR_WIDTH + GAP_WIDTH;
+
+        // --- DOM Elements ---
+        const inputNums1 = document.getElementById('nums1-input');
+        const inputNums2 = document.getElementById('nums2-input');
+        const btnApply = document.getElementById('apply-btn');
+        const btnPlay = document.getElementById('btn-play');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnReset = document.getElementById('btn-reset');
+        const speedSlider = document.getElementById('speed-slider');
+
+        const container1 = document.getElementById('nums1-bars');
+        const container2 = document.getElementById('nums2-bars');
+        const pointerI = document.getElementById('pointer-i');
+        const pointerJ = document.getElementById('pointer-j');
+        const actionDesc = document.getElementById('action-desc');
+        const varI = document.getElementById('var-i');
+        const varJ = document.getElementById('var-j');
+        const val1 = document.getElementById('val-1');
+        const val2 = document.getElementById('val-2');
+        const varMax = document.getElementById('var-max');
+        const cond1Status = document.getElementById('cond-1-status');
+        const cond2Status = document.getElementById('cond-2-status');
+        
+        const distIndicator = document.getElementById('distance-indicator');
+        const distLine = document.getElementById('dist-line');
+        const distText = document.getElementById('dist-text');
+
+        // --- Initialization ---
+        function parseArray(str) {
+            return str.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        }
+
+        function initSimulation() {
+            pause();
+            
+            nums1 = parseArray(inputNums1.value);
+            nums2 = parseArray(inputNums2.value);
+
+            if (nums1.length === 0 || nums2.length === 0) {
+                alert("Arrays cannot be empty.");
+                return;
+            }
+
+            // Draw Initial UI
+            drawArrays();
+            
+            // Generate State Machine
+            generateStates();
+            
+            currentStateIdx = 0;
+            renderState(0);
+        }
+
+        // --- Core Algorithm Logic & State Generation ---
+        function generateStates() {
+            states = [];
+            let i = 0;
+            let j = 0;
+            let maxDist = 0;
+            let maxPair = null;
+
+            states.push({
+                i: 0, j: 0, maxDist: 0, phase: 'start',
+                desc: 'Simulation started. Initializing pointers at index 0.',
+                cond1: null, cond2: null, maxPair: null
+            });
+
+            while (i < nums1.length && j < nums2.length) {
+                let v1 = nums1[i];
+                let v2 = nums2[j];
+                
+                let cond1 = i <= j;
+                let cond2 = v1 <= v2;
+
+                // State: Comparison
+                states.push({
+                    i, j, maxDist, phase: 'compare',
+                    desc: `Comparing nums1[${i}] = ${v1} and nums2[${j}] = ${v2}.`,
+                    cond1, cond2, maxPair
+                });
+
+                if (cond2) {
+                    // v1 <= v2
+                    if (cond1) {
+                        let currentDist = j - i;
+                        if (currentDist > maxDist) {
+                            maxDist = currentDist;
+                            maxPair = { i, j };
+                            states.push({
+                                i, j, maxDist, phase: 'update_max',
+                                desc: `Valid! Distance is ${j} - ${i} = ${currentDist}. New Max Distance found! Moving j right to find a larger distance.`,
+                                cond1, cond2, maxPair
+                            });
+                        } else {
+                            states.push({
+                                i, j, maxDist, phase: 'valid_move_j',
+                                desc: `Valid pair! Distance is ${currentDist} (not > ${maxDist}). Moving j right to try for a larger distance.`,
+                                cond1, cond2, maxPair
+                            });
+                        }
+                    } else {
+                         states.push({
+                            i, j, maxDist, phase: 'invalid_move_j',
+                            desc: `nums1[${i}] <= nums2[${j}], but i > j (${i} > ${j}). Moving j right to catch up.`,
+                            cond1, cond2, maxPair
+                        });
+                    }
+                    j++;
+                } else {
+                    // v1 > v2
+                    states.push({
+                        i, j, maxDist, phase: 'invalid_move_i',
+                        desc: `nums1[${i}] > nums2[${j}]. Array is non-increasing, so we need a smaller nums1. Moving i right.`,
+                        cond1, cond2, maxPair
+                    });
+                    i++;
+                }
+            }
+
+            states.push({
+                i: Math.min(i, nums1.length - 1), 
+                j: Math.min(j, nums2.length - 1), 
+                maxDist, phase: 'end',
+                desc: `Algorithm finished. Pointers out of bounds. Maximum Distance is ${maxDist}.`,
+                cond1: null, cond2: null, maxPair, finished: true
+            });
+        }
+
+        // --- Rendering ---
+        function drawArrays() {
+            const maxVal = Math.max(...nums1, ...nums2);
+            
+            container1.innerHTML = '';
+            container2.innerHTML = '';
+
+            nums1.forEach((val, idx) => {
+                let heightPct = (val / maxVal) * 100;
+                if(heightPct < 5) heightPct = 5; // minimum height
+                
+                let bar = document.createElement('div');
+                bar.className = `bar w-10 bg-blue-500 rounded-t-sm flex flex-col justify-end items-center text-xs font-bold text-white shadow-sm`;
+                bar.style.height = `${heightPct}%`;
+                bar.id = `bar1-${idx}`;
+                
+                let valSpan = document.createElement('span');
+                valSpan.textContent = val;
+                valSpan.className = 'mb-1 drop-shadow-md';
+                
+                let idxSpan = document.createElement('div');
+                idxSpan.textContent = idx;
+                idxSpan.className = 'absolute -bottom-6 text-slate-400 font-mono text-xs';
+
+                bar.appendChild(valSpan);
+                bar.appendChild(idxSpan);
+                container1.appendChild(bar);
+            });
+
+            nums2.forEach((val, idx) => {
+                let heightPct = (val / maxVal) * 100;
+                if(heightPct < 5) heightPct = 5;
+                
+                let bar = document.createElement('div');
+                bar.className = `bar w-10 bg-emerald-500 rounded-t-sm flex flex-col justify-end items-center text-xs font-bold text-white shadow-sm`;
+                bar.style.height = `${heightPct}%`;
+                bar.id = `bar2-${idx}`;
+                
+                let valSpan = document.createElement('span');
+                valSpan.textContent = val;
+                valSpan.className = 'mb-1 drop-shadow-md';
+                
+                let idxSpan = document.createElement('div');
+                idxSpan.textContent = idx;
+                idxSpan.className = 'absolute -bottom-6 text-slate-400 font-mono text-xs';
+
+                bar.appendChild(valSpan);
+                bar.appendChild(idxSpan);
+                container2.appendChild(bar);
+            });
+        }
+
+        function renderState(idx) {
+            const state = states[idx];
+            if (!state) return;
+
+            // Reset all styles
+            document.querySelectorAll('.bar').forEach(b => {
+                b.classList.remove('active-element', 'bg-red-500', 'bg-amber-400');
+                if (b.id.startsWith('bar1')) {
+                    b.classList.add('bg-blue-500');
+                    b.classList.remove('bg-blue-700');
+                }
+                if (b.id.startsWith('bar2')) {
+                    b.classList.add('bg-emerald-500');
+                    b.classList.remove('bg-emerald-700');
+                }
+            });
+
+            // Update Pointers Position
+            pointerI.style.transform = `translateX(${state.i * TOTAL_COL_WIDTH}px)`;
+            pointerJ.style.transform = `translateX(${state.j * TOTAL_COL_WIDTH}px)`;
+
+            // Highlight Active Bars
+            const activeBar1 = document.getElementById(`bar1-${state.i}`);
+            const activeBar2 = document.getElementById(`bar2-${state.j}`);
+
+            // Update Side Panel Variables
+            varI.textContent = state.i;
+            varJ.textContent = state.j;
+            val1.textContent = `nums1[${state.i}] = ${nums1[state.i] !== undefined ? nums1[state.i] : 'OutOfBounds'}`;
+            val2.textContent = `nums2[${state.j}] = ${nums2[state.j] !== undefined ? nums2[state.j] : 'OutOfBounds'}`;
+            varMax.textContent = state.maxDist;
+            actionDesc.innerHTML = state.desc;
+
+            // Handle Conditions UI
+            if (state.cond1 !== null) {
+                cond1Status.textContent = state.cond1 ? 'TRUE' : 'FALSE';
+                cond1Status.className = `px-2 py-0.5 rounded text-xs font-bold ${state.cond1 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`;
+            } else {
+                cond1Status.textContent = '-';
+                cond1Status.className = 'px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300';
+            }
+
+            if (state.cond2 !== null) {
+                cond2Status.textContent = state.cond2 ? 'TRUE' : 'FALSE';
+                cond2Status.className = `px-2 py-0.5 rounded text-xs font-bold ${state.cond2 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`;
+            } else {
+                cond2Status.textContent = '-';
+                cond2Status.className = 'px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300';
+            }
+
+            // Visual Styling based on Phase
+            if (activeBar1) activeBar1.classList.add('active-element');
+            if (activeBar2) activeBar2.classList.add('active-element');
+
+            if (state.phase === 'compare') {
+                // Just highlight
+            } else if (state.phase === 'update_max' || state.phase === 'valid_move_j') {
+                if (activeBar1) { activeBar1.classList.replace('bg-blue-500', 'bg-amber-400'); }
+                if (activeBar2) { activeBar2.classList.replace('bg-emerald-500', 'bg-amber-400'); }
+            } else if (state.phase === 'invalid_move_i' || state.phase === 'invalid_move_j') {
+                if (activeBar1) { activeBar1.classList.replace('bg-blue-500', 'bg-red-500'); }
+                if (activeBar2) { activeBar2.classList.replace('bg-emerald-500', 'bg-red-500'); }
+            } else if (state.phase === 'end') {
+                actionDesc.classList.add('text-amber-400');
+                if(state.maxPair) {
+                    const mI = document.getElementById(`bar1-${state.maxPair.i}`);
+                    const mJ = document.getElementById(`bar2-${state.maxPair.j}`);
+                    if(mI) mI.classList.replace('bg-blue-500', 'bg-amber-400');
+                    if(mJ) mJ.classList.replace('bg-emerald-500', 'bg-amber-400');
+                }
+            } else {
+                actionDesc.classList.remove('text-amber-400');
+            }
+
+            // Distance Line Logic
+            if ((state.cond1 && state.cond2) || (state.phase==='end' && state.maxPair)) {
+                let targetI = state.phase==='end' ? state.maxPair.i : state.i;
+                let targetJ = state.phase==='end' ? state.maxPair.j : state.j;
+
+                distIndicator.style.opacity = '1';
+                let startX = targetI * TOTAL_COL_WIDTH + (BAR_WIDTH/2);
+                let endX = targetJ * TOTAL_COL_WIDTH + (BAR_WIDTH/2);
+                let width = endX - startX;
+
+                distLine.style.left = `${startX}px`;
+                distLine.style.width = `${width}px`;
+                
+                distText.style.left = `${startX}px`;
+                distText.style.width = `${width}px`;
+                distText.textContent = `distance = ${targetJ - targetI}`;
+            } else {
+                distIndicator.style.opacity = '0';
+            }
+
+            // Button States
+            btnPrev.disabled = idx === 0;
+            btnNext.disabled = idx === states.length - 1;
+            btnPrev.style.opacity = idx === 0 ? '0.5' : '1';
+            btnNext.style.opacity = idx === states.length - 1 ? '0.5' : '1';
+
+            if (idx === states.length - 1) {
+                pause();
+            }
+        }
+
+        // --- Controls ---
+        function stepForward() {
+            if (currentStateIdx < states.length - 1) {
+                currentStateIdx++;
+                renderState(currentStateIdx);
+            }
+        }
+
+        function stepBackward() {
+            if (currentStateIdx > 0) {
+                currentStateIdx--;
+                renderState(currentStateIdx);
+            }
+        }
+
+        function play() {
+            if (currentStateIdx >= states.length - 1) {
+                currentStateIdx = 0; // Restart if at end
+            }
+            isPlaying = true;
+            iconPlay.classList.add('hidden');
+            iconPause.classList.remove('hidden');
+            
+            let speed = parseInt(speedSlider.value); // reversed visually
+            
+            timer = setInterval(() => {
+                stepForward();
+                if (currentStateIdx >= states.length - 1) {
+                    pause();
+                }
+            }, speed);
+        }
+
+        function pause() {
+            isPlaying = false;
+            iconPlay.classList.remove('hidden');
+            iconPause.classList.add('hidden');
+            clearInterval(timer);
+        }
+
+        function togglePlay() {
+            if (isPlaying) pause();
+            else play();
+        }
+
+        // --- Event Listeners ---
+        btnApply.addEventListener('click', initSimulation);
+        btnNext.addEventListener('click', () => { pause(); stepForward(); });
+        btnPrev.addEventListener('click', () => { pause(); stepBackward(); });
+        btnPlay.addEventListener('click', togglePlay);
+        btnReset.addEventListener('click', () => {
+            pause();
+            currentStateIdx = 0;
+            renderState(0);
+        });
+
+        speedSlider.addEventListener('change', () => {
+            if (isPlaying) {
+                pause();
+                play();
+            }
+        });
+
+        // Initialize on load
+        window.onload = initSimulation;
+
+    </script>
+</body>
+</html>

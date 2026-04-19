@@ -1,0 +1,19 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/minimum-absolute-distance-between-mirror-pairs",
+  "ProblemName": "Maximum Distance Between a Pair of Values",
+  "ProblemDescription": "\n\nYou are given two non-increasing 0-indexed integer arrays nums1\u200B\u200B\u200B\u200B\u200B\u200B and nums2\u200B\u200B\u200B\u200B\u200B\u200B.\n\nA pair of indices (i, j), where 0 \u003C= i \u003C nums1.length and 0 \u003C= j \u003C nums2.length, is valid if both i \u003C= j and nums1[i] \u003C= nums2[j]. The distance of the pair is j - i\u200B\u200B\u200B\u200B.\n\nReturn the maximum distance of any valid pair (i, j). If there are no valid pairs, return 0.\n\nAn array arr is non-increasing if arr[i-1] \u003E= arr[i] for every 1 \u003C= i \u003C arr.length.\n\n \n\n ",
+  "ProblemSolution": "TwoPointer",
+  "Difficulty": "Medium",
+  "Topics": [
+    "Senior",
+    "Array",
+    "Two",
+    "Pointers",
+    "Binary",
+    "Search",
+    "Weekly",
+    "Contest",
+    "240"
+  ],
+  "ProblemNumber": 1855
+}
