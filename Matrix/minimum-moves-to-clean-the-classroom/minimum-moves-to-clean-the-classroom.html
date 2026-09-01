@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Cleaner Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Custom scrollbar and animations */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .scale-up { animation: scaleUp 0.2s ease-in-out forwards; }
+        @keyframes scaleUp { from { transform: scale(0.8); } to { transform: scale(1.1); } }
+        
+        .cell-transition { transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8 flex flex-col items-center">
+
+    <!-- HEADER -->
+    <header class="mb-8 text-center max-w-2xl w-full">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
+            🧹 Classroom Cleaner
+        </h1>
+        <p class="text-slate-600">
+            Interactive simulator for <span class="font-semibold text-blue-600">LeetCode 3568</span>. 
+            Build constraints, solve, and watch the step-by-step simulation.
+        </p>
+    </header>
+
+    <div class="flex flex-col lg:flex-row gap-8 w-full max-w-6xl justify-center items-start">
+        
+        <!-- LEFT PANEL: CONTROLS -->
+        <div class="w-full lg:w-80 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-6 relative">
+            
+            <!-- Environment Settings -->
+            <div>
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Environment</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Max Energy Capacity</label>
+                        <input type="number" id="input-energy" min="1" max="100" value="5" 
+                            class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 transition-opacity">
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium mb-1">Rows</label>
+                            <select id="select-rows" class="w-full p-2 border border-slate-300 rounded-lg bg-white disabled:opacity-50 transition-opacity">
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="8">8</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium mb-1">Cols</label>
+                            <select id="select-cols" class="w-full p-2 border border-slate-300 rounded-lg bg-white disabled:opacity-50 transition-opacity">
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6" selected>6</option>
+                                <option value="8">8</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paint Tools -->
+            <div>
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Paint Tools</h2>
+                <div class="grid grid-cols-2 gap-2" id="brush-container">
+                    <!-- Brushes injected via JS -->
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-3" id="action-container">
+                <!-- Action buttons injected via JS -->
+            </div>
+            
+            <!-- Error/Result Messages -->
+            <div id="message-container" class="hidden p-3 rounded-lg text-sm font-medium border fade-in">
+                <p id="message-title" class="font-bold"></p>
+                <p id="message-text" class="text-sm"></p>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: GRID & SIMULATION -->
+        <div class="flex flex-col items-center gap-6 w-full max-w-2xl">
+            
+            <!-- Simulation Dashboard -->
+            <div id="sim-dashboard" class="hidden w-full bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 fade-in">
+                <div class="flex items-center gap-4">
+                    <button id="btn-play-pause" class="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
+                        <i class="fas fa-play ml-1" id="icon-play-pause"></i>
+                    </button>
+                    <div class="flex gap-2">
+                        <button id="btn-step-back" class="p-2 rounded-lg hover:bg-slate-100 text-slate-700 disabled:opacity-30 transition-colors">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button id="btn-step-forward" class="p-2 rounded-lg hover:bg-slate-100 text-slate-700 disabled:opacity-30 transition-colors">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Move</p>
+                        <p class="text-2xl font-black text-slate-800 font-mono">
+                            <span id="sim-step-current">0</span> <span class="text-slate-400 text-lg">/ <span id="sim-step-total">0</span></span>
+                        </p>
+                    </div>
+                    <div class="h-10 w-px bg-slate-200"></div>
+                    <div class="text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                            <i class="fas fa-battery-full text-xs"></i> Energy
+                        </p>
+                        <p id="sim-energy" class="text-2xl font-black font-mono text-green-600">
+                            0
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Container -->
+            <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 overflow-auto w-full flex justify-center">
+                <div id="grid-element" class="grid gap-1.5 md:gap-2 relative select-none">
+                    <!-- Grid cells injected via JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        // --- CONSTANTS ---
+        const CELL_TYPES = {
+            EMPTY: '.',
+            START: 'S',
+            LITTER: 'L',
+            RESET: 'R',
+            OBSTACLE: 'X'
+        };
+
+        const BRUSHES = [
+            { type: CELL_TYPES.EMPTY, label: 'Eraser', icon: 'fa-eraser', colorClasses: 'bg-white text-slate-500 border-slate-300' },
+            { type: CELL_TYPES.START, label: 'Start', icon: 'fa-user', colorClasses: 'bg-blue-500 text-white border-blue-600' },
+            { type: CELL_TYPES.LITTER, label: 'Litter', icon: 'fa-trash', colorClasses: 'bg-green-500 text-white border-green-600' },
+            { type: CELL_TYPES.RESET, label: 'Reset', icon: 'fa-bolt', colorClasses: 'bg-yellow-400 text-slate-900 border-yellow-500' },
+            { type: CELL_TYPES.OBSTACLE, label: 'Obstacle', icon: 'fa-ban', colorClasses: 'bg-slate-800 text-white border-slate-900' },
+        ];
+
+        // --- GLOBAL STATE ---
+        const state = {
+            rows: 6,
+            cols: 6,
+            maxEnergy: 5,
+            brush: CELL_TYPES.LITTER,
+            grid: [],
+            isSolving: false,
+            message: null, // { type: 'error'|'success'|'failed', text: '' }
+            
+            // Simulation State
+            playbackPath: null,
+            playbackStep: 0,
+            isPlaying: false,
+            litterMeta: new Map() // maps "r,c" to bitmask ID
+        };
+
+        // Initialize grid defaults
+        function initGrid() {
+            state.grid = Array(state.rows).fill(null).map(() => Array(state.cols).fill(CELL_TYPES.EMPTY));
+            if (state.rows >= 6 && state.cols >= 6) {
+                state.grid[1][1] = CELL_TYPES.START;
+                state.grid[1][4] = CELL_TYPES.LITTER;
+                state.grid[4][1] = CELL_TYPES.RESET;
+                state.grid[4][4] = CELL_TYPES.LITTER;
+                state.grid[2][2] = CELL_TYPES.OBSTACLE;
+                state.grid[2][3] = CELL_TYPES.OBSTACLE;
+            }
+        }
+
+        let isMouseDown = false;
+        document.addEventListener('mousedown', () => isMouseDown = true);
+        document.addEventListener('mouseup', () => isMouseDown = false);
+
+        // --- DOM ELEMENTS ---
+        const elGrid = document.getElementById('grid-element');
+        const elBrushes = document.getElementById('brush-container');
+        const elActions = document.getElementById('action-container');
+        const elMsgContainer = document.getElementById('message-container');
+        const elMsgTitle = document.getElementById('message-title');
+        const elMsgText = document.getElementById('message-text');
+        
+        const inRows = document.getElementById('select-rows');
+        const inCols = document.getElementById('select-cols');
+        const inEnergy = document.getElementById('input-energy');
+
+        // Sim Elements
+        const elSimDash = document.getElementById('sim-dashboard');
+        const btnPlayPause = document.getElementById('btn-play-pause');
+        const iconPlayPause = document.getElementById('icon-play-pause');
+        const btnStepBack = document.getElementById('btn-step-back');
+        const btnStepForward = document.getElementById('btn-step-forward');
+        const simStepCurrent = document.getElementById('sim-step-current');
+        const simStepTotal = document.getElementById('sim-step-total');
+        const simEnergy = document.getElementById('sim-energy');
+
+        // --- RENDER FUNCTIONS ---
+        function renderAll() {
+            renderBrushes();
+            renderActions();
+            renderGrid();
+            renderMessages();
+            renderSimulationDashboard();
+            updateInputsState();
+        }
+
+        function updateInputsState() {
+            const disabled = state.playbackPath !== null || state.isSolving;
+            inRows.disabled = disabled;
+            inCols.disabled = disabled;
+            inEnergy.disabled = disabled;
+        }
+
+        function renderBrushes() {
+            elBrushes.innerHTML = '';
+            const isDisabled = state.playbackPath !== null;
+
+            BRUSHES.forEach(b => {
+                const isSelected = state.brush === b.type;
+                const btn = document.createElement('button');
+                btn.className = `flex items-center gap-2 p-2 rounded-lg border-2 transition-all 
+                    ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} 
+                    ${isSelected && !isDisabled ? 'border-blue-500 ring-2 ring-blue-200 shadow-sm' : 'border-transparent hover:bg-slate-100'}`;
+                btn.disabled = isDisabled;
+                btn.onclick = () => {
+                    if (!isDisabled) {
+                        state.brush = b.type;
+                        renderBrushes();
+                    }
+                };
+                
+                btn.innerHTML = `
+                    <div class="p-1.5 rounded-md border ${b.colorClasses} flex-shrink-0 flex items-center justify-center w-7 h-7">
+                        <i class="fas ${b.icon} text-sm"></i>
+                    </div>
+                    <span class="text-sm font-medium">${b.label}</span>
+                `;
+                elBrushes.appendChild(btn);
+            });
+        }
+
+        function renderActions() {
+            elActions.innerHTML = '';
+            
+            if (!state.playbackPath) {
+                // Compute Button
+                const btnCompute = document.createElement('button');
+                btnCompute.className = "w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-70";
+                btnCompute.disabled = state.isSolving;
+                btnCompute.onclick = runBFS;
+                btnCompute.innerHTML = state.isSolving 
+                    ? `<span class="animate-pulse">Solving...</span>`
+                    : `<i class="fas fa-play"></i> Compute Path`;
+                elActions.appendChild(btnCompute);
+            } else {
+                // Edit Button
+                const btnEdit = document.createElement('button');
+                btnEdit.className = "w-full py-3 px-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors";
+                btnEdit.onclick = clearSimulation;
+                btnEdit.innerHTML = `<i class="fas fa-eraser"></i> Edit Grid`;
+                elActions.appendChild(btnEdit);
+            }
+
+            // Clear Button
+            const btnClear = document.createElement('button');
+            btnClear.className = "w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors";
+            btnClear.onclick = () => {
+                state.grid = Array(state.rows).fill(null).map(() => Array(state.cols).fill(CELL_TYPES.EMPTY));
+                clearSimulation();
+            };
+            btnClear.innerHTML = `<i class="fas fa-undo"></i> Clear All`;
+            elActions.appendChild(btnClear);
+        }
+
+        function renderMessages() {
+            if (!state.message) {
+                elMsgContainer.classList.add('hidden');
+                return;
+            }
+            elMsgContainer.classList.remove('hidden');
+            
+            // Clear previous colors
+            elMsgContainer.className = "p-3 rounded-lg text-sm font-medium border fade-in mt-4";
+            
+            if (state.message.type === 'error' || state.message.type === 'failed') {
+                elMsgContainer.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+                elMsgTitle.textContent = state.message.type === 'error' ? 'Error' : 'No Solution';
+            } else {
+                elMsgContainer.classList.add('bg-green-50', 'text-green-800', 'border-green-200');
+                elMsgTitle.textContent = 'Success!';
+            }
+            elMsgText.textContent = state.message.text;
+        }
+
+        function renderSimulationDashboard() {
+            if (!state.playbackPath) {
+                elSimDash.classList.add('hidden');
+                return;
+            }
+            elSimDash.classList.remove('hidden');
+
+            const total = state.playbackPath.length - 1;
+            const currentSimState = state.playbackPath[state.playbackStep];
+
+            simStepCurrent.textContent = state.playbackStep;
+            simStepTotal.textContent = total;
+            
+            simEnergy.textContent = currentSimState.energy;
+            if (currentSimState.energy <= 2) {
+                simEnergy.className = "text-2xl font-black font-mono text-red-500 animate-pulse";
+            } else {
+                simEnergy.className = "text-2xl font-black font-mono text-green-600";
+            }
+
+            if (state.isPlaying) {
+                iconPlayPause.className = "fas fa-pause";
+                iconPlayPause.classList.remove("ml-1");
+            } else {
+                iconPlayPause.className = "fas fa-play ml-1";
+            }
+
+            btnStepBack.disabled = state.playbackStep === 0;
+            btnStepForward.disabled = state.playbackStep === total;
+        }
+
+        function handleCellInteraction(r, c) {
+            if (state.playbackPath) return; // Block edits during sim
+            clearSimulation();
+            
+            // Enforce single start position
+            if (state.brush === CELL_TYPES.START) {
+                for (let i = 0; i < state.rows; i++) {
+                    for (let j = 0; j < state.cols; j++) {
+                        if (state.grid[i][j] === CELL_TYPES.START) state.grid[i][j] = CELL_TYPES.EMPTY;
+                    }
+                }
+            }
+            state.grid[r][c] = state.brush;
+            renderGrid();
+        }
+
+        function renderGrid() {
+            elGrid.style.gridTemplateColumns = `repeat(${state.cols}, minmax(0, 1fr))`;
+            elGrid.innerHTML = '';
+
+            const currentSimState = state.playbackPath ? state.playbackPath[state.playbackStep] : null;
+
+            for (let r = 0; r < state.rows; r++) {
+                for (let c = 0; c < state.cols; c++) {
+                    const baseCellType = state.grid[r][c];
+                    let displayType = baseCellType;
+                    let isStudentHere = false;
+                    let isPathTrail = false;
+
+                    if (currentSimState) {
+                        isStudentHere = (currentSimState.r === r && currentSimState.c === c);
+                        isPathTrail = state.playbackPath.slice(0, state.playbackStep + 1).some(p => p.r === r && p.c === c);
+
+                        // Hide collected litter
+                        if (baseCellType === CELL_TYPES.LITTER) {
+                            const litterId = state.litterMeta.get(`${r},${c}`);
+                            if ((currentSimState.mask & (1 << litterId)) !== 0) {
+                                displayType = CELL_TYPES.EMPTY; 
+                            }
+                        }
+                    }
+
+                    const cell = document.createElement('div');
+                    let colorClass = 'bg-white border-slate-200 hover:bg-slate-50';
+                    let content = '';
+
+                    if (isStudentHere) {
+                        colorClass = 'bg-blue-500 border-blue-700 shadow-lg ring-4 ring-blue-200 ring-opacity-50 z-10 scale-up';
+                        content = '<i class="fas fa-user text-white text-xl"></i>';
+                    } 
+                    else if (displayType === CELL_TYPES.LITTER) {
+                        colorClass = 'bg-green-500 border-green-700 shadow-sm';
+                        content = '<i class="fas fa-trash text-white text-lg"></i>';
+                    } 
+                    else if (displayType === CELL_TYPES.RESET) {
+                        colorClass = 'bg-yellow-400 border-yellow-600 shadow-sm';
+                        content = '<i class="fas fa-bolt text-slate-900 text-lg"></i>';
+                    } 
+                    else if (displayType === CELL_TYPES.OBSTACLE) {
+                        colorClass = 'bg-slate-800 border-slate-900';
+                        content = '<i class="fas fa-ban text-slate-400 text-lg"></i>';
+                    } 
+                    else if (isPathTrail) {
+                        colorClass = 'bg-blue-50 border-blue-100';
+                    }
+                    else if (displayType === CELL_TYPES.START) {
+                        colorClass = 'bg-slate-100 border-slate-300';
+                        content = '<span class="text-slate-400 font-bold">S</span>';
+                    }
+
+                    cell.className = `w-12 h-12 md:w-16 md:h-16 rounded-xl border flex items-center justify-center cell-transition ${!state.playbackPath ? 'cursor-pointer active:scale-95' : ''} ${colorClass}`;
+                    cell.innerHTML = content;
+
+                    // Event Listeners for Painting
+                    cell.onmousedown = () => handleCellInteraction(r, c);
+                    cell.onmouseenter = () => {
+                        if (isMouseDown) handleCellInteraction(r, c);
+                    };
+
+                    elGrid.appendChild(cell);
+                }
+            }
+        }
+
+        // --- SIMULATION LOGIC ---
+        let simTimerId = null;
+
+        function clearSimulation() {
+            state.message = null;
+            state.playbackPath = null;
+            state.playbackStep = 0;
+            state.isPlaying = false;
+            stopTimer();
+            renderAll();
+        }
+
+        function stopTimer() {
+            if (simTimerId) {
+                clearTimeout(simTimerId);
+                simTimerId = null;
+            }
+        }
+
+        function simulationLoop() {
+            if (!state.isPlaying || !state.playbackPath) return;
+
+            if (state.playbackStep < state.playbackPath.length - 1) {
+                state.playbackStep++;
+                renderSimulationDashboard();
+                renderGrid();
+                simTimerId = setTimeout(simulationLoop, 400);
+            } else {
+                state.isPlaying = false;
+                renderSimulationDashboard();
+            }
+        }
+
+        function togglePlayPause() {
+            state.isPlaying = !state.isPlaying;
+            if (state.isPlaying) {
+                if (state.playbackStep >= state.playbackPath.length - 1) {
+                    state.playbackStep = 0; // restart if at end
+                }
+                simulationLoop();
+            } else {
+                stopTimer();
+            }
+            renderSimulationDashboard();
+        }
+
+        function stepForward() {
+            if (state.playbackPath && state.playbackStep < state.playbackPath.length - 1) {
+                state.playbackStep++;
+                state.isPlaying = false;
+                stopTimer();
+                renderSimulationDashboard();
+                renderGrid();
+            }
+        }
+
+        function stepBack() {
+            if (state.playbackStep > 0) {
+                state.playbackStep--;
+                state.isPlaying = false;
+                stopTimer();
+                renderSimulationDashboard();
+                renderGrid();
+            }
+        }
+
+        // --- CORE ALGORITHM (BFS) ---
+        function runBFS() {
+            state.isSolving = true;
+            clearSimulation();
+            
+            // Allow UI to update to "Solving..."
+            setTimeout(() => {
+                let startPos = null;
+                let litters = [];
+                const R = state.rows;
+                const C = state.cols;
+                const maxE = state.maxEnergy;
+
+                for (let r = 0; r < R; r++) {
+                    for (let c = 0; c < C; c++) {
+                        if (state.grid[r][c] === CELL_TYPES.START) startPos = { r, c };
+                        if (state.grid[r][c] === CELL_TYPES.LITTER) litters.push({ r, c });
+                    }
+                }
+
+                if (!startPos) {
+                    state.message = { type: 'error', text: "Please place a Start (S) position on the grid." };
+                    state.isSolving = false;
+                    renderAll();
+                    return;
+                }
+                if (litters.length > 15) {
+                    state.message = { type: 'error', text: "Too much litter! Limit to 15 pieces to prevent browser crashing." };
+                    state.isSolving = false;
+                    renderAll();
+                    return;
+                }
+
+                const K = litters.length;
+                const targetMask = (1 << K) - 1;
+                state.litterMeta.clear();
+                litters.forEach((l, i) => state.litterMeta.set(`${l.r},${l.c}`, i));
+
+                if (K === 0) {
+                    state.message = { type: 'success', text: "Classroom is already clean!" };
+                    state.playbackPath = [{ r: startPos.r, c: startPos.c, mask: 0, energy: maxE }];
+                    state.isSolving = false;
+                    renderAll();
+                    return;
+                }
+
+                // maxEnergyCache[r][c][mask]
+                const maxEnergyCache = Array.from({ length: R }, () =>
+                    Array.from({ length: C }, () => Array(1 << K).fill(-1))
+                );
+
+                const q = [{ r: startPos.r, c: startPos.c, mask: 0, energy: maxE, steps: 0, parent: null }];
+                maxEnergyCache[startPos.r][startPos.c][0] = maxE;
+
+                const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                let head = 0; 
+                let foundNode = null;
+
+                while (head < q.length) {
+                    const curr = q[head++];
+
+                    for (const [dr, dc] of dirs) {
+                        const nr = curr.r + dr;
+                        const nc = curr.c + dc;
+
+                        if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+                        if (state.grid[nr][nc] === CELL_TYPES.OBSTACLE) continue;
+
+                        let nextEnergy = curr.energy - 1;
+                        if (nextEnergy < 0) continue;
+
+                        let nextMask = curr.mask;
+                        
+                        if (state.grid[nr][nc] === CELL_TYPES.RESET) {
+                            nextEnergy = maxE;
+                        } 
+                        else if (state.grid[nr][nc] === CELL_TYPES.LITTER) {
+                            const litterId = state.litterMeta.get(`${nr},${nc}`);
+                            nextMask |= (1 << litterId);
+                        }
+
+                        if (nextMask === targetMask) {
+                            foundNode = { r: nr, c: nc, mask: nextMask, energy: nextEnergy, steps: curr.steps + 1, parent: curr };
+                            break;
+                        }
+
+                        if (nextEnergy > maxEnergyCache[nr][nc][nextMask]) {
+                            maxEnergyCache[nr][nc][nextMask] = nextEnergy;
+                            q.push({ r: nr, c: nc, mask: nextMask, energy: nextEnergy, steps: curr.steps + 1, parent: curr });
+                        }
+                    }
+                    if (foundNode) break;
+                }
+
+                if (foundNode) {
+                    const path = [];
+                    let curr = foundNode;
+                    while (curr) {
+                        path.push({ r: curr.r, c: curr.c, mask: curr.mask, energy: curr.energy });
+                        curr = curr.parent;
+                    }
+                    path.reverse();
+                    
+                    state.playbackPath = path;
+                    state.message = { type: 'success', text: `Solution found in ${foundNode.steps} moves! Ready to simulate.` };
+                } else {
+                    state.message = { type: 'failed', text: "Impossible! The student runs out of energy or is trapped." };
+                }
+                
+                state.isSolving = false;
+                renderAll();
+            }, 100);
+        }
+
+        // --- EVENT LISTENERS BINDING ---
+        inRows.addEventListener('change', (e) => {
+            state.rows = parseInt(e.target.value);
+            initGrid();
+            clearSimulation();
+        });
+
+        inCols.addEventListener('change', (e) => {
+            state.cols = parseInt(e.target.value);
+            initGrid();
+            clearSimulation();
+        });
+
+        inEnergy.addEventListener('change', (e) => {
+            state.maxEnergy = parseInt(e.target.value) || 1;
+            clearSimulation();
+        });
+
+        btnPlayPause.addEventListener('click', togglePlayPause);
+        btnStepForward.addEventListener('click', stepForward);
+        btnStepBack.addEventListener('click', stepBack);
+
+        // --- KICKOFF ---
+        initGrid();
+        renderAll();
+
+    </script>
+</body>
+</html>

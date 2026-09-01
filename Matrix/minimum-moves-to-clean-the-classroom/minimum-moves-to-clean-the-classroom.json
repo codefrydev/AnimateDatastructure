@@ -1,0 +1,22 @@
+{
+  "ProblemUri": "https://leetcode.com/problems/minimum-moves-to-clean-the-classroom",
+  "ProblemName": "Minimum Moves to Clean the Classroom",
+  "ProblemDescription": "\nYou are given an m x n grid classroom where a student volunteer is tasked with cleaning up litter scattered around the room. Each cell in the grid is one of the following:\n\n\u0027S\u0027: Starting position of the student\n\u0027L\u0027: Litter that must be collected (once collected, the cell becomes empty)\n\u0027R\u0027: Reset area that restores the student\u0027s energy to full capacity, regardless of their current energy level (can be used multiple times)\n\u0027X\u0027: Obstacle the student cannot pass through\n\u0027.\u0027: Empty space\nYou are also given an integer energy, representing the student\u0027s maximum energy capacity. The student starts with this energy from the starting position \u0027S\u0027.\n\nEach move to an adjacent cell (up, down, left, or right) costs 1 unit of energy. If the energy reaches 0, the student can only continue if they are on a reset area \u0027R\u0027, which resets the energy to its maximum capacity energy.\n\nReturn the minimum number of moves required to collect all litter items, or -1 if it\u0027s impossible.\n\n \n\n ",
+  "ProblemSolution": "Matrix",
+  "Difficulty": "Medium",
+  "Topics": [
+    "Staff",
+    "Array",
+    "Hash",
+    "Table",
+    "Bit",
+    "Manipulation",
+    "Breadth-First",
+    "Search",
+    "Matrix",
+    "Weekly",
+    "Contest",
+    "452"
+  ],
+  "ProblemNumber": 3568
+}
