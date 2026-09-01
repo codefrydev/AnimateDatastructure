@@ -311,6 +311,27 @@
           "ProblemNumber": 2946
         },
         {
+          "Title": "Minimum Moves to Clean the Classroom",
+          "Path": "Matrix/minimum-moves-to-clean-the-classroom/minimum-moves-to-clean-the-classroom.html",
+          "ProblemUri": "https://leetcode.com/problems/minimum-moves-to-clean-the-classroom",
+          "Difficulty": "Medium",
+          "Topics": [
+            "Staff",
+            "Array",
+            "Hash",
+            "Table",
+            "Bit",
+            "Manipulation",
+            "Breadth-First",
+            "Search",
+            "Matrix",
+            "Weekly",
+            "Contest",
+            "452"
+          ],
+          "ProblemNumber": 3568
+        },
+        {
           "Title": "Minimum Path Sum",
           "Path": "Matrix/minimum-path-sum/minimum-path-sum.html",
           "ProblemUri": "https://leetcode.com/problems/minimum-path-sum",
